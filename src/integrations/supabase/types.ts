@@ -64,6 +64,7 @@ export type Database = {
           sitemap_lastmod: string | null
           source_id: string
           status: string
+          storage_path: string | null
           title: string | null
           token_count: number | null
           updated_at: string
@@ -80,6 +81,7 @@ export type Database = {
           sitemap_lastmod?: string | null
           source_id: string
           status?: string
+          storage_path?: string | null
           title?: string | null
           token_count?: number | null
           updated_at?: string
@@ -96,6 +98,7 @@ export type Database = {
           sitemap_lastmod?: string | null
           source_id?: string
           status?: string
+          storage_path?: string | null
           title?: string | null
           token_count?: number | null
           updated_at?: string
