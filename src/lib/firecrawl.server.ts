@@ -63,6 +63,35 @@ export function detectLang(url: string): string {
   }
 }
 
+// Detect language from text content. Uses Swedish stopword density and
+// Swedish-specific characters (å/ä/ö). Falls back to "en" when text is too
+// short or signal is too weak.
+const SV_STOPWORDS = [
+  "och", "att", "är", "för", "på", "med", "som", "det", "inte", "även",
+  "enligt", "har", "ett", "den", "till", "av", "kan", "vid", "från", "men",
+  "eller", "när", "över", "under", "samt", "varit", "blir", "denna",
+];
+export function detectLangFromText(text: string): "sv" | "en" {
+  if (!text || text.length < 200) return "en";
+  const sample = text.slice(0, 20000).toLowerCase();
+  const chars = sample.length;
+  // Count Swedish-specific chars
+  const swChars = (sample.match(/[åäö]/g) ?? []).length;
+  // Count stopwords (word-boundary)
+  let swWords = 0;
+  for (const w of SV_STOPWORDS) {
+    const re = new RegExp(`\\b${w}\\b`, "g");
+    swWords += (sample.match(re) ?? []).length;
+  }
+  // Density per 1000 chars
+  const charDensity = (swChars / chars) * 1000;
+  const wordDensity = (swWords / chars) * 1000;
+  // Threshold tuned empirically: Swedish prose has ~4-12 å/ä/ö per 1000 chars
+  // and 30-60 stopword hits per 1000 chars. English has near 0 of both.
+  if (charDensity >= 2 || wordDensity >= 8) return "sv";
+  return "en";
+}
+
 export function urlMatchesFilters(
   url: string,
   includePatterns: string[],
@@ -73,3 +102,4 @@ export function urlMatchesFilters(
   if (includePatterns.length === 0) return true;
   return includePatterns.some((p) => u.includes(p.toLowerCase()));
 }
+

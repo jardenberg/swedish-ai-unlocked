@@ -239,16 +239,23 @@ export const scrapeBatch = createServerFn({ method: "POST" })
     }
 
     // PDFs — one-by-one via unpdf, fallback to Firecrawl
+    const { detectLangFromText } = await import("./firecrawl.server");
     for (const doc of pdfDocs) {
       try {
-        const res = await extractPdf(doc.url);
+        const res = await extractPdf({
+          url: doc.url,
+          storagePath: (doc as { storage_path?: string | null }).storage_path ?? undefined,
+        });
         if (res.method === "firecrawl") credits += 1;
         if (res.text && res.text.length > 200) {
+          const detectedLang = detectLangFromText(res.text);
           await supabaseAdmin
             .from("documents")
             .update({
               raw_markdown: res.text,
-              title: doc.title ?? new URL(doc.url).pathname.split("/").pop() ?? doc.url,
+              title: res.title ?? doc.title ?? doc.url,
+              lang: detectedLang || doc.lang || "en",
+
               status: "scraped",
               fetched_at: new Date().toISOString(),
               token_count: Math.ceil(res.text.length / 4),
@@ -271,6 +278,7 @@ export const scrapeBatch = createServerFn({ method: "POST" })
         failed++;
       }
     }
+
 
     await supabaseAdmin
       .from("ingest_runs")
@@ -534,3 +542,73 @@ export const publicStats = createServerFn({ method: "GET" }).handler(async () =>
   ]);
   return { documents: docCount ?? 0, chunks: chunkCount ?? 0, sources: sources ?? [] };
 });
+
+// ──────────────────────────────────────────────────────────────────
+// uploadManualPdf — admin uploads a PDF that the crawler can't reach
+// (e.g. form-gated). Stored in the private `manual-pdfs` bucket; the
+// document's public URL stays as the canonical landing page so all
+// citations point back to the publisher.
+// ──────────────────────────────────────────────────────────────────
+const UploadPdfInput = z.object({
+  canonicalUrl: z.string().url().max(1000),
+  title: z.string().min(1).max(500),
+  sourceSlug: z.enum(["rise", "ai_sweden"]),
+  lang: z.enum(["en", "sv"]),
+  fileBase64: z.string().min(1).max(70_000_000), // ~52 MB decoded
+  mimeType: z.string().refine((m) => m === "application/pdf", "must be application/pdf"),
+});
+
+export const uploadManualPdf = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => UploadPdfInput.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { canonicalizeUrl } = await import("./url-canonical.server");
+
+    const url = canonicalizeUrl(data.canonicalUrl);
+
+    // Resolve source
+    const { data: source } = await supabaseAdmin
+      .from("sources").select("id").eq("slug", data.sourceSlug).single();
+    if (!source) throw new Error("source not found");
+
+    // Dedupe on canonical URL
+    const { data: existing } = await supabaseAdmin
+      .from("documents").select("id").eq("url", url).maybeSingle();
+    if (existing) throw new Error("A document with this canonical URL already exists");
+
+    // Decode base64 → bytes
+    const bytes = Uint8Array.from(atob(data.fileBase64), (c) => c.charCodeAt(0));
+    if (bytes.length > 55 * 1024 * 1024) throw new Error("File exceeds 55 MB limit");
+
+    // Storage path
+    const id = crypto.randomUUID();
+    const storagePath = `${data.sourceSlug}/${id}.pdf`;
+    const { error: upErr } = await supabaseAdmin.storage
+      .from("manual-pdfs")
+      .upload(storagePath, bytes, { contentType: "application/pdf", upsert: false });
+    if (upErr) throw new Error(`storage upload failed: ${upErr.message}`);
+
+    // Insert document
+    const { data: doc, error: insErr } = await supabaseAdmin
+      .from("documents")
+      .insert({
+        source_id: source.id,
+        url,
+        title: data.title,
+        lang: data.lang,
+        content_type: "pdf",
+        status: "pending",
+        storage_path: storagePath,
+      })
+      .select()
+      .single();
+    if (insErr) {
+      // Roll back storage on insert failure
+      await supabaseAdmin.storage.from("manual-pdfs").remove([storagePath]);
+      throw new Error(`document insert failed: ${insErr.message}`);
+    }
+
+    return { id: doc.id, url, storagePath };
+  });

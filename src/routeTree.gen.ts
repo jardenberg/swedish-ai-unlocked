@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminUploadRouteImport } from './routes/_authenticated/admin/upload'
 import { Route as AuthenticatedAdminRunsRouteImport } from './routes/_authenticated/admin/runs'
 import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authenticated/admin/documents'
 
@@ -47,6 +48,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminUploadRoute =
+  AuthenticatedAdminUploadRouteImport.update({
+    id: '/upload',
+    path: '/upload',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminRunsRoute = AuthenticatedAdminRunsRouteImport.update({
   id: '/runs',
   path: '/runs',
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/api/mcp': typeof ApiMcpRoute
   '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/admin/runs': typeof AuthenticatedAdminRunsRoute
+  '/admin/upload': typeof AuthenticatedAdminUploadRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
   '/api/mcp': typeof ApiMcpRoute
   '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/admin/runs': typeof AuthenticatedAdminRunsRoute
+  '/admin/upload': typeof AuthenticatedAdminUploadRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -85,6 +94,7 @@ export interface FileRoutesById {
   '/api/mcp': typeof ApiMcpRoute
   '/_authenticated/admin/documents': typeof AuthenticatedAdminDocumentsRoute
   '/_authenticated/admin/runs': typeof AuthenticatedAdminRunsRoute
+  '/_authenticated/admin/upload': typeof AuthenticatedAdminUploadRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -96,9 +106,17 @@ export interface FileRouteTypes {
     | '/api/mcp'
     | '/admin/documents'
     | '/admin/runs'
+    | '/admin/upload'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/api/mcp' | '/admin/documents' | '/admin/runs' | '/admin'
+  to:
+    | '/'
+    | '/auth'
+    | '/api/mcp'
+    | '/admin/documents'
+    | '/admin/runs'
+    | '/admin/upload'
+    | '/admin'
   id:
     | '__root__'
     | '/'
@@ -108,6 +126,7 @@ export interface FileRouteTypes {
     | '/api/mcp'
     | '/_authenticated/admin/documents'
     | '/_authenticated/admin/runs'
+    | '/_authenticated/admin/upload'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -162,6 +181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/upload': {
+      id: '/_authenticated/admin/upload'
+      path: '/upload'
+      fullPath: '/admin/upload'
+      preLoaderRoute: typeof AuthenticatedAdminUploadRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/runs': {
       id: '/_authenticated/admin/runs'
       path: '/runs'
@@ -182,12 +208,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminDocumentsRoute: typeof AuthenticatedAdminDocumentsRoute
   AuthenticatedAdminRunsRoute: typeof AuthenticatedAdminRunsRoute
+  AuthenticatedAdminUploadRoute: typeof AuthenticatedAdminUploadRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminDocumentsRoute: AuthenticatedAdminDocumentsRoute,
   AuthenticatedAdminRunsRoute: AuthenticatedAdminRunsRoute,
+  AuthenticatedAdminUploadRoute: AuthenticatedAdminUploadRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 

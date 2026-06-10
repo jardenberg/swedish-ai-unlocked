@@ -69,20 +69,26 @@ async function scrapeOne(sourceId: string): Promise<number> {
   }
 
   // PDFs one-by-one
+  const { detectLangFromText } = await import("/dev-server/src/lib/firecrawl.server.ts");
   for (const doc of pdfDocs) {
     try {
-      const res = await extractPdf(doc.url);
+      const res = await extractPdf({
+        url: doc.url,
+        storagePath: (doc as { storage_path?: string | null }).storage_path ?? undefined,
+      });
       if (res.text && res.text.length > 200) {
+        const detected = detectLangFromText(res.text);
         await sb.from("documents").update({
           raw_markdown: res.text,
-          title: doc.title ?? new URL(doc.url).pathname.split("/").pop() ?? doc.url,
+          title: res.title ?? doc.title ?? new URL(doc.url).pathname.split("/").pop() ?? doc.url,
+          lang: detected || doc.lang || "en",
           status: "scraped",
           fetched_at: new Date().toISOString(),
           token_count: Math.ceil(res.text.length / 4),
           error: null,
         }).eq("id", doc.id);
         scraped++;
-        console.log(`  pdf[${res.method}] ${doc.url} (${res.text.length} chars)`);
+        console.log(`  pdf[${res.method}] ${doc.url} (${res.text.length} chars, lang=${detected}, title="${(res.title ?? "").slice(0, 60)}")`);
       } else {
         await sb.from("documents").update({ status: "failed", error: `empty pdf (${res.method})` }).eq("id", doc.id);
       }
@@ -91,6 +97,7 @@ async function scrapeOne(sourceId: string): Promise<number> {
       console.error("pdf err", doc.url, (e as Error).message);
     }
   }
+
   return scraped;
 }
 
