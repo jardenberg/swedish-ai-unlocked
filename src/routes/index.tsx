@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { publicStats } from "@/lib/ingest.functions";
 
 // Bump on each meaningful deploy. Format: v + YYYYMMDDHHMM (UTC-ish, short).
-const VERSION = "v202606102050";
+const VERSION = "v202606102145";
 const PUBLISHED = "June 10, 2026";
 const MCP_URL = "https://swedish-ai-unlocked.lovable.app/api/mcp";
 const MCP_NAME = "rise-ai-sweden";
