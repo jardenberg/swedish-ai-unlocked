@@ -210,7 +210,25 @@ export const scrapeBatch = createServerFn({ method: "POST" })
           if (u && d.markdown) byUrl.set(u, { markdown: d.markdown, title: d.metadata?.title });
         }
         for (const doc of htmlDocs) {
-          const got = byUrl.get(doc.url);
+          let got = byUrl.get(doc.url);
+          // Retry once per-URL with relaxed options if first pass produced nothing
+          if (!got || got.markdown.length <= 100) {
+            try {
+              const retry = (await fc.scrape(doc.url, {
+                formats: ["markdown"],
+                onlyMainContent: false,
+                waitFor: 2000,
+              } as unknown as Parameters<typeof fc.scrape>[1])) as
+                | { markdown?: string; metadata?: { title?: string } }
+                | null;
+              credits += 1;
+              if (retry?.markdown && retry.markdown.length > 100) {
+                got = { markdown: retry.markdown, title: retry.metadata?.title };
+              }
+            } catch (e) {
+              console.warn("[scrape] retry failed", doc.url, (e as Error).message);
+            }
+          }
           if (got && got.markdown.length > 100) {
             await supabaseAdmin
               .from("documents")
@@ -227,7 +245,7 @@ export const scrapeBatch = createServerFn({ method: "POST" })
           } else {
             await supabaseAdmin
               .from("documents")
-              .update({ status: "failed", error: "no markdown returned" })
+              .update({ status: "failed", error: "no markdown returned (after retry)" })
               .eq("id", doc.id);
             failed++;
           }
