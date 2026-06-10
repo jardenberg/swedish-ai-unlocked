@@ -109,16 +109,23 @@ export async function extractPdf(input: ExtractPdfInput | string): Promise<PdfEx
   if (inp.storagePath) {
     throw new Error("PDF extraction failed and Firecrawl fallback is not available for storage-only PDFs");
   }
-  const fc = getFirecrawl();
-  const result = await fc.scrape(inp.url, {
-    formats: ["markdown"],
-    parsers: ["pdf"],
-    onlyMainContent: false,
-  } as unknown as Parameters<typeof fc.scrape>[1]);
-  const md = (result as { markdown?: string }).markdown ?? "";
-  const fallbackTitle =
-    (result as { metadata?: { title?: string } }).metadata?.title?.trim() ||
-    titleFromText(md) ||
-    titleFromUrl(inp.url);
-  return { text: md, pages: 0, method: "firecrawl", title: fallbackTitle };
+  try {
+    const fc = getFirecrawl();
+    const result = (await fc.scrape(inp.url, {
+      formats: ["markdown"],
+      parsers: ["pdf"],
+      onlyMainContent: false,
+    } as unknown as Parameters<typeof fc.scrape>[1])) as
+      | { markdown?: string; metadata?: { title?: string } }
+      | null;
+    const md = result?.markdown ?? "";
+    if (!md) {
+      throw new Error("Firecrawl returned no markdown for PDF");
+    }
+    const fallbackTitle =
+      result?.metadata?.title?.trim() || titleFromText(md) || titleFromUrl(inp.url);
+    return { text: md, pages: 0, method: "firecrawl", title: fallbackTitle };
+  } catch (e) {
+    throw new Error(`PDF extraction failed: ${(e as Error).message}`);
+  }
 }
