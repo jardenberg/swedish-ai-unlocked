@@ -36,19 +36,31 @@ function RunsPage() {
           </thead>
           <tbody>
             {isLoading && <tr><td colSpan={9} className="p-4 text-muted-foreground">Loading…</td></tr>}
-            {data?.runs.map((r) => (
-              <tr key={r.id} className="border-b last:border-0">
-                <td className="px-3 py-2">{(r.sources as { slug?: string } | null)?.slug}</td>
-                <td className="px-3 py-2 text-xs">{r.kind}</td>
-                <td className="px-3 py-2 text-xs">{new Date(r.started_at).toLocaleString()}</td>
-                <td className="px-3 py-2 text-xs">{r.mapped}</td>
-                <td className="px-3 py-2 text-xs">{r.scraped}</td>
-                <td className="px-3 py-2 text-xs">{r.embedded}</td>
-                <td className="px-3 py-2 text-xs">{r.failed}</td>
-                <td className="px-3 py-2 text-xs">{r.credits_used}</td>
-                <td className="px-3 py-2 text-xs">{r.notes}</td>
-              </tr>
-            ))}
+            {data?.runs.map((r) => {
+              const isSmoke = r.kind === "smoke";
+              const smokeFail = isSmoke && /smoke \d+\/\d+ pass/.test(r.notes ?? "") &&
+                !/smoke \d+\/\d+ pass$/.test(r.notes ?? "");
+              return (
+                <tr key={r.id} className="border-b last:border-0">
+                  <td className="px-3 py-2">{(r.sources as { slug?: string } | null)?.slug}</td>
+                  <td className="px-3 py-2 text-xs">
+                    {isSmoke ? (
+                      <span className={`rounded px-1.5 py-0.5 ${smokeFail ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"}`}>
+                        smoke
+                      </span>
+                    ) : r.kind}
+                  </td>
+                  <td className="px-3 py-2 text-xs">{new Date(r.started_at).toLocaleString()}</td>
+                  <td className="px-3 py-2 text-xs">{r.mapped}</td>
+                  <td className="px-3 py-2 text-xs">{r.scraped}</td>
+                  <td className="px-3 py-2 text-xs">{r.embedded}</td>
+                  <td className="px-3 py-2 text-xs">{r.failed}</td>
+                  <td className="px-3 py-2 text-xs">{r.credits_used}</td>
+                  <td className="px-3 py-2 text-xs">{r.notes}</td>
+                </tr>
+              );
+            })}
+
           </tbody>
         </table>
       </Card>
