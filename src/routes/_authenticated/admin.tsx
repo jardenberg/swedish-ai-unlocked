@@ -20,7 +20,9 @@ function AdminLayout() {
             <nav className="flex gap-4 text-sm text-muted-foreground">
               <Link to="/admin" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Sources</Link>
               <Link to="/admin/documents" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Documents</Link>
+              <Link to="/admin/upload" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Upload PDF</Link>
               <Link to="/admin/runs" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Runs</Link>
+
             </nav>
           </div>
           <Button
