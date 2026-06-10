@@ -690,3 +690,148 @@ export const retryAllFailed = createServerFn({ method: "POST" })
     }
     return { reset: (rows ?? []).length, toScraped: toScraped.length, toPending: toPending.length };
   });
+
+// ──────────────────────────────────────────────────────────────────
+// setDocumentHidden — admin curation toggle
+// ──────────────────────────────────────────────────────────────────
+export const setDocumentHidden = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), hidden: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("documents")
+      .update({ hidden: data.hidden })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { id: data.id, hidden: data.hidden };
+  });
+
+// ──────────────────────────────────────────────────────────────────
+// recleanAndReembed — re-run cleaner + chunk + embed for docs whose
+// raw markdown was captured by the relaxed onlyMainContent=false retry
+// path (which can leak menu trees). Default window: last 24h.
+// ──────────────────────────────────────────────────────────────────
+export const recleanAndReembed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        sinceHours: z.number().int().min(1).max(24 * 30).default(24),
+        limit: z.number().int().min(1).max(500).default(100),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chunkMarkdown } = await import("./chunking.server");
+    const { cleanMarkdown } = await import("./markdown-clean.server");
+    const { embedTexts } = await import("./embeddings.server");
+
+    const since = new Date(Date.now() - data.sinceHours * 3600 * 1000).toISOString();
+    const { data: docs } = await supabaseAdmin
+      .from("documents")
+      .select("id, raw_markdown")
+      .gt("updated_at", since)
+      .eq("status", "embedded")
+      .not("raw_markdown", "is", null)
+      .limit(data.limit);
+
+    let processed = 0;
+    let failed = 0;
+    for (const doc of docs ?? []) {
+      try {
+        const cleaned = cleanMarkdown(doc.raw_markdown ?? "");
+        const chunks = chunkMarkdown(cleaned);
+        if (!chunks.length) continue;
+        const all: number[][] = [];
+        for (let i = 0; i < chunks.length; i += 20) {
+          const vecs = await embedTexts(chunks.slice(i, i + 20).map((c) => c.text));
+          all.push(...vecs);
+        }
+        await supabaseAdmin.from("chunks").delete().eq("document_id", doc.id);
+        await supabaseAdmin.from("chunks").insert(
+          chunks.map((c, i) => ({
+            document_id: doc.id,
+            ord: c.ord,
+            text: c.text,
+            token_count: c.tokenCount,
+            embedding: all[i] as unknown as string,
+          })),
+        );
+        processed++;
+      } catch (e) {
+        console.error("[reclean] failed", doc.id, (e as Error).message);
+        failed++;
+      }
+    }
+    return { processed, failed, window: data.sinceHours };
+  });
+
+// ──────────────────────────────────────────────────────────────────
+// backfillPublishedDates — fill published_at for existing docs from
+// raw_markdown / URL patterns (no re-scrape).
+// ──────────────────────────────────────────────────────────────────
+export const backfillPublishedDates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ limit: z.number().int().min(1).max(5000).default(1000) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { extractPublishedAtFromHtml, extractPublishedAtFromPdfUrl } = await import(
+      "./published-date.server"
+    );
+
+    const { data: docs } = await supabaseAdmin
+      .from("documents")
+      .select("id, url, content_type, raw_markdown, sitemap_lastmod")
+      .is("published_at", null)
+      .limit(data.limit);
+
+    let filled = 0;
+    for (const doc of docs ?? []) {
+      let pub: { date: string; source: string } | null = null;
+      if (doc.content_type === "pdf") {
+        pub = extractPublishedAtFromPdfUrl(doc.url);
+      } else {
+        // Try extracting from raw_markdown (won't catch <meta>, but JSON-LD
+        // may have leaked through). For real backfill, the next scrape will
+        // capture it via rawHtml.
+        pub = extractPublishedAtFromHtml(doc.raw_markdown ?? null);
+      }
+      if (pub) {
+        await supabaseAdmin
+          .from("documents")
+          .update({ published_at: pub.date, published_at_source: pub.source })
+          .eq("id", doc.id);
+        filled++;
+      }
+    }
+    return { scanned: docs?.length ?? 0, filled };
+  });
+
+// ──────────────────────────────────────────────────────────────────
+// runIngestSmokeTests — admin trigger; also called from batch-ingest
+// ──────────────────────────────────────────────────────────────────
+export const runIngestSmokeTests = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { runSmokeTests } = await import("./ingest-smoke.server");
+    const report = await runSmokeTests(supabaseAdmin);
+
+    // Persist as a fake "smoke" ingest_runs row so admin sees history.
+    await supabaseAdmin.from("ingest_runs").insert({
+      kind: "smoke",
+      finished_at: new Date().toISOString(),
+      notes: report.summary,
+    });
+    return report;
+  });
