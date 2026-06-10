@@ -7,7 +7,7 @@ import { publicStats } from "@/lib/ingest.functions";
 // Bump on each meaningful deploy. Format: v + YYYYMMDDHHMM (UTC-ish, short).
 const VERSION = "v202606102145";
 const PUBLISHED = "June 10, 2026";
-const MCP_URL = "https://swedish-ai-unlocked.lovable.app/api/mcp";
+const MCP_URL = "https://rise-ai-sweden.jardenberg.org/api/mcp";
 const MCP_NAME = "rise-ai-sweden";
 const PAGE_TITLE = "RISE & AI Sweden — Public MCP Server";
 
