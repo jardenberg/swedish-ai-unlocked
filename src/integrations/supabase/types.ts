@@ -14,16 +14,260 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chunks: {
+        Row: {
+          created_at: string
+          document_id: string
+          embedding: string | null
+          id: string
+          ord: number
+          text: string
+          token_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          embedding?: string | null
+          id?: string
+          ord: number
+          text: string
+          token_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          embedding?: string | null
+          id?: string
+          ord?: number
+          text?: string
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          content_type: string
+          created_at: string
+          error: string | null
+          fetched_at: string | null
+          id: string
+          lang: string | null
+          raw_markdown: string | null
+          sitemap_lastmod: string | null
+          source_id: string
+          status: string
+          title: string | null
+          token_count: number | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          content_type?: string
+          created_at?: string
+          error?: string | null
+          fetched_at?: string | null
+          id?: string
+          lang?: string | null
+          raw_markdown?: string | null
+          sitemap_lastmod?: string | null
+          source_id: string
+          status?: string
+          title?: string | null
+          token_count?: number | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          error?: string | null
+          fetched_at?: string | null
+          id?: string
+          lang?: string | null
+          raw_markdown?: string | null
+          sitemap_lastmod?: string | null
+          source_id?: string
+          status?: string
+          title?: string | null
+          token_count?: number | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingest_runs: {
+        Row: {
+          credits_used: number | null
+          embedded: number | null
+          failed: number | null
+          finished_at: string | null
+          id: string
+          kind: string
+          mapped: number | null
+          notes: string | null
+          scraped: number | null
+          skipped: number | null
+          source_id: string | null
+          started_at: string
+        }
+        Insert: {
+          credits_used?: number | null
+          embedded?: number | null
+          failed?: number | null
+          finished_at?: string | null
+          id?: string
+          kind: string
+          mapped?: number | null
+          notes?: string | null
+          scraped?: number | null
+          skipped?: number | null
+          source_id?: string | null
+          started_at?: string
+        }
+        Update: {
+          credits_used?: number | null
+          embedded?: number | null
+          failed?: number | null
+          finished_at?: string | null
+          id?: string
+          kind?: string
+          mapped?: number | null
+          notes?: string | null
+          scraped?: number | null
+          skipped?: number | null
+          source_id?: string | null
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingest_runs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rate_limits: {
+        Row: {
+          count: number
+          ip: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          ip: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          ip?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      sources: {
+        Row: {
+          created_at: string
+          exclude_patterns: string[]
+          id: string
+          name: string
+          root_url: string
+          slug: string
+          url_filter_patterns: string[]
+        }
+        Insert: {
+          created_at?: string
+          exclude_patterns?: string[]
+          id?: string
+          name: string
+          root_url: string
+          slug: string
+          url_filter_patterns?: string[]
+        }
+        Update: {
+          created_at?: string
+          exclude_patterns?: string[]
+          id?: string
+          name?: string
+          root_url?: string
+          slug?: string
+          url_filter_patterns?: string[]
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      match_chunks: {
+        Args: {
+          filter_lang?: string
+          filter_source?: string
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_id: string
+          document_id: string
+          fetched_at: string
+          lang: string
+          similarity: number
+          snippet: string
+          source_name: string
+          source_slug: string
+          title: string
+          url: string
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +394,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
