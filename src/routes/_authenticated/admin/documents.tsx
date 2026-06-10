@@ -81,13 +81,14 @@ function DocumentsPage() {
   });
 
   const smokeMut = useMutation({
-    mutationFn: () => smoke({ data: {} }),
+    mutationFn: () => smoke(),
     onSuccess: (r) =>
       r.fail === 0
         ? toast.success(r.summary)
         : toast.error(r.summary, { duration: 10000 }),
     onError: (e) => toast.error((e as Error).message),
   });
+
 
   return (
     <div className="space-y-6">

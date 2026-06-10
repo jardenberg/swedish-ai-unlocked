@@ -531,19 +531,31 @@ export const discoverPdfs = createServerFn({ method: "POST" })
 // ──────────────────────────────────────────────────────────────────
 export const listRecentDocs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ status: z.string().optional(), limit: z.number().default(50) }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        status: z.string().optional(),
+        limit: z.number().default(50),
+        includeHidden: z.boolean().optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let q = supabaseAdmin
       .from("documents")
-      .select("id, url, title, lang, content_type, status, error, fetched_at, sources(slug)")
+      .select(
+        "id, url, title, lang, content_type, status, error, fetched_at, hidden, published_at, published_at_source, sources(slug)",
+      )
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (data.status) q = q.eq("status", data.status);
+    if (!data.includeHidden) q = q.eq("hidden", false);
     const { data: rows } = await q;
     return { docs: rows ?? [] };
   });
+
 
 export const listRuns = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
