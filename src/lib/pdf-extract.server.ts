@@ -27,7 +27,11 @@ async function fetchBytes(input: ExtractPdfInput): Promise<Uint8Array> {
     return new Uint8Array(await data.arrayBuffer());
   }
   const res = await fetch(input.url, {
-    headers: { "User-Agent": "SwedishAILibrarianBot/1.0" },
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; SwedishAILibrarianBot/1.0)",
+      "Accept": "application/pdf,*/*;q=0.8",
+    },
+    redirect: "follow",
   });
   if (!res.ok) throw new Error(`fetch failed ${res.status}`);
   return new Uint8Array(await res.arrayBuffer());
