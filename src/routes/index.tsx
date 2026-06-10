@@ -283,9 +283,10 @@ function Landing() {
               className="underline underline-offset-4 hover:text-foreground"
             >
               joakim@jardenberg.com
-            </a>
-            . This is a developing version — questions and comments very welcome.
+            </a>{" "}
+            and lovable.
           </p>
+
         </footer>
       </main>
     </div>
