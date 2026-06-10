@@ -3,15 +3,17 @@ import { createMcpServer } from "mcp-tanstack-start";
 
 import { getDocumentTool } from "@/lib/mcp/tools/get-document";
 import { listSourcesTool } from "@/lib/mcp/tools/list-sources";
+import { listLatestTool } from "@/lib/mcp/tools/list-latest";
+import { findSimilarTool } from "@/lib/mcp/tools/find-similar";
 import { searchTool } from "@/lib/mcp/tools/search";
 import { checkRateLimit, getClientIp } from "@/lib/mcp/rate-limit.server";
 
 const mcp = createMcpServer({
   name: "swedish-ai-librarian",
-  version: "0.1.0",
+  version: "0.2.0",
   instructions:
-    "Tools for searching AI-relevant content published by Sweden's two government-funded AI organizations: RISE (Research Institutes of Sweden, ri.se) and AI Sweden (ai.se). Covers research projects, reports, blog posts, sector initiatives, AI labs, language models, and adoption stories in both English and Swedish. Start with search_swedish_ai to find passages; follow up with get_document for full text. Use list_sources to discover scope.",
-  tools: [searchTool, getDocumentTool, listSourcesTool],
+    "Tools for searching AI-relevant content published by Sweden's two government-funded AI organizations: RISE (Research Institutes of Sweden, ri.se) and AI Sweden (ai.se). Covers research projects, reports, blog posts, sector initiatives, AI labs, language models, and adoption stories in both English and Swedish. Start with search_swedish_ai for topical queries, list_latest for a 'what's new' view, find_similar for more-like-this, and get_document for full text. Use list_sources to discover scope and freshness.",
+  tools: [searchTool, listLatestTool, findSimilarTool, getDocumentTool, listSourcesTool],
 });
 
 const methodNotAllowed = () =>
