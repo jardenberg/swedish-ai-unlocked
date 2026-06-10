@@ -51,7 +51,7 @@ function Landing() {
 {`{
   "mcpServers": {
     "swedish-ai": {
-      "transport": { "type": "http", "url": "https://YOUR-DOMAIN/api/mcp" }
+      "transport": { "type": "http", "url": "https://swedish-ai-unlocked.lovable.app/api/mcp" }
     }
   }
 }`}
