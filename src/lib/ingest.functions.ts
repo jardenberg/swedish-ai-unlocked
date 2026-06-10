@@ -452,7 +452,7 @@ export const discoverPdfs = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { canonicalizeUrl } = await import("./url-canonical.server");
-    const { detectLang } = await import("./firecrawl.server");
+    const { detectLang, isJunkPdfUrl } = await import("./firecrawl.server");
 
     const { data: source } = await supabaseAdmin
       .from("sources").select("*").eq("slug", data.sourceSlug).single();
@@ -491,6 +491,7 @@ export const discoverPdfs = createServerFn({ method: "POST" })
           } catch { continue; }
           const u = canonicalizeUrl(abs);
           if (!u.toLowerCase().endsWith(".pdf")) continue;
+          if (isJunkPdfUrl(u)) continue;
           // Only same-domain PDFs (matches source site, ignoring subdomain `www`)
           try {
             const h = new URL(u).hostname.replace(/^www\./, "");
@@ -498,6 +499,7 @@ export const discoverPdfs = createServerFn({ method: "POST" })
           } catch { continue; }
           if (known.has(u) || found.has(u)) continue;
           found.add(u);
+
         }
       }
       if (page.length < PAGE) break;
