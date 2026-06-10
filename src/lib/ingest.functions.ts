@@ -239,16 +239,22 @@ export const scrapeBatch = createServerFn({ method: "POST" })
     }
 
     // PDFs — one-by-one via unpdf, fallback to Firecrawl
+    const { detectLangFromText } = await import("./firecrawl.server");
     for (const doc of pdfDocs) {
       try {
-        const res = await extractPdf(doc.url);
+        const res = await extractPdf({
+          url: doc.url,
+          storagePath: (doc as { storage_path?: string | null }).storage_path ?? undefined,
+        });
         if (res.method === "firecrawl") credits += 1;
         if (res.text && res.text.length > 200) {
+          const detectedLang = detectLangFromText(res.text);
           await supabaseAdmin
             .from("documents")
             .update({
               raw_markdown: res.text,
-              title: doc.title ?? new URL(doc.url).pathname.split("/").pop() ?? doc.url,
+              title: doc.title ?? res.title ?? doc.url,
+              lang: doc.lang ?? detectedLang,
               status: "scraped",
               fetched_at: new Date().toISOString(),
               token_count: Math.ceil(res.text.length / 4),
@@ -271,6 +277,7 @@ export const scrapeBatch = createServerFn({ method: "POST" })
         failed++;
       }
     }
+
 
     await supabaseAdmin
       .from("ingest_runs")
