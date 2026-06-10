@@ -143,7 +143,7 @@ function Landing() {
         <section className="mt-12">
           <h2 className="text-xl font-semibold">Tools exposed</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Three tools, each returning JSON. Examples below show the actual shape your
+            Five tools, each returning JSON. Examples below show the actual shape your
             assistant receives.
           </p>
 
@@ -177,6 +177,59 @@ function Landing() {
             />
 
             <ToolDoc
+              name="list_latest"
+              summary="Cheap 'what's new' view. Without arguments, returns the newest documents across both sources. Pass source to restrict to one. No snippets — lightweight metadata only."
+              params={`{
+  source?: "rise" | "ai_sweden",
+  lang?:   "en" | "sv",
+  limit?:  number          // 1–50, default 20
+}`}
+              example={`{
+  "count": 2,
+  "results": [
+    {
+      "url": "https://www.ai.se/en/news/...",
+      "title": "New language model release",
+      "source": "ai_sweden",
+      "sourceName": "AI Sweden",
+      "lang": "en",
+      "fetchedAt": "2026-06-10T08:14:22Z",
+      "sitemapLastmod": "2026-06-09T00:00:00Z"
+    },
+    { "...": "..." }
+  ]
+}`}
+            />
+
+            <ToolDoc
+              name="find_similar"
+              summary="Given a URL already in the index, return semantically nearest other documents. Reuses an existing embedding, so no embedding-model call. Great for 'more like this' after picking a hit."
+              params={`{
+  url: string,             // a URL from search_swedish_ai / list_latest
+  source?: "rise" | "ai_sweden",
+  lang?:   "en" | "sv",
+  limit?:  number          // 1–25, default 10
+}`}
+              example={`{
+  "seedUrl": "https://www.ri.se/en/what-we-do/projects/edge-ai-...",
+  "count": 2,
+  "results": [
+    {
+      "url": "https://www.ri.se/en/what-we-do/projects/tinyml-...",
+      "title": "TinyML for industrial sensors",
+      "source": "rise",
+      "sourceName": "RISE",
+      "lang": "en",
+      "score": 0.7912,
+      "snippet": "Running compact ML models on microcontrollers...",
+      "fetchedAt": "2026-06-07T11:02:08Z"
+    },
+    { "...": "..." }
+  ]
+}`}
+            />
+
+            <ToolDoc
               name="get_document"
               summary="Fetch full cleaned markdown for a single indexed URL. Use after search_swedish_ai to load complete context on the best hit."
               params={`{ url: string }`}
@@ -195,12 +248,26 @@ function Landing() {
 
             <ToolDoc
               name="list_sources"
-              summary="Discover scope: which sources are indexed and how many documents from each."
+              summary="Discover scope and freshness: which sources are indexed, document counts, language breakdown, and the most recent fetch per source."
               params={`{}`}
               example={`{
   "sources": [
-    { "slug": "rise",       "name": "RISE",      "rootUrl": "https://www.ri.se",  "documents": 412 },
-    { "slug": "ai_sweden",  "name": "AI Sweden", "rootUrl": "https://www.ai.se",  "documents": 388 }
+    {
+      "slug": "rise",
+      "name": "RISE",
+      "rootUrl": "https://www.ri.se",
+      "documents": 412,
+      "languages": { "en": 280, "sv": 132 },
+      "lastUpdated": "2026-06-10T08:14:22Z"
+    },
+    {
+      "slug": "ai_sweden",
+      "name": "AI Sweden",
+      "rootUrl": "https://www.ai.se",
+      "documents": 388,
+      "languages": { "en": 250, "sv": 138 },
+      "lastUpdated": "2026-06-10T07:55:01Z"
+    }
   ]
 }`}
             />
