@@ -195,19 +195,20 @@ export const scrapeBatch = createServerFn({ method: "POST" })
     if (htmlDocs.length > 0) {
       try {
         const fc = getFirecrawl();
+        const { extractPublishedAtFromHtml } = await import("./published-date.server");
         const urls = htmlDocs.map((d) => d.url);
         const batchRes = await fc.batchScrape(urls, {
           options: {
-            formats: ["markdown"],
+            formats: ["markdown", "rawHtml"],
             onlyMainContent: true,
           },
         } as unknown as Parameters<typeof fc.batchScrape>[1]);
-        const docs = ((batchRes as { data?: Array<{ markdown?: string; metadata?: { sourceURL?: string; title?: string; statusCode?: number } }> }).data) ?? [];
+        const docs = ((batchRes as { data?: Array<{ markdown?: string; rawHtml?: string; metadata?: { sourceURL?: string; title?: string; statusCode?: number } }> }).data) ?? [];
         credits += docs.length;
-        const byUrl = new Map<string, { markdown: string; title?: string }>();
+        const byUrl = new Map<string, { markdown: string; title?: string; rawHtml?: string }>();
         for (const d of docs) {
           const u = d.metadata?.sourceURL;
-          if (u && d.markdown) byUrl.set(u, { markdown: d.markdown, title: d.metadata?.title });
+          if (u && d.markdown) byUrl.set(u, { markdown: d.markdown, title: d.metadata?.title, rawHtml: d.rawHtml });
         }
         for (const doc of htmlDocs) {
           let got = byUrl.get(doc.url);
@@ -215,21 +216,22 @@ export const scrapeBatch = createServerFn({ method: "POST" })
           if (!got || got.markdown.length <= 100) {
             try {
               const retry = (await fc.scrape(doc.url, {
-                formats: ["markdown"],
+                formats: ["markdown", "rawHtml"],
                 onlyMainContent: false,
                 waitFor: 2000,
               } as unknown as Parameters<typeof fc.scrape>[1])) as
-                | { markdown?: string; metadata?: { title?: string } }
+                | { markdown?: string; rawHtml?: string; metadata?: { title?: string } }
                 | null;
               credits += 1;
               if (retry?.markdown && retry.markdown.length > 100) {
-                got = { markdown: retry.markdown, title: retry.metadata?.title };
+                got = { markdown: retry.markdown, title: retry.metadata?.title, rawHtml: retry.rawHtml };
               }
             } catch (e) {
               console.warn("[scrape] retry failed", doc.url, (e as Error).message);
             }
           }
           if (got && got.markdown.length > 100) {
+            const pub = extractPublishedAtFromHtml(got.rawHtml ?? null);
             await supabaseAdmin
               .from("documents")
               .update({
@@ -238,6 +240,8 @@ export const scrapeBatch = createServerFn({ method: "POST" })
                 status: "scraped",
                 fetched_at: new Date().toISOString(),
                 token_count: Math.ceil(got.markdown.length / 4),
+                published_at: pub?.date ?? doc.published_at ?? null,
+                published_at_source: pub?.source ?? (doc.published_at ? doc.published_at_source : null),
                 error: null,
               })
               .eq("id", doc.id);
@@ -273,10 +277,11 @@ export const scrapeBatch = createServerFn({ method: "POST" })
               raw_markdown: res.text,
               title: res.title ?? doc.title ?? doc.url,
               lang: detectedLang || doc.lang || "en",
-
               status: "scraped",
               fetched_at: new Date().toISOString(),
               token_count: Math.ceil(res.text.length / 4),
+              published_at: res.publishedAt?.date ?? doc.published_at ?? null,
+              published_at_source: res.publishedAt?.source ?? (doc.published_at ? doc.published_at_source : null),
               error: null,
             })
             .eq("id", doc.id);
@@ -296,6 +301,7 @@ export const scrapeBatch = createServerFn({ method: "POST" })
         failed++;
       }
     }
+
 
 
     await supabaseAdmin
