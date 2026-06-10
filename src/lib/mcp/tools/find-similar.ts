@@ -4,7 +4,7 @@ import { z } from "zod";
 export const findSimilarTool = defineTool({
   name: "find_similar",
   description:
-    "Given a URL already present in the index, return semantically similar documents. Reuses an existing embedding so it's cheap and doesn't call the embedding model. Useful for 'more like this' flows after the user picks a hit from search_swedish_ai or list_latest.",
+    "Given a URL already present in the index, return semantically similar documents. Uses the seed document's centroid embedding (average of all its chunks) so navigation chrome doesn't dominate matches. Useful for 'more like this' flows after the user picks a hit from search_swedish_ai or list_latest.",
   parameters: z.object({
     url: z.string().url().describe("A URL previously returned by search_swedish_ai, list_latest, or list_sources"),
     limit: z.number().int().min(1).max(25).default(10),
@@ -19,19 +19,9 @@ export const findSimilarTool = defineTool({
       .select("id")
       .eq("url", url)
       .eq("status", "embedded")
+      .eq("hidden", false)
       .maybeSingle();
     if (!doc) return JSON.stringify({ error: "URL not found in index", url });
-
-    // Use the first chunk's embedding as the document representative.
-    const { data: chunk } = await supabaseAdmin
-      .from("chunks")
-      .select("embedding")
-      .eq("document_id", doc.id)
-      .not("embedding", "is", null)
-      .order("ord", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (!chunk?.embedding) return JSON.stringify({ error: "No embedding available for this URL", url });
 
     let filterSourceId: string | null = null;
     if (source) {
@@ -39,40 +29,34 @@ export const findSimilarTool = defineTool({
       filterSourceId = data?.id ?? null;
     }
 
-    // Pull extra to leave room for de-duping the seed document itself.
     const rpcArgs: {
-      query_embedding: string;
+      seed_document_id: string;
       match_count: number;
       filter_source?: string;
       filter_lang?: string;
     } = {
-      query_embedding: chunk.embedding as unknown as string,
-      match_count: limit + 5,
+      seed_document_id: doc.id,
+      match_count: limit,
     };
     if (filterSourceId) rpcArgs.filter_source = filterSourceId;
     if (lang) rpcArgs.filter_lang = lang;
 
-    const { data, error } = await supabaseAdmin.rpc("match_chunks", rpcArgs);
+    const { data, error } = await supabaseAdmin.rpc("match_similar_documents", rpcArgs);
     if (error) throw new Error(error.message);
 
-    const seen = new Set<string>();
-    const results: Array<Record<string, unknown>> = [];
-    for (const r of data ?? []) {
-      if (r.url === url) continue;
-      if (seen.has(r.url)) continue;
-      seen.add(r.url);
-      results.push({
-        url: r.url,
-        title: r.title,
-        source: r.source_slug,
-        sourceName: r.source_name,
-        lang: r.lang,
-        score: Number(r.similarity.toFixed(4)),
-        snippet: r.snippet,
-        fetchedAt: r.fetched_at,
-      });
-      if (results.length >= limit) break;
-    }
+    const results = (data ?? []).map((r: {
+      url: string; title: string | null; lang: string | null; source_slug: string;
+      source_name: string; snippet: string; similarity: number; fetched_at: string | null;
+    }) => ({
+      url: r.url,
+      title: r.title,
+      source: r.source_slug,
+      sourceName: r.source_name,
+      lang: r.lang,
+      score: Number(r.similarity.toFixed(4)),
+      snippet: r.snippet,
+      fetchedAt: r.fetched_at,
+    }));
 
     return JSON.stringify({ seedUrl: url, count: results.length, results }, null, 2);
   },
