@@ -253,8 +253,9 @@ export const scrapeBatch = createServerFn({ method: "POST" })
             .from("documents")
             .update({
               raw_markdown: res.text,
-              title: doc.title ?? res.title ?? doc.url,
-              lang: doc.lang ?? detectedLang,
+              title: res.title ?? doc.title ?? doc.url,
+              lang: detectedLang || doc.lang || "en",
+
               status: "scraped",
               fetched_at: new Date().toISOString(),
               token_count: Math.ceil(res.text.length / 4),
