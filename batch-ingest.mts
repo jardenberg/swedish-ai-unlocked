@@ -34,28 +34,32 @@ async function scrapeOne(sourceId: string): Promise<number> {
 
   // HTML batch
   if (htmlDocs.length) {
+    const { extractPublishedAtFromHtml } = await import("/dev-server/src/lib/published-date.server.ts");
     const urls = htmlDocs.map((d) => d.url);
     try {
       const res: any = await fc.batchScrape(urls, {
-        options: { formats: ["markdown"], onlyMainContent: true },
+        options: { formats: ["markdown", "rawHtml"], onlyMainContent: true },
       } as any);
       const items = (res?.data ?? []) as any[];
-      const byUrl = new Map<string, { markdown: string; title?: string }>();
+      const byUrl = new Map<string, { markdown: string; title?: string; rawHtml?: string }>();
       for (const it of items) {
         const u = it?.metadata?.sourceURL;
         if (!u) continue;
         const cu = canonicalizeUrl(u);
-        if (it.markdown) byUrl.set(cu, { markdown: it.markdown, title: it?.metadata?.title });
+        if (it.markdown) byUrl.set(cu, { markdown: it.markdown, title: it?.metadata?.title, rawHtml: it?.rawHtml });
       }
       for (const doc of htmlDocs) {
         const got = byUrl.get(doc.url);
         if (got && got.markdown.length > 100) {
+          const pub = extractPublishedAtFromHtml(got.rawHtml ?? null);
           await sb.from("documents").update({
             raw_markdown: got.markdown,
             title: got.title ?? doc.title,
             status: "scraped",
             fetched_at: new Date().toISOString(),
             token_count: Math.ceil(got.markdown.length / 4),
+            published_at: pub?.date ?? doc.published_at ?? null,
+            published_at_source: pub?.source ?? (doc.published_at ? doc.published_at_source : null),
             error: null,
           }).eq("id", doc.id);
           scraped++;
@@ -67,6 +71,7 @@ async function scrapeOne(sourceId: string): Promise<number> {
       console.error("scrape html err", (e as Error).message);
     }
   }
+
 
   // PDFs one-by-one
   const { detectLangFromText } = await import("/dev-server/src/lib/firecrawl.server.ts");
@@ -85,6 +90,8 @@ async function scrapeOne(sourceId: string): Promise<number> {
           status: "scraped",
           fetched_at: new Date().toISOString(),
           token_count: Math.ceil(res.text.length / 4),
+          published_at: res.publishedAt?.date ?? doc.published_at ?? null,
+          published_at_source: res.publishedAt?.source ?? (doc.published_at ? doc.published_at_source : null),
           error: null,
         }).eq("id", doc.id);
         scraped++;
@@ -92,6 +99,7 @@ async function scrapeOne(sourceId: string): Promise<number> {
       } else {
         await sb.from("documents").update({ status: "failed", error: `empty pdf (${res.method})` }).eq("id", doc.id);
       }
+
     } catch (e) {
       await sb.from("documents").update({ status: "failed", error: (e as Error).message.slice(0, 500) }).eq("id", doc.id);
       console.error("pdf err", doc.url, (e as Error).message);
@@ -179,6 +187,18 @@ async function main() {
     }
     if (totalPending === 0 && totalScraped === 0) {
       console.log("DONE — nothing left pending/scraped");
+      try {
+        const { runSmokeTests } = await import("/dev-server/src/lib/ingest-smoke.server.ts");
+        const report = await runSmokeTests(sb);
+        console.log(`SMOKE: ${report.summary}`);
+        await sb.from("ingest_runs").insert({
+          kind: "smoke",
+          finished_at: new Date().toISOString(),
+          notes: report.summary,
+        });
+      } catch (e) {
+        console.error("smoke err", (e as Error).message);
+      }
       break;
     }
     console.log(`-- round ${round} done; remaining pending=${totalPending} scraped=${totalScraped}`);
@@ -186,3 +206,4 @@ async function main() {
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
+
