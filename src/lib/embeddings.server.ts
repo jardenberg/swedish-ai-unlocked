@@ -11,23 +11,29 @@ export async function embedTexts(inputs: string[]): Promise<number[][]> {
   if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
   if (inputs.length === 0) return [];
 
-  const res = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": apiKey,
-      "X-Lovable-AIG-SDK": "fetch",
-    },
-    body: JSON.stringify({ model: EMBED_MODEL, input: inputs }),
-  });
-  if (!res.ok) {
+  // Retry on 429/5xx with exponential backoff (1s, 2s, 4s).
+  let lastErr = "";
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Lovable-API-Key": apiKey,
+        "X-Lovable-AIG-SDK": "fetch",
+      },
+      body: JSON.stringify({ model: EMBED_MODEL, input: inputs }),
+    });
+    if (res.ok) {
+      const json = (await res.json()) as { data: Array<{ embedding: number[]; index: number }> };
+      return json.data.sort((a, b) => a.index - b.index).map((d) => d.embedding);
+    }
     const body = await res.text();
-    throw new Error(`Embeddings failed ${res.status}: ${body.slice(0, 500)}`);
+    lastErr = `Embeddings failed ${res.status}: ${body.slice(0, 300)}`;
+    // Don't retry on auth / bad-request
+    if (res.status !== 429 && res.status < 500) break;
+    if (attempt < 3) await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
   }
-  const json = (await res.json()) as { data: Array<{ embedding: number[]; index: number }> };
-  // Ensure correct order
-  const sorted = json.data.sort((a, b) => a.index - b.index);
-  return sorted.map((d) => d.embedding);
+  throw new Error(lastErr);
 }
 
 export async function embedQuery(text: string): Promise<number[]> {

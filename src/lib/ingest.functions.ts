@@ -210,7 +210,25 @@ export const scrapeBatch = createServerFn({ method: "POST" })
           if (u && d.markdown) byUrl.set(u, { markdown: d.markdown, title: d.metadata?.title });
         }
         for (const doc of htmlDocs) {
-          const got = byUrl.get(doc.url);
+          let got = byUrl.get(doc.url);
+          // Retry once per-URL with relaxed options if first pass produced nothing
+          if (!got || got.markdown.length <= 100) {
+            try {
+              const retry = (await fc.scrape(doc.url, {
+                formats: ["markdown"],
+                onlyMainContent: false,
+                waitFor: 2000,
+              } as unknown as Parameters<typeof fc.scrape>[1])) as
+                | { markdown?: string; metadata?: { title?: string } }
+                | null;
+              credits += 1;
+              if (retry?.markdown && retry.markdown.length > 100) {
+                got = { markdown: retry.markdown, title: retry.metadata?.title };
+              }
+            } catch (e) {
+              console.warn("[scrape] retry failed", doc.url, (e as Error).message);
+            }
+          }
           if (got && got.markdown.length > 100) {
             await supabaseAdmin
               .from("documents")
@@ -227,7 +245,7 @@ export const scrapeBatch = createServerFn({ method: "POST" })
           } else {
             await supabaseAdmin
               .from("documents")
-              .update({ status: "failed", error: "no markdown returned" })
+              .update({ status: "failed", error: "no markdown returned (after retry)" })
               .eq("id", doc.id);
             failed++;
           }
@@ -611,4 +629,56 @@ export const uploadManualPdf = createServerFn({ method: "POST" })
     }
 
     return { id: doc.id, url, storagePath };
+  });
+
+// ──────────────────────────────────────────────────────────────────
+// retryDocument / retryFailed — reset failed docs back to pending so
+// the next scrape/embed batch picks them up (with the improved logic).
+// ──────────────────────────────────────────────────────────────────
+export const retryDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // If it had markdown but failed during embed, send it back to 'scraped'.
+    const { data: doc } = await supabaseAdmin
+      .from("documents")
+      .select("id, raw_markdown")
+      .eq("id", data.id)
+      .single();
+    if (!doc) throw new Error("document not found");
+    const nextStatus = doc.raw_markdown && doc.raw_markdown.length > 100 ? "scraped" : "pending";
+    const { error } = await supabaseAdmin
+      .from("documents")
+      .update({ status: nextStatus, error: null })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { id: data.id, status: nextStatus };
+  });
+
+export const retryAllFailed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ sourceSlug: z.enum(["rise", "ai_sweden"]).optional() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin.from("documents").select("id, raw_markdown").eq("status", "failed");
+    if (data.sourceSlug) {
+      const { data: src } = await supabaseAdmin
+        .from("sources").select("id").eq("slug", data.sourceSlug).single();
+      if (src) q = q.eq("source_id", src.id);
+    }
+    const { data: rows } = await q.limit(2000);
+    const toScraped = (rows ?? []).filter((r) => r.raw_markdown && r.raw_markdown.length > 100).map((r) => r.id);
+    const toPending = (rows ?? []).filter((r) => !(r.raw_markdown && r.raw_markdown.length > 100)).map((r) => r.id);
+    if (toScraped.length) {
+      await supabaseAdmin.from("documents").update({ status: "scraped", error: null }).in("id", toScraped);
+    }
+    if (toPending.length) {
+      await supabaseAdmin.from("documents").update({ status: "pending", error: null }).in("id", toPending);
+    }
+    return { reset: (rows ?? []).length, toScraped: toScraped.length, toPending: toPending.length };
   });
