@@ -284,8 +284,13 @@ function Landing() {
             >
               joakim@jardenberg.com
             </a>{" "}
-            and lovable.
+            and Lovable.
           </p>
+          <p className="mt-2">
+            This is a developing version — questions and comments very welcome.
+          </p>
+
+
 
         </footer>
       </main>
