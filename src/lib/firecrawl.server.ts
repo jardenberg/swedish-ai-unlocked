@@ -103,3 +103,14 @@ export function urlMatchesFilters(
   return includePatterns.some((p) => u.includes(p.toLowerCase()));
 }
 
+// Junk-PDF patterns we never want to index (templates, ToS, appendices).
+const JUNK_PDF_RE =
+  /\/(?:[^/]*[-_])?(?:template|terms[-_]and[-_]conditions|appendix(?:[-_.]|$))[^/]*\.pdf$/i;
+
+export function isJunkPdfUrl(url: string): boolean {
+  const lower = url.toLowerCase();
+  if (!lower.endsWith(".pdf")) return false;
+  return JUNK_PDF_RE.test(lower);
+}
+
+

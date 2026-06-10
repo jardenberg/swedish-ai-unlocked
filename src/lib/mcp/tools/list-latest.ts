@@ -4,7 +4,7 @@ import { z } from "zod";
 export const listLatestTool = defineTool({
   name: "list_latest",
   description:
-    "List the most recently fetched documents. Without arguments, returns the newest items across both RISE and AI Sweden. Pass `source` to restrict to one. Lightweight — returns URL, title, source, language and date but no snippets. Use this as a cheap 'what's new' entry point before reaching for search_swedish_ai.",
+    "List the most recently published documents. Without arguments, returns the newest items across both RISE and AI Sweden. Pass `source` to restrict to one. Lightweight — returns URL, title, source, language and dates but no snippets. Ordered by actual publish date (from page metadata or PDF file path) when available, falling back to sitemap last-modified.",
   parameters: z.object({
     source: z.enum(["rise", "ai_sweden"]).optional().describe("Restrict to one source"),
     lang: z.enum(["en", "sv"]).optional().describe("Restrict by language"),
@@ -19,24 +19,46 @@ export const listLatestTool = defineTool({
       filterSourceId = data?.id ?? null;
     }
 
+    // Pull enough to sort in code by COALESCE(published_at, sitemap_lastmod).
     let q = supabaseAdmin
       .from("documents")
-      .select("url, title, lang, fetched_at, sitemap_lastmod, sources(slug, name)")
+      .select(
+        "url, title, lang, fetched_at, sitemap_lastmod, published_at, published_at_source, sources(slug, name)",
+      )
       .eq("status", "embedded")
-      .order("fetched_at", { ascending: false, nullsFirst: false })
-      .limit(limit);
+      .eq("hidden", false)
+      .limit(Math.min(limit * 4, 200));
     if (filterSourceId) q = q.eq("source_id", filterSourceId);
     if (lang) q = q.eq("lang", lang);
 
     const { data, error } = await q;
     if (error) throw new Error(error.message);
 
-    const results = (data ?? []).map((d) => ({
+    const ranked = (data ?? [])
+      .map((d) => {
+        const effective = d.published_at ?? d.sitemap_lastmod ?? null;
+        return { d, effective };
+      })
+      .sort((a, b) => {
+        const av = a.effective ? new Date(a.effective).getTime() : 0;
+        const bv = b.effective ? new Date(b.effective).getTime() : 0;
+        return bv - av;
+      })
+      .slice(0, limit);
+
+    const results = ranked.map(({ d, effective }) => ({
       url: d.url,
       title: d.title,
       source: (d.sources as { slug?: string } | null)?.slug,
       sourceName: (d.sources as { name?: string } | null)?.name,
       lang: d.lang,
+      publishedAt: effective,
+      publishedAtSource:
+        d.published_at != null
+          ? (d.published_at_source ?? "unknown")
+          : d.sitemap_lastmod
+            ? "sitemap"
+            : null,
       fetchedAt: d.fetched_at,
       sitemapLastmod: d.sitemap_lastmod,
     }));

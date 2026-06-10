@@ -18,12 +18,14 @@ export const listSourcesTool = defineTool({
         .from("documents")
         .select("*", { count: "exact", head: true })
         .eq("status", "embedded")
+        .eq("hidden", false)
         .eq("source_id", s.id);
 
       const { count: enCount } = await supabaseAdmin
         .from("documents")
         .select("*", { count: "exact", head: true })
         .eq("status", "embedded")
+        .eq("hidden", false)
         .eq("source_id", s.id)
         .eq("lang", "en");
 
@@ -31,6 +33,7 @@ export const listSourcesTool = defineTool({
         .from("documents")
         .select("*", { count: "exact", head: true })
         .eq("status", "embedded")
+        .eq("hidden", false)
         .eq("source_id", s.id)
         .eq("lang", "sv");
 
@@ -38,10 +41,12 @@ export const listSourcesTool = defineTool({
         .from("documents")
         .select("fetched_at")
         .eq("status", "embedded")
+        .eq("hidden", false)
         .eq("source_id", s.id)
         .order("fetched_at", { ascending: false, nullsFirst: false })
         .limit(1)
         .maybeSingle();
+
 
       out.push({
         slug: s.slug,

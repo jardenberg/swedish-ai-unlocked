@@ -195,19 +195,20 @@ export const scrapeBatch = createServerFn({ method: "POST" })
     if (htmlDocs.length > 0) {
       try {
         const fc = getFirecrawl();
+        const { extractPublishedAtFromHtml } = await import("./published-date.server");
         const urls = htmlDocs.map((d) => d.url);
         const batchRes = await fc.batchScrape(urls, {
           options: {
-            formats: ["markdown"],
+            formats: ["markdown", "rawHtml"],
             onlyMainContent: true,
           },
         } as unknown as Parameters<typeof fc.batchScrape>[1]);
-        const docs = ((batchRes as { data?: Array<{ markdown?: string; metadata?: { sourceURL?: string; title?: string; statusCode?: number } }> }).data) ?? [];
+        const docs = ((batchRes as { data?: Array<{ markdown?: string; rawHtml?: string; metadata?: { sourceURL?: string; title?: string; statusCode?: number } }> }).data) ?? [];
         credits += docs.length;
-        const byUrl = new Map<string, { markdown: string; title?: string }>();
+        const byUrl = new Map<string, { markdown: string; title?: string; rawHtml?: string }>();
         for (const d of docs) {
           const u = d.metadata?.sourceURL;
-          if (u && d.markdown) byUrl.set(u, { markdown: d.markdown, title: d.metadata?.title });
+          if (u && d.markdown) byUrl.set(u, { markdown: d.markdown, title: d.metadata?.title, rawHtml: d.rawHtml });
         }
         for (const doc of htmlDocs) {
           let got = byUrl.get(doc.url);
@@ -215,21 +216,22 @@ export const scrapeBatch = createServerFn({ method: "POST" })
           if (!got || got.markdown.length <= 100) {
             try {
               const retry = (await fc.scrape(doc.url, {
-                formats: ["markdown"],
+                formats: ["markdown", "rawHtml"],
                 onlyMainContent: false,
                 waitFor: 2000,
               } as unknown as Parameters<typeof fc.scrape>[1])) as
-                | { markdown?: string; metadata?: { title?: string } }
+                | { markdown?: string; rawHtml?: string; metadata?: { title?: string } }
                 | null;
               credits += 1;
               if (retry?.markdown && retry.markdown.length > 100) {
-                got = { markdown: retry.markdown, title: retry.metadata?.title };
+                got = { markdown: retry.markdown, title: retry.metadata?.title, rawHtml: retry.rawHtml };
               }
             } catch (e) {
               console.warn("[scrape] retry failed", doc.url, (e as Error).message);
             }
           }
           if (got && got.markdown.length > 100) {
+            const pub = extractPublishedAtFromHtml(got.rawHtml ?? null);
             await supabaseAdmin
               .from("documents")
               .update({
@@ -238,6 +240,8 @@ export const scrapeBatch = createServerFn({ method: "POST" })
                 status: "scraped",
                 fetched_at: new Date().toISOString(),
                 token_count: Math.ceil(got.markdown.length / 4),
+                published_at: pub?.date ?? doc.published_at ?? null,
+                published_at_source: pub?.source ?? (doc.published_at ? doc.published_at_source : null),
                 error: null,
               })
               .eq("id", doc.id);
@@ -273,10 +277,11 @@ export const scrapeBatch = createServerFn({ method: "POST" })
               raw_markdown: res.text,
               title: res.title ?? doc.title ?? doc.url,
               lang: detectedLang || doc.lang || "en",
-
               status: "scraped",
               fetched_at: new Date().toISOString(),
               token_count: Math.ceil(res.text.length / 4),
+              published_at: res.publishedAt?.date ?? doc.published_at ?? null,
+              published_at_source: res.publishedAt?.source ?? (doc.published_at ? doc.published_at_source : null),
               error: null,
             })
             .eq("id", doc.id);
@@ -296,6 +301,7 @@ export const scrapeBatch = createServerFn({ method: "POST" })
         failed++;
       }
     }
+
 
 
     await supabaseAdmin
@@ -446,7 +452,7 @@ export const discoverPdfs = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { canonicalizeUrl } = await import("./url-canonical.server");
-    const { detectLang } = await import("./firecrawl.server");
+    const { detectLang, isJunkPdfUrl } = await import("./firecrawl.server");
 
     const { data: source } = await supabaseAdmin
       .from("sources").select("*").eq("slug", data.sourceSlug).single();
@@ -485,6 +491,7 @@ export const discoverPdfs = createServerFn({ method: "POST" })
           } catch { continue; }
           const u = canonicalizeUrl(abs);
           if (!u.toLowerCase().endsWith(".pdf")) continue;
+          if (isJunkPdfUrl(u)) continue;
           // Only same-domain PDFs (matches source site, ignoring subdomain `www`)
           try {
             const h = new URL(u).hostname.replace(/^www\./, "");
@@ -492,6 +499,7 @@ export const discoverPdfs = createServerFn({ method: "POST" })
           } catch { continue; }
           if (known.has(u) || found.has(u)) continue;
           found.add(u);
+
         }
       }
       if (page.length < PAGE) break;
@@ -523,19 +531,31 @@ export const discoverPdfs = createServerFn({ method: "POST" })
 // ──────────────────────────────────────────────────────────────────
 export const listRecentDocs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ status: z.string().optional(), limit: z.number().default(50) }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        status: z.string().optional(),
+        limit: z.number().default(50),
+        includeHidden: z.boolean().optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let q = supabaseAdmin
       .from("documents")
-      .select("id, url, title, lang, content_type, status, error, fetched_at, sources(slug)")
+      .select(
+        "id, url, title, lang, content_type, status, error, fetched_at, hidden, published_at, published_at_source, sources(slug)",
+      )
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (data.status) q = q.eq("status", data.status);
+    if (!data.includeHidden) q = q.eq("hidden", false);
     const { data: rows } = await q;
     return { docs: rows ?? [] };
   });
+
 
 export const listRuns = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -681,4 +701,149 @@ export const retryAllFailed = createServerFn({ method: "POST" })
       await supabaseAdmin.from("documents").update({ status: "pending", error: null }).in("id", toPending);
     }
     return { reset: (rows ?? []).length, toScraped: toScraped.length, toPending: toPending.length };
+  });
+
+// ──────────────────────────────────────────────────────────────────
+// setDocumentHidden — admin curation toggle
+// ──────────────────────────────────────────────────────────────────
+export const setDocumentHidden = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), hidden: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("documents")
+      .update({ hidden: data.hidden })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { id: data.id, hidden: data.hidden };
+  });
+
+// ──────────────────────────────────────────────────────────────────
+// recleanAndReembed — re-run cleaner + chunk + embed for docs whose
+// raw markdown was captured by the relaxed onlyMainContent=false retry
+// path (which can leak menu trees). Default window: last 24h.
+// ──────────────────────────────────────────────────────────────────
+export const recleanAndReembed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        sinceHours: z.number().int().min(1).max(24 * 30).default(24),
+        limit: z.number().int().min(1).max(500).default(100),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { chunkMarkdown } = await import("./chunking.server");
+    const { cleanMarkdown } = await import("./markdown-clean.server");
+    const { embedTexts } = await import("./embeddings.server");
+
+    const since = new Date(Date.now() - data.sinceHours * 3600 * 1000).toISOString();
+    const { data: docs } = await supabaseAdmin
+      .from("documents")
+      .select("id, raw_markdown")
+      .gt("updated_at", since)
+      .eq("status", "embedded")
+      .not("raw_markdown", "is", null)
+      .limit(data.limit);
+
+    let processed = 0;
+    let failed = 0;
+    for (const doc of docs ?? []) {
+      try {
+        const cleaned = cleanMarkdown(doc.raw_markdown ?? "");
+        const chunks = chunkMarkdown(cleaned);
+        if (!chunks.length) continue;
+        const all: number[][] = [];
+        for (let i = 0; i < chunks.length; i += 20) {
+          const vecs = await embedTexts(chunks.slice(i, i + 20).map((c) => c.text));
+          all.push(...vecs);
+        }
+        await supabaseAdmin.from("chunks").delete().eq("document_id", doc.id);
+        await supabaseAdmin.from("chunks").insert(
+          chunks.map((c, i) => ({
+            document_id: doc.id,
+            ord: c.ord,
+            text: c.text,
+            token_count: c.tokenCount,
+            embedding: all[i] as unknown as string,
+          })),
+        );
+        processed++;
+      } catch (e) {
+        console.error("[reclean] failed", doc.id, (e as Error).message);
+        failed++;
+      }
+    }
+    return { processed, failed, window: data.sinceHours };
+  });
+
+// ──────────────────────────────────────────────────────────────────
+// backfillPublishedDates — fill published_at for existing docs from
+// raw_markdown / URL patterns (no re-scrape).
+// ──────────────────────────────────────────────────────────────────
+export const backfillPublishedDates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ limit: z.number().int().min(1).max(5000).default(1000) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { extractPublishedAtFromHtml, extractPublishedAtFromPdfUrl } = await import(
+      "./published-date.server"
+    );
+
+    const { data: docs } = await supabaseAdmin
+      .from("documents")
+      .select("id, url, content_type, raw_markdown, sitemap_lastmod")
+      .is("published_at", null)
+      .limit(data.limit);
+
+    let filled = 0;
+    for (const doc of docs ?? []) {
+      let pub: { date: string; source: string } | null = null;
+      if (doc.content_type === "pdf") {
+        pub = extractPublishedAtFromPdfUrl(doc.url);
+      } else {
+        // Try extracting from raw_markdown (won't catch <meta>, but JSON-LD
+        // may have leaked through). For real backfill, the next scrape will
+        // capture it via rawHtml.
+        pub = extractPublishedAtFromHtml(doc.raw_markdown ?? null);
+      }
+      if (pub) {
+        await supabaseAdmin
+          .from("documents")
+          .update({ published_at: pub.date, published_at_source: pub.source })
+          .eq("id", doc.id);
+        filled++;
+      }
+    }
+    return { scanned: docs?.length ?? 0, filled };
+  });
+
+// ──────────────────────────────────────────────────────────────────
+// runIngestSmokeTests — admin trigger; also called from batch-ingest
+// ──────────────────────────────────────────────────────────────────
+export const runIngestSmokeTests = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { runSmokeTests } = await import("./ingest-smoke.server");
+    const report = await runSmokeTests(supabaseAdmin);
+
+    // Persist as a fake "smoke" ingest_runs row so admin sees history.
+    await supabaseAdmin.from("ingest_runs").insert({
+      kind: "smoke",
+      finished_at: new Date().toISOString(),
+      notes: report.summary,
+    });
+    return report;
   });

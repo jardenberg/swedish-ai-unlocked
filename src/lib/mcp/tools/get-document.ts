@@ -12,14 +12,16 @@ export const getDocumentTool = defineTool({
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("documents")
-      .select("url, title, lang, content_type, raw_markdown, fetched_at, sources(slug, name)")
+      .select(
+        "url, title, lang, content_type, raw_markdown, fetched_at, published_at, published_at_source, sources(slug, name)",
+      )
       .eq("url", url)
       .eq("status", "embedded")
+      .eq("hidden", false)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) return JSON.stringify({ error: "Document not found", url });
 
-    // Cap response at ~80 KB
     const MAX = 80_000;
     const md = data.raw_markdown ?? "";
     const truncated = md.length > MAX;
@@ -30,9 +32,12 @@ export const getDocumentTool = defineTool({
       contentType: data.content_type,
       source: (data.sources as { slug?: string } | null)?.slug,
       sourceName: (data.sources as { name?: string } | null)?.name,
+      publishedAt: data.published_at,
+      publishedAtSource: data.published_at_source,
       fetchedAt: data.fetched_at,
       content: truncated ? md.slice(0, MAX) + "\n\n[... truncated, full length: " + md.length + " chars]" : md,
       truncated,
     }, null, 2);
   },
 });
+

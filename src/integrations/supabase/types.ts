@@ -58,8 +58,11 @@ export type Database = {
           created_at: string
           error: string | null
           fetched_at: string | null
+          hidden: boolean
           id: string
           lang: string | null
+          published_at: string | null
+          published_at_source: string | null
           raw_markdown: string | null
           sitemap_lastmod: string | null
           source_id: string
@@ -75,8 +78,11 @@ export type Database = {
           created_at?: string
           error?: string | null
           fetched_at?: string | null
+          hidden?: boolean
           id?: string
           lang?: string | null
+          published_at?: string | null
+          published_at_source?: string | null
           raw_markdown?: string | null
           sitemap_lastmod?: string | null
           source_id: string
@@ -92,8 +98,11 @@ export type Database = {
           created_at?: string
           error?: string | null
           fetched_at?: string | null
+          hidden?: boolean
           id?: string
           lang?: string | null
+          published_at?: string | null
+          published_at_source?: string | null
           raw_markdown?: string | null
           sitemap_lastmod?: string | null
           source_id?: string
@@ -257,6 +266,25 @@ export type Database = {
         }
         Returns: {
           chunk_id: string
+          document_id: string
+          fetched_at: string
+          lang: string
+          similarity: number
+          snippet: string
+          source_name: string
+          source_slug: string
+          title: string
+          url: string
+        }[]
+      }
+      match_similar_documents: {
+        Args: {
+          filter_lang?: string
+          filter_source?: string
+          match_count?: number
+          seed_document_id: string
+        }
+        Returns: {
           document_id: string
           fetched_at: string
           lang: string
