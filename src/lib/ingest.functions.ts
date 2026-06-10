@@ -96,6 +96,7 @@ export const mapSource = createServerFn({ method: "POST" })
     }
 
     // Upsert documents
+    const { canonicalizeUrl } = await import("./url-canonical.server");
     const rows: Array<{
       source_id: string;
       url: string;
@@ -104,7 +105,8 @@ export const mapSource = createServerFn({ method: "POST" })
       sitemap_lastmod: string | null;
       status: string;
     }> = [];
-    for (const [url, lastmod] of lastmodByUrl) {
+    for (const [rawUrl, lastmod] of lastmodByUrl) {
+      const url = canonicalizeUrl(rawUrl);
       if (seen.has(url)) continue;
       seen.add(url);
       rows.push({
@@ -117,6 +119,7 @@ export const mapSource = createServerFn({ method: "POST" })
       });
       mapped++;
     }
+
 
     // Batch upsert (ignore conflicts on url)
     const batchSize = 500;
@@ -292,6 +295,7 @@ export const embedBatch = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { chunkMarkdown } = await import("./chunking.server");
+    const { cleanMarkdown } = await import("./markdown-clean.server");
     const { embedTexts } = await import("./embeddings.server");
 
     let q = supabaseAdmin.from("documents").select("*, sources!inner(slug)").eq("status", "scraped");
@@ -312,7 +316,9 @@ export const embedBatch = createServerFn({ method: "POST" })
 
     for (const doc of docs) {
       try {
-        const chunks = chunkMarkdown(doc.raw_markdown ?? "");
+        const cleaned = cleanMarkdown(doc.raw_markdown ?? "");
+        const chunks = chunkMarkdown(cleaned);
+
         if (chunks.length === 0) {
           await supabaseAdmin
             .from("documents")
@@ -381,7 +387,8 @@ export const refreshSitemap = createServerFn({ method: "POST" })
     if (!source) throw new Error("source not found");
 
     const sitemap = await fetchSitemap(source.root_url);
-    const lastmodByUrl = new Map(sitemap.map((e) => [e.url, e.lastmod]));
+    const { canonicalizeUrl } = await import("./url-canonical.server");
+    const lastmodByUrl = new Map(sitemap.map((e) => [canonicalizeUrl(e.url), e.lastmod]));
 
     const { data: existing } = await supabaseAdmin
       .from("documents")
@@ -402,6 +409,88 @@ export const refreshSitemap = createServerFn({ method: "POST" })
 
     return { stale, totalInSitemap: sitemap.length };
   });
+
+// ──────────────────────────────────────────────────────────────────
+// discoverPdfs — scan already-scraped markdown for .pdf links, add as docs
+// ──────────────────────────────────────────────────────────────────
+export const discoverPdfs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => SourceSlug.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { canonicalizeUrl } = await import("./url-canonical.server");
+    const { detectLang } = await import("./firecrawl.server");
+
+    const { data: source } = await supabaseAdmin
+      .from("sources").select("*").eq("slug", data.sourceSlug).single();
+    if (!source) throw new Error("source not found");
+
+    // Pull existing URLs (set) to skip duplicates cheaply
+    const { data: existing } = await supabaseAdmin
+      .from("documents").select("url").eq("source_id", source.id);
+    const known = new Set((existing ?? []).map((d) => d.url));
+
+    // Stream over scraped docs in pages of 200
+    const PDF_RE = /\(([^)\s]+\.pdf)(?:[?#][^)\s]*)?\)|href=["']([^"'\s]+\.pdf)(?:[?#][^"'\s]*)?["']/gi;
+    const found = new Set<string>();
+    const baseHost = new URL(source.root_url).hostname.replace(/^www\./, "");
+
+    let from = 0;
+    const PAGE = 200;
+    for (;;) {
+      const { data: page } = await supabaseAdmin
+        .from("documents")
+        .select("url, raw_markdown")
+        .eq("source_id", source.id)
+        .not("raw_markdown", "is", null)
+        .range(from, from + PAGE - 1);
+      if (!page || page.length === 0) break;
+      for (const d of page) {
+        const md = d.raw_markdown ?? "";
+        let m: RegExpExecArray | null;
+        PDF_RE.lastIndex = 0;
+        while ((m = PDF_RE.exec(md)) !== null) {
+          const raw = m[1] ?? m[2];
+          if (!raw) continue;
+          let abs: string;
+          try {
+            abs = new URL(raw, d.url).toString();
+          } catch { continue; }
+          const u = canonicalizeUrl(abs);
+          if (!u.toLowerCase().endsWith(".pdf")) continue;
+          // Only same-domain PDFs (matches source site, ignoring subdomain `www`)
+          try {
+            const h = new URL(u).hostname.replace(/^www\./, "");
+            if (h !== baseHost) continue;
+          } catch { continue; }
+          if (known.has(u) || found.has(u)) continue;
+          found.add(u);
+        }
+      }
+      if (page.length < PAGE) break;
+      from += PAGE;
+    }
+
+    const rows = Array.from(found).map((url) => ({
+      source_id: source.id,
+      url,
+      lang: detectLang(url),
+      content_type: "pdf",
+      status: "pending",
+    }));
+
+    let inserted = 0;
+    for (let i = 0; i < rows.length; i += 500) {
+      const slice = rows.slice(i, i + 500);
+      const { error } = await supabaseAdmin
+        .from("documents")
+        .upsert(slice, { onConflict: "url", ignoreDuplicates: true });
+      if (!error) inserted += slice.length;
+    }
+    return { discovered: found.size, inserted };
+  });
+
 
 // ──────────────────────────────────────────────────────────────────
 // Recent docs and runs for admin UI

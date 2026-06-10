@@ -3,11 +3,15 @@ import { createClient } from "@supabase/supabase-js";
 import Firecrawl from "@mendable/firecrawl-js";
 import { chunkMarkdown } from "/dev-server/src/lib/chunking.server.ts";
 import { embedTexts } from "/dev-server/src/lib/embeddings.server.ts";
+import { cleanMarkdown } from "/dev-server/src/lib/markdown-clean.server.ts";
+import { canonicalizeUrl } from "/dev-server/src/lib/url-canonical.server.ts";
+import { extractPdf } from "/dev-server/src/lib/pdf-extract.server.ts";
 
 const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
   auth: { persistSession: false },
 });
 const fc = new Firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! });
+
 
 const SCRAPE_BATCH = 20;
 const EMBED_BATCH = 8;
@@ -21,43 +25,75 @@ async function scrapeOne(sourceId: string): Promise<number> {
     .select("*")
     .eq("source_id", sourceId)
     .eq("status", "pending")
-    .eq("content_type", "html")
     .limit(SCRAPE_BATCH);
   if (!docs?.length) return 0;
 
-  const urls = docs.map((d) => d.url);
+  const htmlDocs = docs.filter((d) => d.content_type === "html");
+  const pdfDocs = docs.filter((d) => d.content_type === "pdf");
   let scraped = 0;
-  try {
-    const res: any = await fc.batchScrape(urls, {
-      options: { formats: ["markdown"], onlyMainContent: true },
-    } as any);
-    const items = (res?.data ?? []) as any[];
-    const byUrl = new Map<string, { markdown: string; title?: string }>();
-    for (const it of items) {
-      const u = it?.metadata?.sourceURL;
-      if (u && it.markdown) byUrl.set(u, { markdown: it.markdown, title: it?.metadata?.title });
+
+  // HTML batch
+  if (htmlDocs.length) {
+    const urls = htmlDocs.map((d) => d.url);
+    try {
+      const res: any = await fc.batchScrape(urls, {
+        options: { formats: ["markdown"], onlyMainContent: true },
+      } as any);
+      const items = (res?.data ?? []) as any[];
+      const byUrl = new Map<string, { markdown: string; title?: string }>();
+      for (const it of items) {
+        const u = it?.metadata?.sourceURL;
+        if (!u) continue;
+        const cu = canonicalizeUrl(u);
+        if (it.markdown) byUrl.set(cu, { markdown: it.markdown, title: it?.metadata?.title });
+      }
+      for (const doc of htmlDocs) {
+        const got = byUrl.get(doc.url);
+        if (got && got.markdown.length > 100) {
+          await sb.from("documents").update({
+            raw_markdown: got.markdown,
+            title: got.title ?? doc.title,
+            status: "scraped",
+            fetched_at: new Date().toISOString(),
+            token_count: Math.ceil(got.markdown.length / 4),
+            error: null,
+          }).eq("id", doc.id);
+          scraped++;
+        } else {
+          await sb.from("documents").update({ status: "failed", error: "no markdown returned" }).eq("id", doc.id);
+        }
+      }
+    } catch (e) {
+      console.error("scrape html err", (e as Error).message);
     }
-    for (const doc of docs) {
-      const got = byUrl.get(doc.url);
-      if (got && got.markdown.length > 100) {
+  }
+
+  // PDFs one-by-one
+  for (const doc of pdfDocs) {
+    try {
+      const res = await extractPdf(doc.url);
+      if (res.text && res.text.length > 200) {
         await sb.from("documents").update({
-          raw_markdown: got.markdown,
-          title: got.title ?? doc.title,
+          raw_markdown: res.text,
+          title: doc.title ?? new URL(doc.url).pathname.split("/").pop() ?? doc.url,
           status: "scraped",
           fetched_at: new Date().toISOString(),
-          token_count: Math.ceil(got.markdown.length / 4),
+          token_count: Math.ceil(res.text.length / 4),
           error: null,
         }).eq("id", doc.id);
         scraped++;
+        console.log(`  pdf[${res.method}] ${doc.url} (${res.text.length} chars)`);
       } else {
-        await sb.from("documents").update({ status: "failed", error: "no markdown returned" }).eq("id", doc.id);
+        await sb.from("documents").update({ status: "failed", error: `empty pdf (${res.method})` }).eq("id", doc.id);
       }
+    } catch (e) {
+      await sb.from("documents").update({ status: "failed", error: (e as Error).message.slice(0, 500) }).eq("id", doc.id);
+      console.error("pdf err", doc.url, (e as Error).message);
     }
-  } catch (e) {
-    console.error("scrape err", (e as Error).message);
   }
   return scraped;
 }
+
 
 async function embedSome(sourceId: string): Promise<{ docs: number; chunks: number }> {
   const { data: docs } = await sb
@@ -72,11 +108,14 @@ async function embedSome(sourceId: string): Promise<{ docs: number; chunks: numb
   let totalChunks = 0;
   for (const doc of docs) {
     try {
-      const chunks = chunkMarkdown(doc.raw_markdown ?? "");
+      const cleaned = cleanMarkdown(doc.raw_markdown ?? "");
+      const chunks = chunkMarkdown(cleaned);
       if (!chunks.length) {
         await sb.from("documents").update({ status: "failed", error: "no chunks" }).eq("id", doc.id);
         continue;
       }
+
+
       const all: number[][] = [];
       for (let i = 0; i < chunks.length; i += 20) {
         const vecs = await embedTexts(chunks.slice(i, i + 20).map((c) => c.text));
