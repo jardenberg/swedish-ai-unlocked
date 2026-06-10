@@ -4,7 +4,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // All ingestion fns require admin role.
-async function assertAdmin(supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }> }, userId: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function assertAdmin(supabase: any, userId: string) {
   const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
   if (!data) throw new Error("Forbidden: admin role required");
 }
@@ -95,7 +96,14 @@ export const mapSource = createServerFn({ method: "POST" })
     }
 
     // Upsert documents
-    const rows: Array<Record<string, unknown>> = [];
+    const rows: Array<{
+      source_id: string;
+      url: string;
+      lang: string;
+      content_type: string;
+      sitemap_lastmod: string | null;
+      status: string;
+    }> = [];
     for (const [url, lastmod] of lastmodByUrl) {
       if (seen.has(url)) continue;
       seen.add(url);

@@ -22,12 +22,18 @@ export const searchTool = defineTool({
     }
 
     const vec = await embedQuery(query);
-    const { data, error } = await supabaseAdmin.rpc("match_chunks", {
+    const rpcArgs: {
+      query_embedding: string;
+      match_count: number;
+      filter_source?: string;
+      filter_lang?: string;
+    } = {
       query_embedding: vec as unknown as string,
       match_count: limit,
-      filter_source: filterSource,
-      filter_lang: lang ?? null,
-    });
+    };
+    if (filterSource) rpcArgs.filter_source = filterSource;
+    if (lang) rpcArgs.filter_lang = lang;
+    const { data, error } = await supabaseAdmin.rpc("match_chunks", rpcArgs);
     if (error) throw new Error(error.message);
 
     const results = (data ?? []).map((r: {
