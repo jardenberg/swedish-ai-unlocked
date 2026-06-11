@@ -1,0 +1,39 @@
+# RISE & AI Sweden Public MCP
+
+> A public, no-auth MCP server indexing AI-relevant publications from RISE and AI Sweden, Sweden's two government-funded AI organizations. Provided in good faith to support the agentic AI ecosystem.
+
+Run by Joakim Jardenberg (joakim@jardenberg.com) and Lovable.
+
+## MCP endpoint
+
+- URL: https://rise-ai-sweden.jardenberg.org/api/mcp
+- Transport: streamable-http
+- Auth: none
+- Suggested client name: `rise-ai-sweden`
+
+## Tools
+
+- `search_swedish_ai` — Semantic search across RISE and AI Sweden publications (sv/en). Filters: `source`, `lang`, `limit` (1–25).
+- `list_latest` — Newest indexed documents; lightweight metadata only. Filters: `source`, `lang`, `limit` (1–50).
+- `find_similar` — Given an indexed URL, return semantically nearest documents.
+- `get_document` — Full cleaned markdown for a single indexed URL.
+- `list_sources` — Sources covered, document counts, language breakdown, last-updated.
+
+## Rate limit
+
+60 requests / 5 minutes per IP.
+
+## Sources
+
+Live document counts, language breakdown, and last-updated timestamps are available via the `list_sources` MCP tool.
+
+## Links
+
+- Landing page: https://rise-ai-sweden.jardenberg.org/
+- MCP Server Card: https://rise-ai-sweden.jardenberg.org/.well-known/mcp/server-card.json
+- Agent skills index: https://rise-ai-sweden.jardenberg.org/.well-known/agent-skills/index.json
+- Sitemap: https://rise-ai-sweden.jardenberg.org/sitemap.xml
+
+## Citation
+
+Every result returned by the MCP includes the original publisher URL on ri.se or ai.se. Agents should cite and link those, not this MCP server.
