@@ -65,6 +65,26 @@ function buildCanonicalExistingMap<R extends ExistingRow>(
   return { existing, dupes };
 }
 
+// PostgREST caps .select() at 1000 rows. Paginate so the diff sees ALL docs.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchAllDocuments(sb: any, sourceId: string): Promise<ExistingRow[]> {
+  const PAGE = 1000;
+  const out: ExistingRow[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await sb
+      .from("documents")
+      .select("id, url, status, sitemap_lastmod, fetched_at")
+      .eq("source_id", sourceId)
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    out.push(...(data as ExistingRow[]));
+    if (data.length < PAGE) break;
+  }
+  return out;
+}
+
 export class BulkGuardError extends Error {
   preview: Record<string, unknown>;
   constructor(preview: Record<string, unknown>) {
