@@ -372,6 +372,7 @@ export const previewBulkOp = createServerFn({ method: "POST" })
       for (const [url, lastmod] of lastmodByUrl) {
         const row = existing.get(url);
         if (!row) { willInsert++; insertSample.push(url); continue; }
+        if (row.status === "skipped_offsite") { unchanged++; continue; }
         const newer =
           lastmod &&
           row.fetched_at &&
@@ -386,6 +387,7 @@ export const previewBulkOp = createServerFn({ method: "POST" })
     } else {
       // refresh: only diff against existing rows in DB (canonical key)
       for (const row of existingRows) {
+        if (row.status === "skipped_offsite") continue;
         const key = canonicalizeUrl(row.url);
         const lastmod = lastmodByUrl.get(key);
         const newer =
@@ -397,6 +399,7 @@ export const previewBulkOp = createServerFn({ method: "POST" })
         }
       }
     }
+
 
     const guardFraction = embeddedBefore > 0 ? willResetEmbedded / embeddedBefore : 0;
     return {
