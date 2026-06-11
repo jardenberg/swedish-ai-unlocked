@@ -239,24 +239,68 @@ export async function runSmokeTests(sb: AnySb): Promise<SmokeReport> {
     };
   });
 
-  // 9. filter_miss rate (must stay below ~2% of HTML docs).
-  await wrap("filter_miss rate", async () => {
+  // 9. filter_miss rate — same-origin only. Off-domain redirects are filed
+  //    under status='skipped_offsite' and excluded from the denominator;
+  //    they are not selector failures.
+  await wrap("filter_miss rate (same-origin)", async () => {
     const { count: total } = await sb
       .from("documents")
       .select("*", { count: "exact", head: true })
-      .eq("content_type", "html");
+      .eq("content_type", "html")
+      .eq("status", "embedded");
     const { count: misses } = await sb
       .from("documents")
       .select("*", { count: "exact", head: true })
       .eq("content_type", "html")
+      .eq("status", "embedded")
       .eq("filter_miss", true);
     const pct = total ? ((misses ?? 0) / total) * 100 : 0;
     return {
-      name: "filter_miss rate",
+      name: "filter_miss rate (same-origin)",
       pass: pct <= 2,
-      detail: `${misses ?? 0}/${total ?? 0} HTML docs hit fallback (${pct.toFixed(2)}%)`,
+      detail: `${misses ?? 0}/${total ?? 0} embedded HTML hit fallback (${pct.toFixed(2)}%)`,
     };
   });
+
+  // 9b. Date-source distribution — reported, not thresholded. The real
+  //     guarantee is usable-date coverage (#8); this breakdown shows where
+  //     the dates actually come from (meta / visible_date / sitemap / path /
+  //     pdf_metadata / pdf_path / null).
+  await wrap("date-source distribution (informational)", async () => {
+    const pathMonthRe = /\/(20\d{2})[-/](0[1-9]|1[0-2])(?:[-/]|$)/;
+    const buckets: Record<string, number> = {};
+    let total = 0;
+    const pageSize = 1000;
+    for (let from = 0; ; from += pageSize) {
+      const { data: rows } = await sb
+        .from("documents")
+        .select("url, published_at, published_at_source, sitemap_lastmod")
+        .eq("status", "embedded")
+        .range(from, from + pageSize - 1);
+      const list = (rows ?? []) as Array<{ url: string; published_at: string | null; published_at_source: string | null; sitemap_lastmod: string | null }>;
+      if (list.length === 0) break;
+      for (const d of list) {
+        total++;
+        let key: string;
+        if (d.published_at && d.published_at_source) key = d.published_at_source;
+        else if (d.sitemap_lastmod) key = "sitemap";
+        else if (pathMonthRe.test(d.url)) key = "path_month";
+        else key = "none";
+        buckets[key] = (buckets[key] ?? 0) + 1;
+      }
+      if (list.length < pageSize) break;
+    }
+    const detail = Object.entries(buckets)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `${k}=${v} (${total ? ((v / total) * 100).toFixed(1) : "0"}%)`)
+      .join(", ");
+    return {
+      name: "date-source distribution (informational)",
+      pass: true, // reported only
+      detail: `total=${total}; ${detail}`,
+    };
+  });
+
 
   // 10. Lexical-entity canary: hybrid search for a proper noun should return
   //     ≥10 distinct documents that literally contain the term, AND the
