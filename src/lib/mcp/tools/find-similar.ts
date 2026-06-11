@@ -44,15 +44,32 @@ export const findSimilarTool = defineTool({
     const { data, error } = await supabaseAdmin.rpc("match_similar_documents", rpcArgs);
     if (error) throw new Error(error.message);
 
-    const results = (data ?? []).map((r: {
-      url: string; title: string | null; lang: string | null; source_slug: string;
-      source_name: string; snippet: string; similarity: number; fetched_at: string | null;
-    }) => ({
+    const rows = (data ?? []) as Array<{
+      document_id: string; url: string; title: string | null; lang: string | null;
+      source_slug: string; source_name: string; snippet: string;
+      similarity: number; fetched_at: string | null;
+    }>;
+
+    // RPC predates page_type — look it up in one query.
+    const urls = rows.map((r) => r.url);
+    const pageTypeByUrl = new Map<string, string>();
+    if (urls.length) {
+      const { data: pts } = await supabaseAdmin
+        .from("documents")
+        .select("url, page_type")
+        .in("url", urls);
+      for (const p of (pts ?? []) as Array<{ url: string; page_type: string }>) {
+        pageTypeByUrl.set(p.url, p.page_type);
+      }
+    }
+
+    const results = rows.map((r) => ({
       url: r.url,
       title: r.title,
       source: r.source_slug,
       sourceName: r.source_name,
       lang: r.lang,
+      pageType: pageTypeByUrl.get(r.url) ?? null,
       score: Number(r.similarity.toFixed(4)),
       snippet: r.snippet,
       fetchedAt: r.fetched_at,

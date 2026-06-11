@@ -381,6 +381,7 @@ export const embedBatch = createServerFn({ method: "POST" })
           text: c.text,
           token_count: c.tokenCount,
           embedding: all[i] as unknown as string,
+          lang: doc.lang ?? null,
         }));
         const { error: insErr } = await supabaseAdmin.from("chunks").insert(rows);
         if (insErr) throw insErr;
@@ -754,7 +755,7 @@ export const recleanAndReembed = createServerFn({ method: "POST" })
     const since = new Date(Date.now() - data.sinceHours * 3600 * 1000).toISOString();
     const { data: docs } = await supabaseAdmin
       .from("documents")
-      .select("id, raw_markdown")
+      .select("id, raw_markdown, lang")
       .gt("updated_at", since)
       .eq("status", "embedded")
       .not("raw_markdown", "is", null)
@@ -780,6 +781,7 @@ export const recleanAndReembed = createServerFn({ method: "POST" })
             text: c.text,
             token_count: c.tokenCount,
             embedding: all[i] as unknown as string,
+            lang: doc.lang ?? null,
           })),
         );
         processed++;

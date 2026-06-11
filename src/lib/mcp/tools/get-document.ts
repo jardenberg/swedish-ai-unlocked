@@ -13,7 +13,7 @@ export const getDocumentTool = defineTool({
     const { data, error } = await supabaseAdmin
       .from("documents")
       .select(
-        "url, title, lang, content_type, raw_markdown, fetched_at, published_at, published_at_source, sources(slug, name)",
+        "url, title, lang, page_type, content_type, raw_markdown, fetched_at, published_at, published_at_source, sources(slug, name)",
       )
       .eq("url", url)
       .eq("status", "embedded")
@@ -29,6 +29,7 @@ export const getDocumentTool = defineTool({
       url: data.url,
       title: data.title,
       lang: data.lang,
+      pageType: data.page_type,
       contentType: data.content_type,
       source: (data.sources as { slug?: string } | null)?.slug,
       sourceName: (data.sources as { name?: string } | null)?.name,

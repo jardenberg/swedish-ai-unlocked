@@ -258,6 +258,79 @@ export async function runSmokeTests(sb: AnySb): Promise<SmokeReport> {
     };
   });
 
+  // 10. Lexical-entity canary: hybrid search for a proper noun should return
+  //     ≥10 distinct documents that literally contain the term, AND the
+  //     find_mentions total should be within ±10% of the raw ILIKE count.
+  await wrap("lexical entity canary (Helsingborg)", async () => {
+    const term = "Helsingborg";
+
+    // Vector arm
+    const vec = await embedQuery(term);
+    const { data: vecRows, error: vErr } = await sb.rpc("match_chunks", {
+      query_embedding: vec as unknown as string,
+      match_count: 30,
+    });
+    if (vErr) throw new Error(`match_chunks: ${vErr.message}`);
+
+    // Lexical arm
+    const { data: lexRows, error: lErr } = await sb.rpc("lexical_match_chunks", {
+      query_text: term,
+      match_count: 30,
+    });
+    if (lErr) throw new Error(`lexical_match_chunks: ${lErr.message}`);
+
+    // RRF fuse (lex weight 2x — single-token query)
+    const RRF_K = 60;
+    type R = { document_id: string; url: string };
+    const byDoc = new Map<string, { doc: R; score: number }>();
+    (vecRows as R[] ?? []).forEach((r, i) => {
+      const c = 1 / (RRF_K + i + 1);
+      const cur = byDoc.get(r.document_id);
+      if (cur) cur.score += c; else byDoc.set(r.document_id, { doc: r, score: c });
+    });
+    (lexRows as R[] ?? []).forEach((r, i) => {
+      const c = 2 / (RRF_K + i + 1);
+      const cur = byDoc.get(r.document_id);
+      if (cur) cur.score += c; else byDoc.set(r.document_id, { doc: r, score: c });
+    });
+    const fused = [...byDoc.values()].sort((a, b) => b.score - a.score).slice(0, 20);
+
+    // How many of the top-20 fused docs literally contain "Helsingborg"?
+    const ids = fused.map((f) => f.doc.document_id);
+    const { data: docHits } = await sb
+      .from("documents")
+      .select("id, raw_markdown")
+      .in("id", ids);
+    const literal = (docHits ?? []).filter((d: { raw_markdown: string | null }) =>
+      (d.raw_markdown ?? "").toLowerCase().includes("helsingborg"),
+    ).length;
+
+    // Parity: find_mentions_total vs raw ILIKE
+    const { data: rpcTotal, error: tErr } = await sb.rpc("find_mentions_total", {
+      query_text: term,
+    });
+    if (tErr) throw new Error(`find_mentions_total: ${tErr.message}`);
+    const { count: rawTotal } = await sb
+      .from("documents")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "embedded")
+      .eq("hidden", false)
+      .ilike("raw_markdown", `%${term}%`);
+
+    const total = Number(rpcTotal ?? 0);
+    const raw = rawTotal ?? 0;
+    const drift = raw ? Math.abs(total - raw) / raw : 0;
+
+    const pass = literal >= 10 && drift <= 0.1;
+    return {
+      name: "lexical entity canary",
+      pass,
+      detail: `top-20 literal=${literal}/20, find_mentions_total=${total} vs raw ILIKE=${raw} (drift ${(drift * 100).toFixed(1)}%)`,
+    };
+  });
+
+
+
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
   const summary =

@@ -158,33 +158,75 @@ function Landing() {
         <section className="mt-12">
           <h2 className="text-xl font-semibold">Tools exposed</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Five tools, each returning JSON. Examples below show the actual shape your
+            Six tools, each returning JSON. Most accept a{" "}
+            <code className="rounded bg-muted px-1">page_type</code> filter
+            (<code className="rounded bg-muted px-1">event</code> ·{" "}
+            <code className="rounded bg-muted px-1">news</code> ·{" "}
+            <code className="rounded bg-muted px-1">project</code> ·{" "}
+            <code className="rounded bg-muted px-1">page</code>). Examples below show the actual shape your
             assistant receives.
           </p>
 
           <div className="mt-6 space-y-8">
             <ToolDoc
               name="search_swedish_ai"
-              summary="Semantic search across all indexed RISE and AI Sweden content. Returns ranked passages with source URLs. Swedish and English."
+              summary="Hybrid (semantic + lexical) search across all indexed RISE and AI Sweden content. Vector arm for topical queries; lexical arm (Swedish/English stemming + trigram fallback) for proper nouns and short keyword queries. Reciprocal-rank-fusion merge; lexical weighted 2x when query is ≤2 tokens."
               params={`{
-  query: string,           // 2–500 chars
-  source?: "rise" | "ai_sweden",
-  lang?:   "en" | "sv",
-  limit?:  number          // 1–25, default 10
+  query: string,                                     // 2–500 chars
+  source?:    "rise" | "ai_sweden",
+  lang?:      "en" | "sv",
+  page_type?: "event" | "news" | "project" | "page",
+  limit?:     number                                 // 1–50, default 20
 }`}
               example={`{
-  "query": "edge AI in manufacturing",
+  "query": "Helsingborg",
   "count": 2,
+  "hybrid": { "rrfK": 60, "weights": { "vector": 1, "lexical": 2 }, "tokenCount": 1 },
   "results": [
     {
-      "url": "https://www.ri.se/en/what-we-do/projects/edge-ai-...",
-      "title": "Edge AI for smart factories",
-      "source": "rise",
-      "sourceName": "RISE",
+      "url": "https://www.ai.se/en/sector-initiatives-projects/.../national-city-lab",
+      "title": "National City Lab",
+      "source": "ai_sweden",
+      "sourceName": "AI Sweden",
       "lang": "en",
-      "score": 0.8421,
-      "snippet": "RISE is developing edge AI models that run on...",
-      "fetchedAt": "2026-06-08T14:22:11Z"
+      "pageType": "project",
+      "score": 0.0312,
+      "arms": { "vector": 0.4912, "lexical": 0.0821 },
+      "snippet": "The National City Lab in Helsingborg...",
+      "fetchedAt": "2026-06-10T08:14:22Z"
+    },
+    { "...": "..." }
+  ]
+}`}
+            />
+
+            <ToolDoc
+              name="find_mentions"
+              summary="Lexical 'everything that mentions X' primitive. No embeddings — stemmed tsquery + exact-substring fallback. Includes a total field that mirrors a direct count(DISTINCT id) WHERE raw_markdown ILIKE '%term%' SQL query."
+              params={`{
+  term: string,                                      // 1–200 chars
+  source?:    "rise" | "ai_sweden",
+  lang?:      "en" | "sv",
+  page_type?: "event" | "news" | "project" | "page",
+  limit?:     number                                 // 1–100, default 25
+}`}
+              example={`{
+  "term": "Helsingborg",
+  "total": 39,
+  "totalNote": "Exact-substring document count (ILIKE) matching the same filters. Reconciles with raw SQL.",
+  "returned": 25,
+  "results": [
+    {
+      "url": "https://www.ai.se/en/news/helsingborg-opens-national-city-lab",
+      "title": "Helsingborg opens the National City Lab",
+      "source": "ai_sweden",
+      "sourceName": "AI Sweden",
+      "lang": "en",
+      "pageType": "news",
+      "matchMode": "exact",
+      "rank": 0.0912,
+      "snippet": "Helsingborg opens the National City Lab...",
+      "fetchedAt": "2026-06-09T07:32:10Z"
     },
     { "...": "..." }
   ]
@@ -193,11 +235,12 @@ function Landing() {
 
             <ToolDoc
               name="list_latest"
-              summary="Cheap 'what's new' view. Without arguments, returns the newest documents across both sources. Pass source to restrict to one. No snippets — lightweight metadata only."
+              summary="Cheap 'what's new' view. Without arguments, returns the newest documents across both sources. Pass source / page_type to slice. No snippets — lightweight metadata only."
               params={`{
-  source?: "rise" | "ai_sweden",
-  lang?:   "en" | "sv",
-  limit?:  number          // 1–50, default 20
+  source?:    "rise" | "ai_sweden",
+  lang?:      "en" | "sv",
+  page_type?: "event" | "news" | "project" | "page",
+  limit?:     number                                 // 1–50, default 20
 }`}
               example={`{
   "count": 2,
@@ -208,6 +251,7 @@ function Landing() {
       "source": "ai_sweden",
       "sourceName": "AI Sweden",
       "lang": "en",
+      "pageType": "news",
       "fetchedAt": "2026-06-10T08:14:22Z",
       "sitemapLastmod": "2026-06-09T00:00:00Z"
     },

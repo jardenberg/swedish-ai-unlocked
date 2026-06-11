@@ -13,11 +13,23 @@ Run by Joakim Jardenberg (joakim@jardenberg.com) and Lovable.
 
 ## Tools
 
-- `search_swedish_ai` — Semantic search across RISE and AI Sweden publications (sv/en). Filters: `source`, `lang`, `limit` (1–25).
-- `list_latest` — Newest indexed documents; lightweight metadata only. Filters: `source`, `lang`, `limit` (1–50).
+- `search_swedish_ai` — Hybrid semantic + lexical search across RISE and AI Sweden publications (sv/en). Vector arm for topical queries; lexical arm (tsvector with Swedish/English stemming, trigram fallback) for proper nouns and short keyword queries. Reciprocal-rank-fusion merge; lexical arm weighted 2x when query ≤2 tokens. Filters: `source`, `lang`, `page_type`, `limit` (1–50, default 20).
+- `find_mentions` — Lexical "everything that mentions X" primitive. Stemmed tsquery + exact-substring fallback, with a `total` field that reconciles with `count(DISTINCT id) WHERE raw_markdown ILIKE '%term%'`. Filters: `source`, `lang`, `page_type`, `limit` (1–100, default 25).
+- `list_latest` — Newest indexed documents; lightweight metadata only. Filters: `source`, `lang`, `page_type`, `limit` (1–50, default 20).
 - `find_similar` — Given an indexed URL, return semantically nearest documents.
 - `get_document` — Full cleaned markdown for a single indexed URL.
 - `list_sources` — Sources covered, document counts, language breakdown, last-updated.
+
+## Page types
+
+Every document is labeled with a URL-derived `page_type`:
+
+- `event` — events / past events
+- `news` — news posts and announcements
+- `project` — project, sector-initiative, and program pages
+- `page` — anything else
+
+Relevance filtering is the client's job; our job is labeling.
 
 ## Rate limit
 
