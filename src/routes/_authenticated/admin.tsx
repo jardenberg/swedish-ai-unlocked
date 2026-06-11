@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { CorpusHealthHeader } from "@/components/admin/CorpusHealthHeader";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
@@ -19,10 +20,12 @@ function AdminLayout() {
             </Link>
             <nav className="flex gap-4 text-sm text-muted-foreground">
               <Link to="/admin" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Sources</Link>
+              <Link to="/admin/pipeline" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Pipeline</Link>
+              <Link to="/admin/runs" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Runs</Link>
+              <Link to="/admin/smoke" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Smoke</Link>
+              <Link to="/admin/search" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Search</Link>
               <Link to="/admin/documents" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Documents</Link>
               <Link to="/admin/upload" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Upload PDF</Link>
-              <Link to="/admin/runs" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>Runs</Link>
-
             </nav>
           </div>
           <Button
@@ -37,6 +40,7 @@ function AdminLayout() {
           </Button>
         </div>
       </header>
+      <CorpusHealthHeader />
       <main className="mx-auto max-w-6xl px-6 py-8">
         <Outlet />
       </main>

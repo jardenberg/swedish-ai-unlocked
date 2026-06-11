@@ -18,8 +18,12 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as DotwellKnownSplatRouteImport } from './routes/[.]well-known/$'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminUploadRouteImport } from './routes/_authenticated/admin/upload'
+import { Route as AuthenticatedAdminSmokeRouteImport } from './routes/_authenticated/admin/smoke'
+import { Route as AuthenticatedAdminSearchRouteImport } from './routes/_authenticated/admin/search'
 import { Route as AuthenticatedAdminRunsRouteImport } from './routes/_authenticated/admin/runs'
+import { Route as AuthenticatedAdminPipelineRouteImport } from './routes/_authenticated/admin/pipeline'
 import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authenticated/admin/documents'
+import { Route as AuthenticatedAdminDocumentsDocumentIdRouteImport } from './routes/_authenticated/admin/documents.$documentId'
 import { Route as DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRouteImport } from './routes/[.]well-known/agent-skills/query-swedish-ai/SKILL[.]md'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -67,16 +71,39 @@ const AuthenticatedAdminUploadRoute =
     path: '/upload',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminSmokeRoute = AuthenticatedAdminSmokeRouteImport.update({
+  id: '/smoke',
+  path: '/smoke',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminSearchRoute =
+  AuthenticatedAdminSearchRouteImport.update({
+    id: '/search',
+    path: '/search',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminRunsRoute = AuthenticatedAdminRunsRouteImport.update({
   id: '/runs',
   path: '/runs',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminPipelineRoute =
+  AuthenticatedAdminPipelineRouteImport.update({
+    id: '/pipeline',
+    path: '/pipeline',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminDocumentsRoute =
   AuthenticatedAdminDocumentsRouteImport.update({
     id: '/documents',
     path: '/documents',
     getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminDocumentsDocumentIdRoute =
+  AuthenticatedAdminDocumentsDocumentIdRouteImport.update({
+    id: '/$documentId',
+    path: '/$documentId',
+    getParentRoute: () => AuthenticatedAdminDocumentsRoute,
   } as any)
 const DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute =
   DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRouteImport.update({
@@ -92,11 +119,15 @@ export interface FileRoutesByFullPath {
   '/.well-known/$': typeof DotwellKnownSplatRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/api/mcp': typeof ApiMcpRoute
-  '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
+  '/admin/documents': typeof AuthenticatedAdminDocumentsRouteWithChildren
+  '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/runs': typeof AuthenticatedAdminRunsRoute
+  '/admin/search': typeof AuthenticatedAdminSearchRoute
+  '/admin/smoke': typeof AuthenticatedAdminSmokeRoute
   '/admin/upload': typeof AuthenticatedAdminUploadRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/.well-known/agent-skills/query-swedish-ai/SKILL.md': typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
+  '/admin/documents/$documentId': typeof AuthenticatedAdminDocumentsDocumentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -104,11 +135,15 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/$': typeof DotwellKnownSplatRoute
   '/api/mcp': typeof ApiMcpRoute
-  '/admin/documents': typeof AuthenticatedAdminDocumentsRoute
+  '/admin/documents': typeof AuthenticatedAdminDocumentsRouteWithChildren
+  '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/runs': typeof AuthenticatedAdminRunsRoute
+  '/admin/search': typeof AuthenticatedAdminSearchRoute
+  '/admin/smoke': typeof AuthenticatedAdminSmokeRoute
   '/admin/upload': typeof AuthenticatedAdminUploadRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/.well-known/agent-skills/query-swedish-ai/SKILL.md': typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
+  '/admin/documents/$documentId': typeof AuthenticatedAdminDocumentsDocumentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -119,11 +154,15 @@ export interface FileRoutesById {
   '/.well-known/$': typeof DotwellKnownSplatRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/api/mcp': typeof ApiMcpRoute
-  '/_authenticated/admin/documents': typeof AuthenticatedAdminDocumentsRoute
+  '/_authenticated/admin/documents': typeof AuthenticatedAdminDocumentsRouteWithChildren
+  '/_authenticated/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/_authenticated/admin/runs': typeof AuthenticatedAdminRunsRoute
+  '/_authenticated/admin/search': typeof AuthenticatedAdminSearchRoute
+  '/_authenticated/admin/smoke': typeof AuthenticatedAdminSmokeRoute
   '/_authenticated/admin/upload': typeof AuthenticatedAdminUploadRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/.well-known/agent-skills/query-swedish-ai/SKILL.md': typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
+  '/_authenticated/admin/documents/$documentId': typeof AuthenticatedAdminDocumentsDocumentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -135,10 +174,14 @@ export interface FileRouteTypes {
     | '/admin'
     | '/api/mcp'
     | '/admin/documents'
+    | '/admin/pipeline'
     | '/admin/runs'
+    | '/admin/search'
+    | '/admin/smoke'
     | '/admin/upload'
     | '/admin/'
     | '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
+    | '/admin/documents/$documentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -147,10 +190,14 @@ export interface FileRouteTypes {
     | '/.well-known/$'
     | '/api/mcp'
     | '/admin/documents'
+    | '/admin/pipeline'
     | '/admin/runs'
+    | '/admin/search'
+    | '/admin/smoke'
     | '/admin/upload'
     | '/admin'
     | '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
+    | '/admin/documents/$documentId'
   id:
     | '__root__'
     | '/'
@@ -161,10 +208,14 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/api/mcp'
     | '/_authenticated/admin/documents'
+    | '/_authenticated/admin/pipeline'
     | '/_authenticated/admin/runs'
+    | '/_authenticated/admin/search'
+    | '/_authenticated/admin/smoke'
     | '/_authenticated/admin/upload'
     | '/_authenticated/admin/'
     | '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
+    | '/_authenticated/admin/documents/$documentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -242,11 +293,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUploadRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/smoke': {
+      id: '/_authenticated/admin/smoke'
+      path: '/smoke'
+      fullPath: '/admin/smoke'
+      preLoaderRoute: typeof AuthenticatedAdminSmokeRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/search': {
+      id: '/_authenticated/admin/search'
+      path: '/search'
+      fullPath: '/admin/search'
+      preLoaderRoute: typeof AuthenticatedAdminSearchRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/runs': {
       id: '/_authenticated/admin/runs'
       path: '/runs'
       fullPath: '/admin/runs'
       preLoaderRoute: typeof AuthenticatedAdminRunsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/pipeline': {
+      id: '/_authenticated/admin/pipeline'
+      path: '/pipeline'
+      fullPath: '/admin/pipeline'
+      preLoaderRoute: typeof AuthenticatedAdminPipelineRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/documents': {
@@ -255,6 +327,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/documents'
       preLoaderRoute: typeof AuthenticatedAdminDocumentsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/documents/$documentId': {
+      id: '/_authenticated/admin/documents/$documentId'
+      path: '/$documentId'
+      fullPath: '/admin/documents/$documentId'
+      preLoaderRoute: typeof AuthenticatedAdminDocumentsDocumentIdRouteImport
+      parentRoute: typeof AuthenticatedAdminDocumentsRoute
     }
     '/.well-known/agent-skills/query-swedish-ai/SKILL.md': {
       id: '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
@@ -266,16 +345,38 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminDocumentsRouteChildren {
+  AuthenticatedAdminDocumentsDocumentIdRoute: typeof AuthenticatedAdminDocumentsDocumentIdRoute
+}
+
+const AuthenticatedAdminDocumentsRouteChildren: AuthenticatedAdminDocumentsRouteChildren =
+  {
+    AuthenticatedAdminDocumentsDocumentIdRoute:
+      AuthenticatedAdminDocumentsDocumentIdRoute,
+  }
+
+const AuthenticatedAdminDocumentsRouteWithChildren =
+  AuthenticatedAdminDocumentsRoute._addFileChildren(
+    AuthenticatedAdminDocumentsRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminDocumentsRoute: typeof AuthenticatedAdminDocumentsRoute
+  AuthenticatedAdminDocumentsRoute: typeof AuthenticatedAdminDocumentsRouteWithChildren
+  AuthenticatedAdminPipelineRoute: typeof AuthenticatedAdminPipelineRoute
   AuthenticatedAdminRunsRoute: typeof AuthenticatedAdminRunsRoute
+  AuthenticatedAdminSearchRoute: typeof AuthenticatedAdminSearchRoute
+  AuthenticatedAdminSmokeRoute: typeof AuthenticatedAdminSmokeRoute
   AuthenticatedAdminUploadRoute: typeof AuthenticatedAdminUploadRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminDocumentsRoute: AuthenticatedAdminDocumentsRoute,
+  AuthenticatedAdminDocumentsRoute:
+    AuthenticatedAdminDocumentsRouteWithChildren,
+  AuthenticatedAdminPipelineRoute: AuthenticatedAdminPipelineRoute,
   AuthenticatedAdminRunsRoute: AuthenticatedAdminRunsRoute,
+  AuthenticatedAdminSearchRoute: AuthenticatedAdminSearchRoute,
+  AuthenticatedAdminSmokeRoute: AuthenticatedAdminSmokeRoute,
   AuthenticatedAdminUploadRoute: AuthenticatedAdminUploadRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }

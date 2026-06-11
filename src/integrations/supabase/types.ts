@@ -58,6 +58,50 @@ export type Database = {
           },
         ]
       }
+      corpus_snapshots: {
+        Row: {
+          captured_at: string
+          chunks: number
+          embedded: number
+          failed: number
+          hidden: number
+          id: string
+          pending: number
+          scraped: number
+          source_id: string | null
+        }
+        Insert: {
+          captured_at?: string
+          chunks?: number
+          embedded?: number
+          failed?: number
+          hidden?: number
+          id?: string
+          pending?: number
+          scraped?: number
+          source_id?: string | null
+        }
+        Update: {
+          captured_at?: string
+          chunks?: number
+          embedded?: number
+          failed?: number
+          hidden?: number
+          id?: string
+          pending?: number
+          scraped?: number
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corpus_snapshots_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           bytes_replaced_at: string | null

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import {
   refreshSitemap,
   previewBulkOp,
 } from "@/lib/ingest.functions";
+import { snapshotCorpus } from "@/lib/admin-observability.functions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -120,11 +121,14 @@ function SourcesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Sources</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Trigger ingestion steps for each data source. Map and Refresh show a pre-flight impact summary before executing; a {`>10%`} embedded reset requires an explicit force confirm.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Sources</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Trigger ingestion steps for each data source. Map and Refresh show a pre-flight impact summary before executing; a {`>10%`} embedded reset requires an explicit force confirm.
+          </p>
+        </div>
+        <SnapshotNowButton />
       </div>
 
       <div className="grid gap-4">
@@ -294,5 +298,23 @@ function SourcesPage() {
       </AlertDialog>
     </div>
 
+  );
+}
+
+function SnapshotNowButton() {
+  const fn = useServerFn(snapshotCorpus);
+  const qc = useQueryClient();
+  const mut = useMutation({
+    mutationFn: () => fn(),
+    onSuccess: () => {
+      toast.success("Snapshot captured");
+      qc.invalidateQueries({ queryKey: ["admin-overview"] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  return (
+    <Button size="sm" variant="ghost" disabled={mut.isPending} onClick={() => mut.mutate()}>
+      {mut.isPending ? "…" : "Snapshot now"}
+    </Button>
   );
 }

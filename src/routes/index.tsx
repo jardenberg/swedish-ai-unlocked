@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { createServerFn, useServerFn } from "@tanstack/react-start";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { createServerFn } from "@tanstack/react-start";
 
 import { publicStats } from "@/lib/ingest.functions";
 import { VERSION, PUBLISHED, MCP_ENDPOINT as MCP_URL, MCP_NAME } from "@/lib/build-version";
@@ -20,9 +20,17 @@ const setLinkHeader = createServerFn({ method: "GET" }).handler(async () => {
   return null;
 });
 
+const statsQuery = queryOptions({
+  queryKey: ["public-stats"],
+  queryFn: () => publicStats(),
+});
+
 export const Route = createFileRoute("/")({
-  loader: async () => {
-    await setLinkHeader();
+  loader: async ({ context }) => {
+    await Promise.all([
+      setLinkHeader(),
+      context.queryClient.ensureQueryData(statsQuery),
+    ]);
     return null;
   },
 
@@ -47,8 +55,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const stats = useServerFn(publicStats);
-  const { data } = useQuery({ queryKey: ["public-stats"], queryFn: () => stats() });
+  const { data } = useSuspenseQuery(statsQuery);
 
   return (
     <div className="min-h-screen bg-background">

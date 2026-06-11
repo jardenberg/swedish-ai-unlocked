@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -238,7 +238,14 @@ function DocumentsPage() {
                 <tr key={d.id} className={`border-b last:border-0 ${d.hidden ? "opacity-50" : ""}`}>
                   <td className="px-3 py-2 text-xs">{d.sources?.slug}</td>
                   <td className="px-3 py-2">
-                    <a href={d.url} target="_blank" rel="noreferrer" className="hover:underline">{d.title || d.url}</a>
+                    <Link
+                      to="/admin/documents/$documentId"
+                      params={{ documentId: d.id }}
+                      search={{ url: d.url }}
+                      className="hover:underline"
+                    >
+                      {d.title || d.url}
+                    </Link>
                     {d.bytes_replaced_at && (
                       <span
                         className="ml-2 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[10px] uppercase text-amber-900 dark:bg-amber-900/40 dark:text-amber-200"

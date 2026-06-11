@@ -313,6 +313,9 @@ export const mapSource = createServerFn({ method: "POST" })
       })
       .eq("id", run!.id);
 
+    const { snapshotCorpusForSource } = await import("./ingest-helpers.server");
+    await snapshotCorpusForSource(supabaseAdmin, source.id);
+
     return {
       mapped: inserted,
       inserted,
@@ -643,6 +646,9 @@ export const scrapeBatch = createServerFn({ method: "POST" })
       .update({ finished_at: new Date().toISOString(), scraped, failed, credits_used: credits, notes: skippedOffsite ? `skipped_offsite=${skippedOffsite}` : null })
       .eq("id", run!.id);
 
+    const { snapshotCorpusForSource } = await import("./ingest-helpers.server");
+    await snapshotCorpusForSource(supabaseAdmin, source.id);
+
     return { scraped, failed, skippedOffsite, credits, runId: run!.id };
   });
 
@@ -736,6 +742,9 @@ export const embedBatch = createServerFn({ method: "POST" })
       .update({ finished_at: new Date().toISOString(), embedded, failed, notes: `${totalChunks} chunks` })
       .eq("id", run!.id);
 
+    const { snapshotCorpusForSource } = await import("./ingest-helpers.server");
+    if (docs[0]?.source_id) await snapshotCorpusForSource(supabaseAdmin, docs[0].source_id);
+
     return { embedded, chunks: totalChunks, failed };
   });
 
@@ -824,6 +833,9 @@ export const refreshSitemap = createServerFn({ method: "POST" })
       notes,
     });
 
+    const { snapshotCorpusForSource } = await import("./ingest-helpers.server");
+    await snapshotCorpusForSource(supabaseAdmin, source.id);
+
     return {
       stale: stale.length,
       totalInSitemap: sitemap.length,
@@ -849,10 +861,17 @@ export const discoverPdfs = createServerFn({ method: "POST" })
       .from("sources").select("*").eq("slug", data.sourceSlug).single();
     if (!source) throw new Error("source not found");
 
-    // Pull existing URLs (set) to skip duplicates cheaply
-    const { data: existing } = await supabaseAdmin
-      .from("documents").select("url").eq("source_id", source.id);
-    const known = new Set((existing ?? []).map((d) => d.url));
+    // Pull existing URLs (set) to skip duplicates cheaply. Paginate — the
+    // PostgREST 1k cap would otherwise let duplicates through.
+    const { fetchAllPages } = await import("./ingest-helpers.server");
+    const existing = await fetchAllPages<{ url: string }>(async (from, to) => {
+      const res = await supabaseAdmin
+        .from("documents").select("url").eq("source_id", source.id)
+        .order("id", { ascending: true })
+        .range(from, to);
+      return { data: res.data, error: res.error };
+    });
+    const known = new Set(existing.map((d) => d.url));
 
     // Stream over scraped docs in pages of 200
     const PDF_RE = /\(([^)\s]+\.pdf)(?:[?#][^)\s]*)?\)|href=["']([^"'\s]+\.pdf)(?:[?#][^"'\s]*)?["']/gi;
