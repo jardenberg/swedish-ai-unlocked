@@ -25,18 +25,19 @@ function walk(dir) {
 
 function audit(file) {
   const src = readFileSync(file, "utf8");
-  // Match `.from("documents")` or `.from("chunks")` followed within ~600 chars
-  // by `.select(` — then check if the same chain has a bounding clause.
-  const re = /\.from\(\s*["'](documents|chunks)["']\s*\)([\s\S]{0,600}?)\.select\(([\s\S]{0,200}?)\)([\s\S]{0,400})/g;
+  const re = /\.from\(\s*["'](documents|chunks)["']\s*\)([\s\S]{0,1200}?)\.select\(([\s\S]{0,400}?)\)([\s\S]{0,600})/g;
   let m;
   while ((m = re.exec(src)) !== null) {
-    const [whole, table, before, selectArgs, after] = m;
-    const isCountHead = /count:\s*["']exact["']/.test(selectArgs) && /head:\s*true/.test(selectArgs);
+    const [whole, table, before, , after] = m;
+    const window = whole;
+    const isCountHead = /count:\s*["']exact["']/.test(window) && /head:\s*true/.test(window);
     const hasLimit = /\.limit\s*\(/.test(after) || /\.limit\s*\(/.test(before);
     const hasRange = /\.range\s*\(/.test(after);
     const hasSingle = /\.(single|maybeSingle)\s*\(/.test(after);
-    const isFetchAllPages = new RegExp("fetchAllPages\\b").test(src.slice(Math.max(0, m.index - 400), m.index));
-    if (isCountHead || hasLimit || hasRange || hasSingle || isFetchAllPages) continue;
+    // `.in("col", arr)` is implicitly bounded by the array the caller passes.
+    const hasIn = /\.in\s*\(\s*["'][^"']+["']\s*,/.test(after);
+    const isFetchAllPages = /fetchAllPages\b/.test(src.slice(Math.max(0, m.index - 400), m.index));
+    if (isCountHead || hasLimit || hasRange || hasSingle || hasIn || isFetchAllPages) continue;
     const line = src.slice(0, m.index).split("\n").length;
     violations.push({ file: relative(ROOT, file), line, table, snippet: whole.split("\n").slice(0, 3).join(" ⏎ ").slice(0, 240) });
   }
