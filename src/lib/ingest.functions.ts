@@ -579,18 +579,20 @@ export const embedBatch = createServerFn({ method: "POST" })
           const vecs = await embedTexts(slice);
           all.push(...vecs);
         }
-        // Delete existing chunks then insert
-        await supabaseAdmin.from("chunks").delete().eq("document_id", doc.id);
+        // Atomic chunk swap via SQL function: delete + insert in one tx,
+        // so old chunks remain searchable until the new ones land.
         const rows = chunks.map((c, i) => ({
-          document_id: doc.id,
           ord: c.ord,
           text: c.text,
           token_count: c.tokenCount,
-          embedding: all[i] as unknown as string,
+          embedding: `[${(all[i] as unknown as number[]).join(",")}]`,
           lang: doc.lang ?? null,
         }));
-        const { error: insErr } = await supabaseAdmin.from("chunks").insert(rows);
-        if (insErr) throw insErr;
+        const { error: rpcErr } = await supabaseAdmin.rpc("replace_chunks", {
+          p_document_id: doc.id,
+          p_rows: rows,
+        });
+        if (rpcErr) throw rpcErr;
         await supabaseAdmin
           .from("documents")
           .update({ status: "embedded", error: null })
