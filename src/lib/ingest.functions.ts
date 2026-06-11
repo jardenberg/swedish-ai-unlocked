@@ -132,9 +132,8 @@ export const mapSource = createServerFn({ method: "POST" })
       .from("documents")
       .select("id, url, status, sitemap_lastmod, fetched_at")
       .eq("source_id", source.id);
-    const existing = new Map(
-      (existingRows ?? []).map((r) => [r.url, r] as const),
-    );
+    const { existing, dupes: mapDupes } = buildCanonicalExistingMap(existingRows ?? [], canonicalizeUrl);
+    if (mapDupes > 0) console.warn(`[map] ${mapDupes} legacy duplicate URL rows collapsed (canonical form). Clean up later.`);
 
     type Refresh = { id: string; sitemap_lastmod: string | null };
     const toInsert: Array<{
