@@ -346,12 +346,9 @@ export const previewBulkOp = createServerFn({ method: "POST" })
       filtered.map((e) => [canonicalizeUrl(e.url), e.lastmod]),
     );
 
-    const { data: existingRows } = await supabaseAdmin
-      .from("documents")
-      .select("id, url, status, sitemap_lastmod, fetched_at")
-      .eq("source_id", source.id);
+    const existingRows = await fetchAllDocuments(supabaseAdmin, source.id);
 
-    const { existing, dupes } = buildCanonicalExistingMap(existingRows ?? [], canonicalizeUrl);
+    const { existing, dupes } = buildCanonicalExistingMap(existingRows, canonicalizeUrl);
     if (dupes > 0) console.warn(`[preview] ${dupes} legacy duplicate URL rows collapsed.`);
 
     let willInsert = 0;
