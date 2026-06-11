@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { createServerFn, useServerFn } from "@tanstack/react-start";
-import { setResponseHeader } from "@tanstack/react-start/server";
 
 import { publicStats } from "@/lib/ingest.functions";
 import { VERSION, PUBLISHED, MCP_ENDPOINT as MCP_URL, MCP_NAME } from "@/lib/build-version";
@@ -10,6 +9,7 @@ const PAGE_TITLE = "RISE & AI Sweden — Public MCP Server";
 
 const setLinkHeader = createServerFn({ method: "GET" }).handler(async () => {
   try {
+    const { setResponseHeader } = await import("@tanstack/react-start/server");
     setResponseHeader(
       "Link",
       '</.well-known/mcp/server-card.json>; rel="service-desc", </llms.txt>; rel="describedby"',
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/")({
     await setLinkHeader();
     return null;
   },
+
 
   head: () => ({
     meta: [
