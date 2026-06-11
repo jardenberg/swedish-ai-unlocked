@@ -325,8 +325,9 @@ export const scrapeBatch = createServerFn({ method: "POST" })
 // ──────────────────────────────────────────────────────────────────
 const EmbedBatchInput = z.object({
   sourceSlug: z.enum(["rise", "ai_sweden"]).optional(),
-  batchSize: z.number().int().min(1).max(50).default(10),
+  batchSize: z.number().int().min(1).max(100).default(25),
 });
+
 
 export const embedBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
