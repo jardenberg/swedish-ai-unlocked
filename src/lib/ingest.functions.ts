@@ -870,8 +870,9 @@ export const listRecentDocs = createServerFn({ method: "GET" })
     let q = supabaseAdmin
       .from("documents")
       .select(
-        "id, url, title, lang, content_type, status, error, fetched_at, hidden, published_at, published_at_source, sources(slug)",
+        "id, url, title, lang, content_type, status, error, fetched_at, hidden, published_at, published_at_source, bytes_replaced_at, storage_path, sources(slug)",
       )
+
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (data.status) q = q.eq("status", data.status);
