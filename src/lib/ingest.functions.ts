@@ -381,6 +381,7 @@ export const embedBatch = createServerFn({ method: "POST" })
           text: c.text,
           token_count: c.tokenCount,
           embedding: all[i] as unknown as string,
+          lang: doc.lang ?? null,
         }));
         const { error: insErr } = await supabaseAdmin.from("chunks").insert(rows);
         if (insErr) throw insErr;
@@ -780,6 +781,7 @@ export const recleanAndReembed = createServerFn({ method: "POST" })
             text: c.text,
             token_count: c.tokenCount,
             embedding: all[i] as unknown as string,
+            lang: doc.lang ?? null,
           })),
         );
         processed++;
