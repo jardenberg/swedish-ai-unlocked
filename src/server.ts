@@ -37,12 +37,32 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   });
 }
 
+// Force the correct content-type on well-known endpoints whose type gets
+// clobbered by the SSR/asset layer (e.g. SKILL.md served as text/html).
+const FORCED_CONTENT_TYPES: Array<[string, string]> = [
+  ["/.well-known/agent-skills/query-swedish-ai/SKILL.md", "text/markdown; charset=utf-8"],
+];
+
+function forceContentType(request: Request, response: Response): Response {
+  const url = new URL(request.url);
+  const match = FORCED_CONTENT_TYPES.find(([path]) => url.pathname === path);
+  if (!match) return response;
+  const headers = new Headers(response.headers);
+  headers.set("content-type", match[1]);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(response);
+      return forceContentType(request, normalized);
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {
