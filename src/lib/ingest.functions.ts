@@ -313,6 +313,9 @@ export const mapSource = createServerFn({ method: "POST" })
       })
       .eq("id", run!.id);
 
+    const { snapshotCorpusForSource } = await import("./ingest-helpers.server");
+    await snapshotCorpusForSource(supabaseAdmin, source.id);
+
     return {
       mapped: inserted,
       inserted,
@@ -642,6 +645,9 @@ export const scrapeBatch = createServerFn({ method: "POST" })
       .from("ingest_runs")
       .update({ finished_at: new Date().toISOString(), scraped, failed, credits_used: credits, notes: skippedOffsite ? `skipped_offsite=${skippedOffsite}` : null })
       .eq("id", run!.id);
+
+    const { snapshotCorpusForSource } = await import("./ingest-helpers.server");
+    await snapshotCorpusForSource(supabaseAdmin, source.id);
 
     return { scraped, failed, skippedOffsite, credits, runId: run!.id };
   });
