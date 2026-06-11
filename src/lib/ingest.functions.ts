@@ -742,6 +742,9 @@ export const embedBatch = createServerFn({ method: "POST" })
       .update({ finished_at: new Date().toISOString(), embedded, failed, notes: `${totalChunks} chunks` })
       .eq("id", run!.id);
 
+    const { snapshotCorpusForSource } = await import("./ingest-helpers.server");
+    if (docs[0]?.source_id) await snapshotCorpusForSource(supabaseAdmin, docs[0].source_id);
+
     return { embedded, chunks: totalChunks, failed };
   });
 
