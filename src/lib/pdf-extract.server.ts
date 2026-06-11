@@ -15,6 +15,10 @@ export interface PdfExtractResult {
   method: "unpdf" | "firecrawl";
   title?: string;
   publishedAt?: PublishedAtResult | null;
+  /** Populated when unpdf failed or was bypassed and Firecrawl took over.
+   *  Surfaced in the row's provenance so operators can see why a manual PDF
+   *  routed via OCR instead of in-process text extraction. */
+  unpdfError?: string;
 }
 
 export interface ExtractPdfInput {
