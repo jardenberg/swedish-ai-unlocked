@@ -341,6 +341,62 @@ function Landing() {
           </div>
         </section>
 
+        {/* ── FAQ ────────────────────────────────────────────────── */}
+        <section className="mt-12">
+          <h2 className="text-xl font-semibold">FAQ</h2>
+          <dl className="mt-4 space-y-5 text-sm">
+            <Faq q="Do I need an API key?">
+              No. Public endpoint, no auth. Rate limit: 60 requests / 5 minutes per IP.
+            </Faq>
+            <Faq q="What's indexed?">
+              Public web pages and PDFs from ri.se and ai.se. No paywalled or internal
+              content. Use <code className="rounded bg-muted px-1">list_sources</code> for
+              current counts and the most recent fetch per source.
+            </Faq>
+            <Faq q="How fresh is it?">
+              Sitemaps are re-checked daily. New documents are scraped, cleaned, chunked,
+              and embedded in the same pass.
+            </Faq>
+            <Faq q="Why does find_mentions return fewer rows than `total`?">
+              <code className="rounded bg-muted px-1">total</code> is a reconciliation
+              count — distinct documents whose markdown contains the exact substring,
+              matching a direct SQL <code className="rounded bg-muted px-1">ILIKE</code>{" "}
+              query. <code className="rounded bg-muted px-1">returned</code> is what the
+              tool hands back, capped by <code className="rounded bg-muted px-1">limit</code>{" "}
+              (max 100).
+            </Faq>
+            <Faq q="Why doesn't my AI Sweden event URL show up?">
+              Many ai.se event pages 301-redirect to third-party sites (Invajo, Meetup,
+              etc.). Those are deliberately skipped — the index only stores content served
+              from ri.se and ai.se themselves.
+            </Faq>
+            <Faq q="How short-query search works">
+              For queries of ≤2 tokens, the lexical arm is weighted 2× over the vector
+              arm. Good for proper nouns and organization names; if a one-word topical
+              query feels too literal, add a second word.
+            </Faq>
+            <Faq q="Can I trust the dates?">
+              <code className="rounded bg-muted px-1">publishedAt</code> comes from page
+              metadata or PDF path when available, falling back to sitemap last-modified.
+              <code className="rounded bg-muted px-1">publishedAtSource</code> tells you
+              which (<code>meta</code> · <code>path</code> · <code>sitemap</code>).
+            </Faq>
+            <Faq q="Why does a PDF look OCR'd?">
+              Image-only PDFs and oversized files (~&gt;20 MB) are routed through Firecrawl
+              OCR. <code className="rounded bg-muted px-1">get_document</code> surfaces this
+              via <code className="rounded bg-muted px-1">extractionMethod: "firecrawl"</code>{" "}
+              and a human-readable <code className="rounded bg-muted px-1">contentNote</code>.
+            </Faq>
+            <Faq q="What does page_type mean?">
+              It's URL-derived, not editorial. <code className="rounded bg-muted px-1">project</code>{" "}
+              means the URL lives under a <code>/projects/</code> path, not that someone
+              curated it as a project.
+            </Faq>
+          </dl>
+        </section>
+
+
+
         {/* ── About / contact ───────────────────────────────────── */}
         <footer className="mt-16 border-t pt-6 text-sm text-muted-foreground">
           <p>
