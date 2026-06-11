@@ -10,15 +10,28 @@ import {
   scrapeBatch,
   embedBatch,
   refreshSitemap,
+  previewBulkOp,
 } from "@/lib/ingest.functions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: SourcesPage,
 });
 
 type SourceSlug = "rise" | "ai_sweden";
+
+type Preview = Awaited<ReturnType<typeof previewBulkOp>> & { _label: string; _slug: SourceSlug; _op: "map" | "refresh" };
 
 function SourcesPage() {
   const list = useServerFn(listSourcesAdmin);
@@ -32,8 +45,10 @@ function SourcesPage() {
   const scrapeFn = useServerFn(scrapeBatch);
   const embedFn = useServerFn(embedBatch);
   const refreshFn = useServerFn(refreshSitemap);
+  const previewFn = useServerFn(previewBulkOp);
   const [busy, setBusy] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
+  const [pendingPreview, setPendingPreview] = useState<Preview | null>(null);
 
   async function run(label: string, fn: () => Promise<unknown>) {
     setBusy(label);
@@ -46,6 +61,29 @@ function SourcesPage() {
     } finally {
       setBusy(null);
     }
+  }
+
+  async function previewThenRun(op: "map" | "refresh", slug: SourceSlug) {
+    setBusy(`preview ${op} ${slug}`);
+    try {
+      const preview = await previewFn({ data: { op, sourceSlug: slug } });
+      setPendingPreview({ ...preview, _label: `${op} ${slug}`, _slug: slug, _op: op });
+    } catch (e) {
+      toast.error(`Preview failed: ${(e as Error).message}`);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function confirmPreview(force: boolean) {
+    if (!pendingPreview) return;
+    const { _op, _slug, _label } = pendingPreview;
+    setPendingPreview(null);
+    await run(_label, () =>
+      _op === "map"
+        ? mapFn({ data: { sourceSlug: _slug, force } })
+        : refreshFn({ data: { sourceSlug: _slug, force } }),
+    );
   }
 
   // Loop a batch fn until it processes 0 items, or until safety cap reached.
@@ -85,7 +123,7 @@ function SourcesPage() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Sources</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Trigger ingestion steps for each data source. Run map → scrape → embed in order. Use refresh to mark stale URLs as pending.
+          Trigger ingestion steps for each data source. Map and Refresh show a pre-flight impact summary before executing; a {`>10%`} embedded reset requires an explicit force confirm.
         </p>
       </div>
 
@@ -113,9 +151,9 @@ function SourcesPage() {
                     size="sm"
                     variant="outline"
                     disabled={!!busy}
-                    onClick={() => run(`map ${slug}`, () => mapFn({ data: { sourceSlug: slug } }))}
+                    onClick={() => previewThenRun("map", slug)}
                   >
-                    1. Map URLs
+                    1. Map URLs…
                   </Button>
                   <Button
                     size="sm"
@@ -171,9 +209,9 @@ function SourcesPage() {
                     size="sm"
                     variant="ghost"
                     disabled={!!busy}
-                    onClick={() => run(`refresh ${slug}`, () => refreshFn({ data: { sourceSlug: slug } }))}
+                    onClick={() => previewThenRun("refresh", slug)}
                   >
-                    Refresh sitemap
+                    Refresh sitemap…
                   </Button>
                 </div>
               </div>
@@ -184,6 +222,62 @@ function SourcesPage() {
       {busy && (
         <p className="text-sm text-muted-foreground">{progress ?? `Running: ${busy}…`}</p>
       )}
+
+      <AlertDialog open={!!pendingPreview} onOpenChange={(o) => { if (!o) setPendingPreview(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Confirm {pendingPreview?._op} on {pendingPreview?._slug}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono">
+                  <span>Currently embedded</span>
+                  <span className="text-right">{pendingPreview?.embeddedBefore}</span>
+                  {pendingPreview?._op === "map" && (
+                    <>
+                      <span>New URLs to insert</span>
+                      <span className="text-right text-emerald-600">+{pendingPreview?.willInsert}</span>
+                      <span>Existing URLs untouched</span>
+                      <span className="text-right">{pendingPreview?.unchanged}</span>
+                    </>
+                  )}
+                  <span>URLs to refresh (→ pending)</span>
+                  <span className="text-right">{pendingPreview?.willRefresh}</span>
+                  <span>Embedded docs that will reset</span>
+                  <span className={`text-right ${pendingPreview && pendingPreview.willResetEmbedded > 0 ? "text-rose-600" : ""}`}>
+                    {pendingPreview?.willResetEmbedded}
+                  </span>
+                  <span>Reset fraction</span>
+                  <span className="text-right">
+                    {pendingPreview ? (pendingPreview.guardFraction * 100).toFixed(1) : "0"}%
+                  </span>
+                </div>
+                {pendingPreview?.guardTriggered && (
+                  <div className="rounded border border-rose-600/40 bg-rose-600/10 p-2 text-rose-700 dark:text-rose-300">
+                    ⚠ Backend guard triggered ({(pendingPreview.guardFraction * 100).toFixed(1)}% &gt; {(pendingPreview.guardThreshold * 100).toFixed(0)}%). This will create a search-corpus gap. Requires force.
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            {pendingPreview?.guardTriggered ? (
+              <AlertDialogAction
+                className="bg-rose-600 hover:bg-rose-700"
+                onClick={() => confirmPreview(true)}
+              >
+                Force confirm
+              </AlertDialogAction>
+            ) : (
+              <AlertDialogAction onClick={() => confirmPreview(false)}>
+                Confirm
+              </AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
 
   );
