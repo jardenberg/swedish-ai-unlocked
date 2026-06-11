@@ -212,6 +212,9 @@ export const mapSource = createServerFn({ method: "POST" })
         });
         continue;
       }
+      // Leave skipped_offsite rows alone — re-scraping them would just hit the
+      // same offsite redirect and waste credits. They stay parked, hidden.
+      if (row.status === "skipped_offsite") { unchanged++; continue; }
       // Refresh ONLY when the row has been scraped before and sitemap is newer.
       // Rows still pending (no fetched_at) are already queued — leave alone.
       const newer =
@@ -224,6 +227,7 @@ export const mapSource = createServerFn({ method: "POST" })
         unchanged++;
       }
     }
+
 
     // Guard: a refresh resets embedded → pending. If too many, require force.
     const wouldResetEmbedded = toRefresh.filter((r) => {
