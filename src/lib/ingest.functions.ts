@@ -207,6 +207,10 @@ export const mapSource = createServerFn({ method: "POST" })
       return row.status === "embedded";
     }).length;
 
+    const willInsertSample = toInsert
+      .map((r) => r.url)
+      .sort()
+      .slice(0, 20);
     const preview = {
       op: "map",
       source: data.sourceSlug,
@@ -216,6 +220,7 @@ export const mapSource = createServerFn({ method: "POST" })
       unchanged,
       embeddedBefore,
       estCredits: credits,
+      willInsertSample,
     };
 
     if (
