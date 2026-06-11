@@ -191,18 +191,21 @@ export const scrapeBatch = createServerFn({ method: "POST" })
     const htmlDocs = pendingDocs.filter((d) => d.content_type === "html");
     const pdfDocs = pendingDocs.filter((d) => d.content_type === "pdf");
 
-    // HTML — batch via Firecrawl
+    // HTML — batch via Firecrawl, with per-source include/exclude selectors
     if (htmlDocs.length > 0) {
       try {
         const fc = getFirecrawl();
         const { extractPublishedAtFromHtml } = await import("./published-date.server");
+        const includeTags = ((source as { include_tags?: string[] }).include_tags ?? []) as string[];
+        const excludeTags = ((source as { exclude_tags?: string[] }).exclude_tags ?? []) as string[];
         const urls = htmlDocs.map((d) => d.url);
-        const batchRes = await fc.batchScrape(urls, {
-          options: {
-            formats: ["markdown", "rawHtml"],
-            onlyMainContent: true,
-          },
-        } as unknown as Parameters<typeof fc.batchScrape>[1]);
+        const scrapeOpts: Record<string, unknown> = {
+          formats: ["markdown", "rawHtml"],
+          onlyMainContent: false,
+        };
+        if (includeTags.length) scrapeOpts.includeTags = includeTags;
+        if (excludeTags.length) scrapeOpts.excludeTags = excludeTags;
+        const batchRes = await fc.batchScrape(urls, { options: scrapeOpts } as unknown as Parameters<typeof fc.batchScrape>[1]);
         const docs = ((batchRes as { data?: Array<{ markdown?: string; rawHtml?: string; metadata?: { sourceURL?: string; title?: string; statusCode?: number } }> }).data) ?? [];
         credits += docs.length;
         const byUrl = new Map<string, { markdown: string; title?: string; rawHtml?: string }>();
@@ -212,22 +215,25 @@ export const scrapeBatch = createServerFn({ method: "POST" })
         }
         for (const doc of htmlDocs) {
           let got = byUrl.get(doc.url);
-          // Retry once per-URL with relaxed options if first pass produced nothing
+          let filterMiss = false;
+          // Defined fallback: include-tags returned empty → retry once with
+          // onlyMainContent. Never unfiltered. Mark filter_miss for review.
           if (!got || got.markdown.length <= 100) {
             try {
               const retry = (await fc.scrape(doc.url, {
                 formats: ["markdown", "rawHtml"],
-                onlyMainContent: false,
-                waitFor: 2000,
+                onlyMainContent: true,
+                waitFor: 1500,
               } as unknown as Parameters<typeof fc.scrape>[1])) as
                 | { markdown?: string; rawHtml?: string; metadata?: { title?: string } }
                 | null;
               credits += 1;
               if (retry?.markdown && retry.markdown.length > 100) {
                 got = { markdown: retry.markdown, title: retry.metadata?.title, rawHtml: retry.rawHtml };
+                filterMiss = true;
               }
             } catch (e) {
-              console.warn("[scrape] retry failed", doc.url, (e as Error).message);
+              console.warn("[scrape] fallback failed", doc.url, (e as Error).message);
             }
           }
           if (got && got.markdown.length > 100) {
@@ -242,6 +248,7 @@ export const scrapeBatch = createServerFn({ method: "POST" })
                 token_count: Math.ceil(got.markdown.length / 4),
                 published_at: pub?.date ?? doc.published_at ?? null,
                 published_at_source: pub?.source ?? (doc.published_at ? doc.published_at_source : null),
+                filter_miss: filterMiss,
                 error: null,
               })
               .eq("id", doc.id);
@@ -249,7 +256,7 @@ export const scrapeBatch = createServerFn({ method: "POST" })
           } else {
             await supabaseAdmin
               .from("documents")
-              .update({ status: "failed", error: "no markdown returned (after retry)" })
+              .update({ status: "failed", error: "no markdown (after onlyMainContent fallback)", filter_miss: true })
               .eq("id", doc.id);
             failed++;
           }

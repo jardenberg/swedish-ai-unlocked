@@ -156,6 +156,96 @@ export async function runSmokeTests(sb: AnySb): Promise<SmokeReport> {
     };
   });
 
+  // 6. Boilerplate-zero: assert no chunks still contain known chrome strings.
+  await wrap("boilerplate-zero", async () => {
+    const phrases = ["CAPTCHA", "Expand/contract", "Skip to main content"];
+    let total = 0;
+    const offenders: string[] = [];
+    for (const p of phrases) {
+      const { count } = await sb
+        .from("chunks")
+        .select("*", { count: "exact", head: true })
+        .ilike("text", `%${p}%`);
+      const n = count ?? 0;
+      total += n;
+      if (n > 0) offenders.push(`${p}=${n}`);
+    }
+    return {
+      name: "boilerplate-zero",
+      pass: total === 0,
+      detail: total === 0 ? "no chunks contain known chrome strings" : offenders.join(", "),
+    };
+  });
+
+  // 7. Cross-doc duplicate metric: sample chunks; for each, count peer chunks
+  //    in OTHER docs with similarity > 0.97. A clean corpus has near zero.
+  await wrap("cross-doc duplicate chunks", async () => {
+    const { data: sample } = await sb
+      .from("chunks")
+      .select("id, document_id, embedding")
+      .limit(200);
+    if (!sample?.length) return { name: "cross-doc duplicates", pass: true, detail: "no chunks" };
+    let bad = 0;
+    let checked = 0;
+    for (const row of sample.slice(0, 50) as Array<{ id: string; document_id: string; embedding: unknown }>) {
+      const { data: rpc, error } = await sb.rpc("match_chunks", {
+        query_embedding: row.embedding as string,
+        match_count: 20,
+      });
+      if (error) continue;
+      checked++;
+      const peers = ((rpc ?? []) as Array<{ document_id: string; similarity: number }>)
+        .filter((r) => r.document_id !== row.document_id && r.similarity > 0.97);
+      if (peers.length >= 5) bad++;
+    }
+    const pct = checked ? (bad / checked) * 100 : 0;
+    return {
+      name: "cross-doc duplicates",
+      pass: pct < 5,
+      detail: `${bad}/${checked} sample chunks have ≥5 near-dup peers (${pct.toFixed(1)}%)`,
+    };
+  });
+
+  // 8. published_at coverage for HTML docs (expect big jump from 0).
+  await wrap("html published_at coverage", async () => {
+    const { count: total } = await sb
+      .from("documents")
+      .select("*", { count: "exact", head: true })
+      .eq("content_type", "html")
+      .eq("status", "embedded");
+    const { count: withPub } = await sb
+      .from("documents")
+      .select("*", { count: "exact", head: true })
+      .eq("content_type", "html")
+      .eq("status", "embedded")
+      .not("published_at", "is", null);
+    const pct = total ? ((withPub ?? 0) / total) * 100 : 0;
+    return {
+      name: "html published_at coverage",
+      pass: pct >= 30, // expect a big jump from 0; tune as needed
+      detail: `${withPub ?? 0}/${total ?? 0} HTML embedded docs have published_at (${pct.toFixed(1)}%)`,
+    };
+  });
+
+  // 9. filter_miss rate (must stay below ~2% of HTML docs).
+  await wrap("filter_miss rate", async () => {
+    const { count: total } = await sb
+      .from("documents")
+      .select("*", { count: "exact", head: true })
+      .eq("content_type", "html");
+    const { count: misses } = await sb
+      .from("documents")
+      .select("*", { count: "exact", head: true })
+      .eq("content_type", "html")
+      .eq("filter_miss", true);
+    const pct = total ? ((misses ?? 0) / total) * 100 : 0;
+    return {
+      name: "filter_miss rate",
+      pass: pct <= 2,
+      detail: `${misses ?? 0}/${total ?? 0} HTML docs hit fallback (${pct.toFixed(2)}%)`,
+    };
+  });
+
   const pass = results.filter((r) => r.pass).length;
   const fail = results.length - pass;
   const summary =

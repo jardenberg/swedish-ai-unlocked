@@ -58,6 +58,7 @@ export type Database = {
           created_at: string
           error: string | null
           fetched_at: string | null
+          filter_miss: boolean
           hidden: boolean
           id: string
           lang: string | null
@@ -78,6 +79,7 @@ export type Database = {
           created_at?: string
           error?: string | null
           fetched_at?: string | null
+          filter_miss?: boolean
           hidden?: boolean
           id?: string
           lang?: string | null
@@ -98,6 +100,7 @@ export type Database = {
           created_at?: string
           error?: string | null
           fetched_at?: string | null
+          filter_miss?: boolean
           hidden?: boolean
           id?: string
           lang?: string | null
@@ -198,7 +201,9 @@ export type Database = {
         Row: {
           created_at: string
           exclude_patterns: string[]
+          exclude_tags: string[]
           id: string
+          include_tags: string[]
           name: string
           root_url: string
           slug: string
@@ -207,7 +212,9 @@ export type Database = {
         Insert: {
           created_at?: string
           exclude_patterns?: string[]
+          exclude_tags?: string[]
           id?: string
+          include_tags?: string[]
           name: string
           root_url: string
           slug: string
@@ -216,7 +223,9 @@ export type Database = {
         Update: {
           created_at?: string
           exclude_patterns?: string[]
+          exclude_tags?: string[]
           id?: string
+          include_tags?: string[]
           name?: string
           root_url?: string
           slug?: string
