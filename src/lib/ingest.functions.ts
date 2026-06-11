@@ -833,6 +833,9 @@ export const refreshSitemap = createServerFn({ method: "POST" })
       notes,
     });
 
+    const { snapshotCorpusForSource } = await import("./ingest-helpers.server");
+    await snapshotCorpusForSource(supabaseAdmin, source.id);
+
     return {
       stale: stale.length,
       totalInSitemap: sitemap.length,
