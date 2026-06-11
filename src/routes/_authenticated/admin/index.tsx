@@ -300,3 +300,21 @@ function SourcesPage() {
 
   );
 }
+
+function SnapshotNowButton() {
+  const fn = useServerFn(snapshotCorpus);
+  const qc = useQueryClient();
+  const mut = useMutation({
+    mutationFn: () => fn(),
+    onSuccess: () => {
+      toast.success("Snapshot captured");
+      qc.invalidateQueries({ queryKey: ["admin-overview"] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  return (
+    <Button size="sm" variant="ghost" disabled={mut.isPending} onClick={() => mut.mutate()}>
+      {mut.isPending ? "…" : "Snapshot now"}
+    </Button>
+  );
+}
