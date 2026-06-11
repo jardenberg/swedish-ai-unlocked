@@ -47,7 +47,13 @@ export const searchTool = defineTool({
     // Pull deeper arms so RRF has material to fuse.
     const armDepth = Math.max(limit * 3, 30);
 
-    const baseArgs: Record<string, unknown> = { match_count: armDepth };
+    type BaseArgs = {
+      match_count: number;
+      filter_source?: string;
+      filter_lang?: string;
+      filter_page_type?: string;
+    };
+    const baseArgs: BaseArgs = { match_count: armDepth };
     if (filterSource) baseArgs.filter_source = filterSource;
     if (lang) baseArgs.filter_lang = lang;
     if (page_type) baseArgs.filter_page_type = page_type;

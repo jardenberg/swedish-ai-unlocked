@@ -32,12 +32,18 @@ export const findMentionsTool = defineTool({
       filterSource = data?.id ?? null;
     }
 
-    const args: Record<string, unknown> = { query_text: term, match_count: limit };
+    const args: {
+      query_text: string; match_count: number;
+      filter_source?: string; filter_lang?: string; filter_page_type?: string;
+    } = { query_text: term, match_count: limit };
     if (filterSource) args.filter_source = filterSource;
     if (lang) args.filter_lang = lang;
     if (page_type) args.filter_page_type = page_type;
 
-    const totalArgs: Record<string, unknown> = { query_text: term };
+    const totalArgs: {
+      query_text: string;
+      filter_source?: string; filter_lang?: string; filter_page_type?: string;
+    } = { query_text: term };
     if (filterSource) totalArgs.filter_source = filterSource;
     if (lang) totalArgs.filter_lang = lang;
     if (page_type) totalArgs.filter_page_type = page_type;
