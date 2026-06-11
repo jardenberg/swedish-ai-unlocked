@@ -1,27 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { createServerFn, useServerFn } from "@tanstack/react-start";
+import { setResponseHeader } from "@tanstack/react-start/server";
 
 import { publicStats } from "@/lib/ingest.functions";
 import { VERSION, PUBLISHED, MCP_ENDPOINT as MCP_URL, MCP_NAME } from "@/lib/build-version";
 
 const PAGE_TITLE = "RISE & AI Sweden — Public MCP Server";
 
+const setLinkHeader = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    setResponseHeader(
+      "Link",
+      '</.well-known/mcp/server-card.json>; rel="service-desc", </llms.txt>; rel="describedby"',
+    );
+  } catch {
+    // not in a server request context (e.g. prerender) — ignore
+  }
+  return null;
+});
+
 export const Route = createFileRoute("/")({
   loader: async () => {
-    if (typeof window === "undefined") {
-      try {
-        const { setResponseHeader } = await import("@tanstack/react-start/server");
-        setResponseHeader(
-          "Link",
-          '</.well-known/mcp/server-card.json>; rel="service-desc", </llms.txt>; rel="describedby"',
-        );
-      } catch {
-        // not in a server request context (e.g. prerender) — ignore
-      }
-    }
+    await setLinkHeader();
     return null;
   },
+
   head: () => ({
     meta: [
       { title: PAGE_TITLE },
