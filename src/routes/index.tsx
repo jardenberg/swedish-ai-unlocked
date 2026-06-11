@@ -252,8 +252,10 @@ function Landing() {
       "sourceName": "AI Sweden",
       "lang": "en",
       "pageType": "news",
-      "fetchedAt": "2026-06-10T08:14:22Z",
-      "sitemapLastmod": "2026-06-09T00:00:00Z"
+      "publishedAt": "2026-06-09T00:00:00Z",
+      "publishedAtSource": "meta",
+      "sitemapLastmod": "2026-06-09T00:00:00Z",
+      "fetchedAt": "2026-06-10T08:14:22Z"
     },
     { "...": "..." }
   ]
