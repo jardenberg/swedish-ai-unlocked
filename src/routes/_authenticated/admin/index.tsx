@@ -121,17 +121,51 @@ function SourcesPage() {
                     size="sm"
                     variant="outline"
                     disabled={!!busy}
-                    onClick={() => run(`scrape ${slug}`, () => scrapeFn({ data: { sourceSlug: slug, batchSize: 25 } }))}
+                    onClick={() => run(`scrape ${slug}`, () => scrapeFn({ data: { sourceSlug: slug, batchSize: 50 } }))}
                   >
-                    2. Scrape batch (25)
+                    2. Scrape batch (50)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    disabled={!!busy}
+                    onClick={() =>
+                      drain(
+                        `drain scrape ${slug}`,
+                        () =>
+                          scrapeFn({ data: { sourceSlug: slug, batchSize: 100 } }) as Promise<{
+                            scraped?: number;
+                          }>,
+                        "scraped",
+                      )
+                    }
+                  >
+                    Drain scrape
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     disabled={!!busy}
-                    onClick={() => run(`embed ${slug}`, () => embedFn({ data: { sourceSlug: slug, batchSize: 10 } }))}
+                    onClick={() => run(`embed ${slug}`, () => embedFn({ data: { sourceSlug: slug, batchSize: 25 } }))}
                   >
-                    3. Embed batch (10)
+                    3. Embed batch (25)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    disabled={!!busy}
+                    onClick={() =>
+                      drain(
+                        `drain embed ${slug}`,
+                        () =>
+                          embedFn({ data: { sourceSlug: slug, batchSize: 50 } }) as Promise<{
+                            embedded?: number;
+                          }>,
+                        "embedded",
+                      )
+                    }
+                  >
+                    Drain embed
                   </Button>
                   <Button
                     size="sm"
@@ -147,7 +181,10 @@ function SourcesPage() {
           );
         })}
       </div>
-      {busy && <p className="text-sm text-muted-foreground">Running: {busy}…</p>}
+      {busy && (
+        <p className="text-sm text-muted-foreground">{progress ?? `Running: ${busy}…`}</p>
+      )}
     </div>
+
   );
 }
