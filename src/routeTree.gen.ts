@@ -20,6 +20,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminUploadRouteImport } from './routes/_authenticated/admin/upload'
 import { Route as AuthenticatedAdminRunsRouteImport } from './routes/_authenticated/admin/runs'
 import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authenticated/admin/documents'
+import { Route as DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRouteImport } from './routes/[.]well-known/agent-skills/query-swedish-ai/SKILL[.]md'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -77,6 +78,12 @@ const AuthenticatedAdminDocumentsRoute =
     path: '/documents',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute =
+  DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRouteImport.update({
+    id: '/.well-known/agent-skills/query-swedish-ai/SKILL.md',
+    path: '/.well-known/agent-skills/query-swedish-ai/SKILL.md',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/admin/runs': typeof AuthenticatedAdminRunsRoute
   '/admin/upload': typeof AuthenticatedAdminUploadRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/.well-known/agent-skills/query-swedish-ai/SKILL.md': typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -100,6 +108,7 @@ export interface FileRoutesByTo {
   '/admin/runs': typeof AuthenticatedAdminRunsRoute
   '/admin/upload': typeof AuthenticatedAdminUploadRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/.well-known/agent-skills/query-swedish-ai/SKILL.md': typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,6 +123,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/runs': typeof AuthenticatedAdminRunsRoute
   '/_authenticated/admin/upload': typeof AuthenticatedAdminUploadRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/.well-known/agent-skills/query-swedish-ai/SKILL.md': typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/admin/runs'
     | '/admin/upload'
     | '/admin/'
+    | '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/admin/runs'
     | '/admin/upload'
     | '/admin'
+    | '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
   id:
     | '__root__'
     | '/'
@@ -152,6 +164,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/runs'
     | '/_authenticated/admin/upload'
     | '/_authenticated/admin/'
+    | '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -161,6 +174,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   DotwellKnownSplatRoute: typeof DotwellKnownSplatRoute
   ApiMcpRoute: typeof ApiMcpRoute
+  DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute: typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -242,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDocumentsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/.well-known/agent-skills/query-swedish-ai/SKILL.md': {
+      id: '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
+      path: '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
+      fullPath: '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
+      preLoaderRoute: typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -280,6 +301,8 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   DotwellKnownSplatRoute: DotwellKnownSplatRoute,
   ApiMcpRoute: ApiMcpRoute,
+  DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute:
+    DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
