@@ -476,3 +476,12 @@ function ToolDoc({
     </div>
   );
 }
+
+function Faq({ q, children }: { q: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="font-medium text-foreground">{q}</dt>
+      <dd className="mt-1 text-muted-foreground">{children}</dd>
+    </div>
+  );
+}
