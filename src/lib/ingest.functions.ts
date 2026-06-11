@@ -65,6 +65,26 @@ function buildCanonicalExistingMap<R extends ExistingRow>(
   return { existing, dupes };
 }
 
+// PostgREST caps .select() at 1000 rows. Paginate so the diff sees ALL docs.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchAllDocuments(sb: any, sourceId: string): Promise<ExistingRow[]> {
+  const PAGE = 1000;
+  const out: ExistingRow[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await sb
+      .from("documents")
+      .select("id, url, status, sitemap_lastmod, fetched_at")
+      .eq("source_id", sourceId)
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    out.push(...(data as ExistingRow[]));
+    if (data.length < PAGE) break;
+  }
+  return out;
+}
+
 export class BulkGuardError extends Error {
   preview: Record<string, unknown>;
   constructor(preview: Record<string, unknown>) {
@@ -161,12 +181,9 @@ export const mapSource = createServerFn({ method: "POST" })
       }
     }
 
-    // Load existing rows for this source so we can diff
-    const { data: existingRows } = await supabaseAdmin
-      .from("documents")
-      .select("id, url, status, sitemap_lastmod, fetched_at")
-      .eq("source_id", source.id);
-    const { existing, dupes: mapDupes } = buildCanonicalExistingMap(existingRows ?? [], canonicalizeUrl);
+    // Load existing rows for this source so we can diff (paginated — PostgREST 1k cap)
+    const existingRows = await fetchAllDocuments(supabaseAdmin, source.id);
+    const { existing, dupes: mapDupes } = buildCanonicalExistingMap(existingRows, canonicalizeUrl);
     if (mapDupes > 0) console.warn(`[map] ${mapDupes} legacy duplicate URL rows collapsed (canonical form). Clean up later.`);
 
     type Refresh = { id: string; sitemap_lastmod: string | null };
@@ -329,12 +346,9 @@ export const previewBulkOp = createServerFn({ method: "POST" })
       filtered.map((e) => [canonicalizeUrl(e.url), e.lastmod]),
     );
 
-    const { data: existingRows } = await supabaseAdmin
-      .from("documents")
-      .select("id, url, status, sitemap_lastmod, fetched_at")
-      .eq("source_id", source.id);
+    const existingRows = await fetchAllDocuments(supabaseAdmin, source.id);
 
-    const { existing, dupes } = buildCanonicalExistingMap(existingRows ?? [], canonicalizeUrl);
+    const { existing, dupes } = buildCanonicalExistingMap(existingRows, canonicalizeUrl);
     if (dupes > 0) console.warn(`[preview] ${dupes} legacy duplicate URL rows collapsed.`);
 
     let willInsert = 0;
@@ -359,7 +373,7 @@ export const previewBulkOp = createServerFn({ method: "POST" })
       }
     } else {
       // refresh: only diff against existing rows in DB (canonical key)
-      for (const row of existingRows ?? []) {
+      for (const row of existingRows) {
         const key = canonicalizeUrl(row.url);
         const lastmod = lastmodByUrl.get(key);
         const newer =
@@ -686,14 +700,11 @@ export const refreshSitemap = createServerFn({ method: "POST" })
     const { canonicalizeUrl } = await import("./url-canonical.server");
     const lastmodByUrl = new Map(sitemap.map((e) => [canonicalizeUrl(e.url), e.lastmod]));
 
-    const { data: existing } = await supabaseAdmin
-      .from("documents")
-      .select("id, url, status, sitemap_lastmod, fetched_at")
-      .eq("source_id", source.id);
+    const existing = await fetchAllDocuments(supabaseAdmin, source.id);
 
     type Stale = { id: string; lastmod: string; wasEmbedded: boolean };
     const stale: Stale[] = [];
-    for (const doc of existing ?? []) {
+    for (const doc of existing) {
       const newLastmod = lastmodByUrl.get(canonicalizeUrl(doc.url));
       if (newLastmod && (!doc.sitemap_lastmod || new Date(newLastmod) > new Date(doc.sitemap_lastmod))) {
         stale.push({ id: doc.id, lastmod: newLastmod, wasEmbedded: doc.status === "embedded" });
