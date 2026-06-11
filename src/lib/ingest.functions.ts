@@ -547,6 +547,13 @@ export const scrapeBatch = createServerFn({ method: "POST" })
         if (res.method === "firecrawl") credits += 1;
         if (res.text && res.text.length > 200) {
           const detectedLang = detectLangFromText(res.text);
+          // Provenance: when we routed via OCR, keep the unpdf reason in `error`
+          // (non-fatal annotation) so operators can spot patterns like
+          // "large file → Worker memory exhaustion → routinely OCR'd".
+          const provenanceError =
+            res.method === "firecrawl" && res.unpdfError
+              ? `[provenance] unpdf bypassed → firecrawl OCR (${res.unpdfError.slice(0, 300)})`
+              : null;
           await supabaseAdmin
             .from("documents")
             .update({
@@ -558,7 +565,8 @@ export const scrapeBatch = createServerFn({ method: "POST" })
               token_count: Math.ceil(res.text.length / 4),
               published_at: res.publishedAt?.date ?? doc.published_at ?? null,
               published_at_source: res.publishedAt?.source ?? (doc.published_at ? doc.published_at_source : null),
-              error: null,
+              extraction_method: res.method,
+              error: provenanceError,
             })
             .eq("id", doc.id);
           scraped++;
