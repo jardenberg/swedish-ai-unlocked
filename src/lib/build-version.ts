@@ -1,5 +1,5 @@
 // Bump on each meaningful deploy. Format: v + YYYYMMDDHHMM (UTC-ish, short).
-export const VERSION = "v202606112315";
+export const VERSION = "v202606112345";
 export const PUBLISHED = "June 11, 2026";
 export const SITE_URL = "https://rise-ai-sweden.jardenberg.org";
 export const MCP_ENDPOINT = "https://rise-ai-sweden.jardenberg.org/api/mcp";
