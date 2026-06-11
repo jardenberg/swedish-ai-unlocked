@@ -29,6 +29,7 @@ export const getDocumentTool = defineTool({
       url: data.url,
       title: data.title,
       lang: data.lang,
+      pageType: data.page_type,
       contentType: data.content_type,
       source: (data.sources as { slug?: string } | null)?.slug,
       sourceName: (data.sources as { name?: string } | null)?.name,
