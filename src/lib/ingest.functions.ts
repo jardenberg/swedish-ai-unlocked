@@ -694,7 +694,7 @@ export const refreshSitemap = createServerFn({ method: "POST" })
     type Stale = { id: string; lastmod: string; wasEmbedded: boolean };
     const stale: Stale[] = [];
     for (const doc of existing ?? []) {
-      const newLastmod = lastmodByUrl.get(doc.url);
+      const newLastmod = lastmodByUrl.get(canonicalizeUrl(doc.url));
       if (newLastmod && (!doc.sitemap_lastmod || new Date(newLastmod) > new Date(doc.sitemap_lastmod))) {
         stale.push({ id: doc.id, lastmod: newLastmod, wasEmbedded: doc.status === "embedded" });
       }
