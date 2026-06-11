@@ -6,5 +6,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+Content-Signal: ai-train=yes, search=yes, ai-input=yes
 
 Sitemap: https://rise-ai-sweden.jardenberg.org/sitemap.xml
