@@ -633,11 +633,12 @@ export const scrapeBatch = createServerFn({ method: "POST" })
 
     await supabaseAdmin
       .from("ingest_runs")
-      .update({ finished_at: new Date().toISOString(), scraped, failed, credits_used: credits })
+      .update({ finished_at: new Date().toISOString(), scraped, failed, credits_used: credits, notes: skippedOffsite ? `skipped_offsite=${skippedOffsite}` : null })
       .eq("id", run!.id);
 
-    return { scraped, failed, credits, runId: run!.id };
+    return { scraped, failed, skippedOffsite, credits, runId: run!.id };
   });
+
 
 // ──────────────────────────────────────────────────────────────────
 // embedBatch — pick N scraped docs, chunk, embed via Lovable AI, store
