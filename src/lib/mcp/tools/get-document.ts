@@ -13,7 +13,7 @@ export const getDocumentTool = defineTool({
     const { data, error } = await supabaseAdmin
       .from("documents")
       .select(
-        "url, title, lang, page_type, content_type, raw_markdown, fetched_at, published_at, published_at_source, sources(slug, name)",
+        "url, title, lang, page_type, content_type, raw_markdown, fetched_at, published_at, published_at_source, bytes_replaced_at, sources(slug, name)",
       )
       .eq("url", url)
       .eq("status", "embedded")
@@ -25,6 +25,10 @@ export const getDocumentTool = defineTool({
     const MAX = 80_000;
     const md = data.raw_markdown ?? "";
     const truncated = md.length > MAX;
+    const replacedAt = (data as { bytes_replaced_at?: string | null }).bytes_replaced_at ?? null;
+    const contentNote = replacedAt
+      ? `Stored copy manually replaced on ${replacedAt.slice(0, 10)}; the canonical source remains the publisher URL.`
+      : null;
     return JSON.stringify({
       url: data.url,
       title: data.title,
@@ -36,9 +40,12 @@ export const getDocumentTool = defineTool({
       publishedAt: data.published_at,
       publishedAtSource: data.published_at_source,
       fetchedAt: data.fetched_at,
+      bytesReplacedAt: replacedAt,
+      contentNote,
       content: truncated ? md.slice(0, MAX) + "\n\n[... truncated, full length: " + md.length + " chars]" : md,
       truncated,
     }, null, 2);
   },
 });
+
 
