@@ -111,6 +111,9 @@ export async function extractPdf(input: ExtractPdfInput | string): Promise<PdfEx
   const inp: ExtractPdfInput = typeof input === "string" ? { url: input } : input;
 
   // 1) Try unpdf
+  let unpdfError: string | undefined;
+  let carryTitle: string | undefined;
+  let carryPublishedAt: PublishedAtResult | null = null;
   try {
     const buf = await fetchBytes(inp);
     const pdf = await getDocumentProxy(buf);
@@ -135,23 +138,39 @@ export async function extractPdf(input: ExtractPdfInput | string): Promise<PdfEx
     if (!title) title = titleFromText(merged);
     if (!title) title = titleFromUrl(inp.url);
     if (!publishedAt) publishedAt = extractPublishedAtFromPdfUrl(inp.url);
+    carryTitle = title;
+    carryPublishedAt = publishedAt;
 
     const density = merged.length / Math.max(totalPages, 1);
     if (density >= 200) {
       return { text: merged, pages: totalPages, method: "unpdf", title, publishedAt };
     }
+    unpdfError = `density too low (${density.toFixed(1)} chars/page, ${totalPages} pages) — routing to OCR`;
+    console.warn("[pdf-extract]", unpdfError);
     // density too low → fall through to Firecrawl OCR (but keep title we found)
   } catch (e) {
-    console.warn("[pdf-extract] unpdf failed, falling back:", (e as Error).message);
+    unpdfError = (e as Error).message;
+    console.warn("[pdf-extract] unpdf failed, falling back:", unpdfError);
   }
 
-  // 2) Firecrawl fallback (cannot use for storage-only PDFs)
+  // 2) Firecrawl fallback. For storage-only PDFs, mint a short-lived signed
+  //    URL from the manual-pdfs bucket so Firecrawl can fetch the bytes.
+  let scrapeUrl = inp.url;
   if (inp.storagePath) {
-    throw new Error("PDF extraction failed and Firecrawl fallback is not available for storage-only PDFs");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error: signErr } = await supabaseAdmin.storage
+      .from("manual-pdfs")
+      .createSignedUrl(inp.storagePath, 60 * 60); // 1h
+    if (signErr || !signed?.signedUrl) {
+      throw new Error(
+        `PDF extraction failed (unpdf: ${unpdfError ?? "n/a"}) and signed URL minting failed: ${signErr?.message ?? "no url"}`,
+      );
+    }
+    scrapeUrl = signed.signedUrl;
   }
   try {
     const fc = getFirecrawl();
-    const result = (await fc.scrape(inp.url, {
+    const result = (await fc.scrape(scrapeUrl, {
       formats: ["markdown"],
       parsers: ["pdf"],
       onlyMainContent: false,
@@ -166,15 +185,18 @@ export async function extractPdf(input: ExtractPdfInput | string): Promise<PdfEx
       throw new Error("PDF extraction returned site HTML (likely redirect)");
     }
     const fallbackTitle =
-      result?.metadata?.title?.trim() || titleFromText(md) || titleFromUrl(inp.url);
+      carryTitle || result?.metadata?.title?.trim() || titleFromText(md) || titleFromUrl(inp.url);
     return {
       text: md,
       pages: 0,
       method: "firecrawl",
       title: fallbackTitle,
-      publishedAt: extractPublishedAtFromPdfUrl(inp.url),
+      publishedAt: carryPublishedAt ?? extractPublishedAtFromPdfUrl(inp.url),
+      unpdfError,
     };
   } catch (e) {
-    throw new Error(`PDF extraction failed: ${(e as Error).message}`);
+    throw new Error(
+      `PDF extraction failed (unpdf: ${unpdfError ?? "n/a"}; firecrawl: ${(e as Error).message})`,
+    );
   }
 }
