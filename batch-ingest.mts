@@ -19,6 +19,28 @@ const PAUSE_MS = 3000;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+type SourceFilters = { include_tags: string[]; exclude_tags: string[] };
+const sourceFilterCache = new Map<string, SourceFilters>();
+async function getFilters(sourceId: string): Promise<SourceFilters> {
+  const cached = sourceFilterCache.get(sourceId);
+  if (cached) return cached;
+  const { data } = await sb
+    .from("sources")
+    .select("include_tags, exclude_tags")
+    .eq("id", sourceId)
+    .single();
+  const f: SourceFilters = {
+    include_tags: (data?.include_tags as string[]) ?? [],
+    exclude_tags: (data?.exclude_tags as string[]) ?? [],
+  };
+  sourceFilterCache.set(sourceId, f);
+  return f;
+}
+
+// Counters surfaced in the run summary.
+let filterMissCount = 0;
+let emptyAfterFallback = 0;
+
 async function scrapeOne(sourceId: string): Promise<number> {
   const { data: docs } = await sb
     .from("documents")
@@ -31,15 +53,21 @@ async function scrapeOne(sourceId: string): Promise<number> {
   const htmlDocs = docs.filter((d) => d.content_type === "html");
   const pdfDocs = docs.filter((d) => d.content_type === "pdf");
   let scraped = 0;
+  const filters = await getFilters(sourceId);
 
-  // HTML batch
+  // HTML batch — pass per-source CSS include/exclude selectors
   if (htmlDocs.length) {
     const { extractPublishedAtFromHtml } = await import("/dev-server/src/lib/published-date.server.ts");
     const urls = htmlDocs.map((d) => d.url);
+    const scrapeOpts: any = {
+      formats: ["markdown", "rawHtml"],
+      onlyMainContent: false,
+    };
+    if (filters.include_tags.length) scrapeOpts.includeTags = filters.include_tags;
+    if (filters.exclude_tags.length) scrapeOpts.excludeTags = filters.exclude_tags;
+
     try {
-      const res: any = await fc.batchScrape(urls, {
-        options: { formats: ["markdown", "rawHtml"], onlyMainContent: true },
-      } as any);
+      const res: any = await fc.batchScrape(urls, { options: scrapeOpts } as any);
       const items = (res?.data ?? []) as any[];
       const byUrl = new Map<string, { markdown: string; title?: string; rawHtml?: string }>();
       for (const it of items) {
@@ -49,7 +77,29 @@ async function scrapeOne(sourceId: string): Promise<number> {
         if (it.markdown) byUrl.set(cu, { markdown: it.markdown, title: it?.metadata?.title, rawHtml: it?.rawHtml });
       }
       for (const doc of htmlDocs) {
-        const got = byUrl.get(doc.url);
+        let got = byUrl.get(doc.url);
+        let filterMiss = false;
+        // Defined fallback: include-tags returned empty → retry once with
+        // onlyMainContent. NEVER an unfiltered fallback. Mark filter_miss.
+        if (!got || got.markdown.length <= 100) {
+          try {
+            const retry: any = await fc.scrape(doc.url, {
+              formats: ["markdown", "rawHtml"],
+              onlyMainContent: true,
+              waitFor: 1500,
+            } as any);
+            if (retry?.markdown && retry.markdown.length > 100) {
+              got = { markdown: retry.markdown, title: retry?.metadata?.title, rawHtml: retry?.rawHtml };
+              filterMiss = true;
+              filterMissCount++;
+              console.warn(`  filter_miss fallback ok: ${doc.url}`);
+            } else {
+              emptyAfterFallback++;
+            }
+          } catch (e) {
+            console.warn("  fallback failed", doc.url, (e as Error).message);
+          }
+        }
         if (got && got.markdown.length > 100) {
           const pub = extractPublishedAtFromHtml(got.rawHtml ?? null);
           await sb.from("documents").update({
@@ -60,11 +110,16 @@ async function scrapeOne(sourceId: string): Promise<number> {
             token_count: Math.ceil(got.markdown.length / 4),
             published_at: pub?.date ?? doc.published_at ?? null,
             published_at_source: pub?.source ?? (doc.published_at ? doc.published_at_source : null),
+            filter_miss: filterMiss,
             error: null,
           }).eq("id", doc.id);
           scraped++;
         } else {
-          await sb.from("documents").update({ status: "failed", error: "no markdown returned" }).eq("id", doc.id);
+          await sb.from("documents").update({
+            status: "failed",
+            error: "no markdown returned (after onlyMainContent fallback)",
+            filter_miss: true,
+          }).eq("id", doc.id);
         }
       }
     } catch (e) {
@@ -72,8 +127,7 @@ async function scrapeOne(sourceId: string): Promise<number> {
     }
   }
 
-
-  // PDFs one-by-one
+  // PDFs one-by-one (selectors don't apply)
   const { detectLangFromText } = await import("/dev-server/src/lib/firecrawl.server.ts");
   for (const doc of pdfDocs) {
     try {
@@ -95,11 +149,10 @@ async function scrapeOne(sourceId: string): Promise<number> {
           error: null,
         }).eq("id", doc.id);
         scraped++;
-        console.log(`  pdf[${res.method}] ${doc.url} (${res.text.length} chars, lang=${detected}, title="${(res.title ?? "").slice(0, 60)}")`);
+        console.log(`  pdf[${res.method}] ${doc.url} (${res.text.length} chars, lang=${detected})`);
       } else {
         await sb.from("documents").update({ status: "failed", error: `empty pdf (${res.method})` }).eq("id", doc.id);
       }
-
     } catch (e) {
       await sb.from("documents").update({ status: "failed", error: (e as Error).message.slice(0, 500) }).eq("id", doc.id);
       console.error("pdf err", doc.url, (e as Error).message);
