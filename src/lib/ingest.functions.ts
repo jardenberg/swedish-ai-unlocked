@@ -31,6 +31,40 @@ function writeRunNotes(payload: Record<string, unknown>): string {
   return JSON.stringify(payload);
 }
 
+// Build a canonical-URL → row lookup from raw documents rows. Stored URLs may
+// predate canonicalizeUrl (bare host, trailing slash, mixed case), so the diff
+// MUST canonicalize both sides — otherwise existing rows look like new inserts.
+// If two rows collapse to the same canonical key, prefer embedded; tiebreak by
+// most recent fetched_at. Returns the dup count so callers can log it.
+type ExistingRow = {
+  id: string;
+  url: string;
+  status: string;
+  sitemap_lastmod: string | null;
+  fetched_at: string | null;
+};
+function buildCanonicalExistingMap<R extends ExistingRow>(
+  rows: R[],
+  canon: (u: string) => string,
+): { existing: Map<string, R>; dupes: number } {
+  const existing = new Map<string, R>();
+  let dupes = 0;
+  for (const r of rows) {
+    const key = canon(r.url);
+    const prev = existing.get(key);
+    if (!prev) { existing.set(key, r); continue; }
+    dupes++;
+    const prevEmb = prev.status === "embedded";
+    const curEmb = r.status === "embedded";
+    if (curEmb && !prevEmb) { existing.set(key, r); continue; }
+    if (prevEmb && !curEmb) continue;
+    const prevT = prev.fetched_at ? new Date(prev.fetched_at).getTime() : 0;
+    const curT = r.fetched_at ? new Date(r.fetched_at).getTime() : 0;
+    if (curT > prevT) existing.set(key, r);
+  }
+  return { existing, dupes };
+}
+
 export class BulkGuardError extends Error {
   preview: Record<string, unknown>;
   constructor(preview: Record<string, unknown>) {
