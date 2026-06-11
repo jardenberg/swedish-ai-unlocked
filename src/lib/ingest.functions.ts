@@ -212,6 +212,9 @@ export const mapSource = createServerFn({ method: "POST" })
         });
         continue;
       }
+      // Leave skipped_offsite rows alone — re-scraping them would just hit the
+      // same offsite redirect and waste credits. They stay parked, hidden.
+      if (row.status === "skipped_offsite") { unchanged++; continue; }
       // Refresh ONLY when the row has been scraped before and sitemap is newer.
       // Rows still pending (no fetched_at) are already queued — leave alone.
       const newer =
@@ -224,6 +227,7 @@ export const mapSource = createServerFn({ method: "POST" })
         unchanged++;
       }
     }
+
 
     // Guard: a refresh resets embedded → pending. If too many, require force.
     const wouldResetEmbedded = toRefresh.filter((r) => {
@@ -368,6 +372,7 @@ export const previewBulkOp = createServerFn({ method: "POST" })
       for (const [url, lastmod] of lastmodByUrl) {
         const row = existing.get(url);
         if (!row) { willInsert++; insertSample.push(url); continue; }
+        if (row.status === "skipped_offsite") { unchanged++; continue; }
         const newer =
           lastmod &&
           row.fetched_at &&
@@ -382,6 +387,7 @@ export const previewBulkOp = createServerFn({ method: "POST" })
     } else {
       // refresh: only diff against existing rows in DB (canonical key)
       for (const row of existingRows) {
+        if (row.status === "skipped_offsite") continue;
         const key = canonicalizeUrl(row.url);
         const lastmod = lastmodByUrl.get(key);
         const newer =
@@ -393,6 +399,7 @@ export const previewBulkOp = createServerFn({ method: "POST" })
         }
       }
     }
+
 
     const guardFraction = embeddedBefore > 0 ? willResetEmbedded / embeddedBefore : 0;
     return {
@@ -459,6 +466,35 @@ export const scrapeBatch = createServerFn({ method: "POST" })
 
     const htmlDocs = pendingDocs.filter((d) => d.content_type === "html");
     const pdfDocs = pendingDocs.filter((d) => d.content_type === "pdf");
+    let skippedOffsite = 0;
+
+    // Host equality with `www.` stripped (matches scrape paths everywhere).
+    const sourceHost = (() => {
+      try { return new URL(source.root_url).hostname.replace(/^www\./, ""); }
+      catch { return ""; }
+    })();
+    const isOffsite = (finalUrl: string | undefined): boolean => {
+      if (!finalUrl || !sourceHost) return false;
+      try {
+        const h = new URL(finalUrl).hostname.replace(/^www\./, "");
+        return h !== sourceHost;
+      } catch { return false; }
+    };
+    const markSkippedOffsite = async (docId: string, finalUrl: string | undefined, origUrl: string) => {
+      // Purge any existing chunks so dead vectors don't pollute search.
+      await supabaseAdmin.from("chunks").delete().eq("document_id", docId);
+      await supabaseAdmin
+        .from("documents")
+        .update({
+          status: "skipped_offsite",
+          hidden: true,
+          fetched_at: new Date().toISOString(),
+          error: `offsite redirect: ${origUrl} → ${finalUrl ?? "(unknown)"}`,
+          filter_miss: false,
+        })
+        .eq("id", docId);
+      skippedOffsite++;
+    };
 
     // HTML — batch via Firecrawl, with per-source include/exclude selectors
     if (htmlDocs.length > 0) {
@@ -475,15 +511,23 @@ export const scrapeBatch = createServerFn({ method: "POST" })
         if (includeTags.length) scrapeOpts.includeTags = includeTags;
         if (excludeTags.length) scrapeOpts.excludeTags = excludeTags;
         const batchRes = await fc.batchScrape(urls, { options: scrapeOpts } as unknown as Parameters<typeof fc.batchScrape>[1]);
-        const docs = ((batchRes as { data?: Array<{ markdown?: string; rawHtml?: string; metadata?: { sourceURL?: string; title?: string; statusCode?: number } }> }).data) ?? [];
+        const docs = ((batchRes as { data?: Array<{ markdown?: string; rawHtml?: string; metadata?: { sourceURL?: string; url?: string; title?: string; statusCode?: number } }> }).data) ?? [];
         credits += docs.length;
-        const byUrl = new Map<string, { markdown: string; title?: string; rawHtml?: string }>();
+        // Index by ORIGINAL requested URL — match by metadata.url first (the
+        // request URL) and fall back to sourceURL (final). When the final URL
+        // is on another host, we never want to index it.
+        const byUrl = new Map<string, { markdown: string; title?: string; rawHtml?: string; finalUrl?: string }>();
         for (const d of docs) {
-          const u = d.metadata?.sourceURL;
-          if (u && d.markdown) byUrl.set(u, { markdown: d.markdown, title: d.metadata?.title, rawHtml: d.rawHtml });
+          const final = d.metadata?.sourceURL ?? d.metadata?.url;
+          const key = d.metadata?.url ?? final;
+          if (key && d.markdown) byUrl.set(key, { markdown: d.markdown, title: d.metadata?.title, rawHtml: d.rawHtml, finalUrl: final });
         }
         for (const doc of htmlDocs) {
           let got = byUrl.get(doc.url);
+          if (got && isOffsite(got.finalUrl)) {
+            await markSkippedOffsite(doc.id, got.finalUrl, doc.url);
+            continue;
+          }
           let filterMiss = false;
           // Defined fallback: include-tags returned empty → retry once with
           // onlyMainContent. Never unfiltered. Mark filter_miss for review.
@@ -494,11 +538,16 @@ export const scrapeBatch = createServerFn({ method: "POST" })
                 onlyMainContent: true,
                 waitFor: 1500,
               } as unknown as Parameters<typeof fc.scrape>[1])) as
-                | { markdown?: string; rawHtml?: string; metadata?: { title?: string } }
+                | { markdown?: string; rawHtml?: string; metadata?: { sourceURL?: string; url?: string; title?: string } }
                 | null;
               credits += 1;
+              const retryFinal = retry?.metadata?.sourceURL ?? retry?.metadata?.url;
+              if (retry && isOffsite(retryFinal)) {
+                await markSkippedOffsite(doc.id, retryFinal, doc.url);
+                continue;
+              }
               if (retry?.markdown && retry.markdown.length > 100) {
-                got = { markdown: retry.markdown, title: retry.metadata?.title, rawHtml: retry.rawHtml };
+                got = { markdown: retry.markdown, title: retry.metadata?.title, rawHtml: retry.rawHtml, finalUrl: retryFinal };
                 filterMiss = true;
               }
             } catch (e) {
@@ -535,6 +584,7 @@ export const scrapeBatch = createServerFn({ method: "POST" })
         failed += htmlDocs.length;
       }
     }
+
 
     // PDFs — one-by-one via unpdf, fallback to Firecrawl
     const { detectLangFromText } = await import("./firecrawl.server");
@@ -590,11 +640,12 @@ export const scrapeBatch = createServerFn({ method: "POST" })
 
     await supabaseAdmin
       .from("ingest_runs")
-      .update({ finished_at: new Date().toISOString(), scraped, failed, credits_used: credits })
+      .update({ finished_at: new Date().toISOString(), scraped, failed, credits_used: credits, notes: skippedOffsite ? `skipped_offsite=${skippedOffsite}` : null })
       .eq("id", run!.id);
 
-    return { scraped, failed, credits, runId: run!.id };
+    return { scraped, failed, skippedOffsite, credits, runId: run!.id };
   });
+
 
 // ──────────────────────────────────────────────────────────────────
 // embedBatch — pick N scraped docs, chunk, embed via Lovable AI, store
@@ -721,11 +772,14 @@ export const refreshSitemap = createServerFn({ method: "POST" })
     type Stale = { id: string; lastmod: string; wasEmbedded: boolean };
     const stale: Stale[] = [];
     for (const doc of existing) {
+      // skipped_offsite rows are permanently parked — never resurrect.
+      if (doc.status === "skipped_offsite") continue;
       const newLastmod = lastmodByUrl.get(canonicalizeUrl(doc.url));
       if (newLastmod && (!doc.sitemap_lastmod || new Date(newLastmod) > new Date(doc.sitemap_lastmod))) {
         stale.push({ id: doc.id, lastmod: newLastmod, wasEmbedded: doc.status === "embedded" });
       }
     }
+
     const willResetEmbedded = stale.filter((s) => s.wasEmbedded).length;
 
     const preview = {
