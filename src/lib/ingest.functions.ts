@@ -12,6 +12,36 @@ async function assertAdmin(supabase: any, userId: string) {
 
 const SourceSlug = z.object({ sourceSlug: z.enum(["rise", "ai_sweden"]) });
 
+// Backend hard guard: any bulk operation that would reduce the embedded count
+// by more than this fraction must be invoked with { force: true }.
+const EMBEDDED_DROP_GUARD = 0.10;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function countEmbedded(sb: any, sourceId: string): Promise<number> {
+  const { count } = await sb
+    .from("documents")
+    .select("*", { count: "exact", head: true })
+    .eq("source_id", sourceId)
+    .eq("status", "embedded")
+    .eq("hidden", false);
+  return count ?? 0;
+}
+
+function writeRunNotes(payload: Record<string, unknown>): string {
+  return JSON.stringify(payload);
+}
+
+export class BulkGuardError extends Error {
+  preview: Record<string, unknown>;
+  constructor(preview: Record<string, unknown>) {
+    super(
+      `BulkGuard: operation would reset ${preview.willResetEmbedded} of ${preview.embeddedBefore} embedded docs (>${Math.round(EMBEDDED_DROP_GUARD * 100)}%). Re-run with { force: true } to override.`,
+    );
+    this.preview = preview;
+    this.name = "BulkGuardError";
+  }
+}
+
 // ──────────────────────────────────────────────────────────────────
 // listSources — read for admin UI
 // ──────────────────────────────────────────────────────────────────
