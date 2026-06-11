@@ -215,17 +215,19 @@ export const listRunsDetailed = createServerFn({ method: "POST" })
     if (data.beforeStartedAt) q = q.lt("started_at", data.beforeStartedAt);
     const { data: runs } = await q;
     const parsed = (runs ?? []).map((r) => {
-      let notesObj: Record<string, unknown> | null = null;
+      let delta: number | null = null;
+      let durationMs: number | null = null;
+      let force: boolean | null = null;
       try {
-        notesObj = r.notes ? JSON.parse(r.notes) : null;
+        if (r.notes) {
+          const o = JSON.parse(r.notes) as { delta?: unknown; durationMs?: unknown; force?: unknown };
+          if (typeof o.delta === "number") delta = o.delta;
+          if (typeof o.durationMs === "number") durationMs = o.durationMs;
+          if (typeof o.force === "boolean") force = o.force;
+        }
       } catch {
-        notesObj = null;
+        /* not JSON */
       }
-      const delta =
-        notesObj && typeof notesObj.delta === "number" ? (notesObj.delta as number) : null;
-      const durationMs =
-        notesObj && typeof notesObj.durationMs === "number" ? (notesObj.durationMs as number) : null;
-      const force = notesObj && typeof notesObj.force === "boolean" ? (notesObj.force as boolean) : null;
       return {
         id: r.id,
         kind: r.kind,
@@ -238,7 +240,6 @@ export const listRunsDetailed = createServerFn({ method: "POST" })
         failed: r.failed,
         credits_used: r.credits_used,
         notes: r.notes,
-        notesObj,
         delta,
         durationMs,
         force,
@@ -421,44 +422,38 @@ export const runSearchConsole = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     rateLimit(context.userId);
 
-    const { searchSwedishAiTool } = await import("./mcp/tools/search");
+    const { searchTool } = await import("./mcp/tools/search");
     const { findMentionsTool } = await import("./mcp/tools/find-mentions");
     const { findSimilarTool } = await import("./mcp/tools/find-similar");
     const { listLatestTool } = await import("./mcp/tools/list-latest");
     const { getDocumentTool } = await import("./mcp/tools/get-document");
     const { listSourcesTool } = await import("./mcp/tools/list-sources");
 
-    const tools = {
-      search_swedish_ai: searchSwedishAiTool,
-      find_mentions: findMentionsTool,
-      find_similar: findSimilarTool,
-      list_latest: listLatestTool,
-      get_document: getDocumentTool,
-      list_sources: listSourcesTool,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as Record<string, { execute: (p: any) => Promise<string> }>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tools: Record<string, { execute: (p: any, ctx: any) => Promise<unknown> }> = {
+      search_swedish_ai: searchTool as never,
+      find_mentions: findMentionsTool as never,
+      find_similar: findSimilarTool as never,
+      list_latest: listLatestTool as never,
+      get_document: getDocumentTool as never,
+      list_sources: listSourcesTool as never,
+    };
 
     const tool = tools[data.tool];
     if (!tool) throw new Error(`Unknown tool: ${data.tool}`);
     const t0 = Date.now();
-    let parsed: unknown = null;
-    let raw = "";
+    let resultJson = "";
     let error: string | null = null;
     try {
-      raw = await tool.execute(data.params);
-      try {
-        parsed = JSON.parse(raw);
-      } catch {
-        parsed = raw;
-      }
+      const raw = await tool.execute(data.params, {});
+      resultJson = typeof raw === "string" ? raw : JSON.stringify(raw, null, 2);
     } catch (e) {
       error = (e as Error).message;
     }
     return {
       tool: data.tool,
-      params: data.params,
       durationMs: Date.now() - t0,
-      result: parsed,
+      resultJson,
       error,
     };
   });
