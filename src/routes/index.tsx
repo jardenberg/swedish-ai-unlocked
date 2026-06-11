@@ -110,7 +110,7 @@ function Landing() {
               above.
             </Tool>
             <Tool name="Claude.ai (web)">
-              Settings → Connectors → Add custom connector → paste the URL.
+              Customize → Connectors → + → Add custom connector → paste the URL.
             </Tool>
             <Tool name="ChatGPT (Pro/Team)">
               Settings → Connectors → Add → MCP server → paste the URL.
