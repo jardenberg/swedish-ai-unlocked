@@ -1,46 +1,55 @@
-# Fix: ai_sweden phantom-insert bug + preview transparency
+# Fix: paginate documents fetch in the diff partition
 
 ## Root cause
 
-`mapSource`, `previewBulkOp`, and `refreshSitemap` all build the "existing URLs" lookup directly from `documents.url` without re-canonicalizing. Incoming sitemap URLs go through `canonicalizeUrl(...)`, so any stored row whose URL is in a slightly different shape — bare-host `ai.se`, trailing slash, mixed case — fails the lookup and is classified as a brand-new insert. For ai_sweden this inflates "new" by ~1,065 even though SQL confirms 2,065 canonical-www rows already exist.
+Supabase's PostgREST returns at most 1,000 rows per `.select()` by default. `mapSource`, `previewBulkOp`, and `refreshSitemap` all do:
 
-The insert path is unaffected because it canonicalizes before insert; only the diff partition is broken.
+```ts
+const { data: existingRows } = await supabaseAdmin
+  .from("documents")
+  .select("id, url, status, sitemap_lastmod, fetched_at")
+  .eq("source_id", source.id);
+```
 
-## Changes
+For ai_sweden (2,065 docs) this silently returns only the first 1,000. The other ~1,065 are invisible to the diff and get classified as brand-new inserts. SQL confirms ai_sweden has the exact "new" URLs (e.g. `https://www.ai.se/en/about-cookies-our-website`) already stored in canonical form — they just weren't in the slice the JS client received.
 
-### 1. `src/lib/ingest.functions.ts` — canonicalize both sides of every diff
+The recently added `canonicalizeUrl`-both-sides logic is still correct defense-in-depth and should stay; it just wasn't the bug.
 
-In all three functions that build a URL→row map from `documents` (`mapSource`, `previewBulkOp`, `refreshSitemap`):
+## Fix
 
-- Build the lookup with `canonicalizeUrl(r.url)` as the key, not the raw `r.url`.
-- If two stored rows collapse to the same canonical key (legacy duplicates), keep the embedded one; otherwise keep the most recently fetched. Log a one-line warning with the duplicate count so we can clean those rows up later, but don't block the op.
-- No other logic changes — the insert/refresh/unchanged partitioning stays as-is.
+Add a small helper in `src/lib/ingest.functions.ts`:
 
-### 2. `mapSource` — return a sample of would-insert URLs
+```ts
+async function fetchAllDocuments(sb, sourceId) {
+  const PAGE = 1000;
+  const out = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await sb
+      .from("documents")
+      .select("id, url, status, sitemap_lastmod, fetched_at")
+      .eq("source_id", sourceId)
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    out.push(...data);
+    if (data.length < PAGE) break;
+  }
+  return out;
+}
+```
 
-- Extend the returned `preview` (and the `BulkGuardError` payload) with `willInsertSample: string[]` — the first 20 entries of `toInsert.map(r => r.url)`, sorted.
-- Same field added to `previewBulkOp`'s return shape so the dialog always has it.
-
-### 3. `src/routes/_authenticated/admin/index.tsx` — show the sample
-
-- Below the existing stats grid in the AlertDialog, add a collapsible `<details>` block: "Sample of new URLs (first 20 of N)" with a monospace `<ul>` of the URLs.
-- Only render when `_op === "map"` and `willInsert > 0`. Each URL is a plain external `<a>` so we can spot-check in one click.
-
-### 4. No schema, no migration, no behavior change beyond the diff fix
-
-Guard math, force flow, and atomic re-embed are untouched.
+Replace the three current `existingRows` fetches with `await fetchAllDocuments(supabaseAdmin, source.id)`. No other logic changes — `buildCanonicalExistingMap` and partition stay identical.
 
 ## Verification
 
-After implementation, re-run the ai_sweden preview from the admin panel:
+After deploy, re-run the ai_sweden preview:
 
-- Acceptance: `willInsert ≤ ~150`, `unchanged ≥ ~1,900`, `willResetEmbedded = 0`.
-- Acceptance: the new "Sample of new URLs" disclosure lists URLs that genuinely aren't in `documents` (spot-check 3 against SQL).
-- Re-run the rise preview to confirm it still shows `0/0/0` (no regression).
-- If both pass, the safety floor holds and we can proceed to Phase C.
+- Acceptance: `willInsert ≤ ~150` (likely far fewer), `unchanged ≈ 2,000+`, `willResetEmbedded = 0`.
+- Re-run rise preview to confirm it still shows `0/0/0`.
+- The 20-URL sample in the dialog should now show URLs that are genuinely not in `documents` (or be empty).
 
 ## Files touched
 
-- `src/lib/ingest.functions.ts` (3 partition sites + return shape)
-- `src/routes/_authenticated/admin/index.tsx` (dialog disclosure)
+- `src/lib/ingest.functions.ts` (one helper + three call-site replacements)
 - `src/lib/build-version.ts` (bump)
