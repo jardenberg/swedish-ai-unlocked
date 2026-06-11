@@ -769,11 +769,14 @@ export const refreshSitemap = createServerFn({ method: "POST" })
     type Stale = { id: string; lastmod: string; wasEmbedded: boolean };
     const stale: Stale[] = [];
     for (const doc of existing) {
+      // skipped_offsite rows are permanently parked — never resurrect.
+      if (doc.status === "skipped_offsite") continue;
       const newLastmod = lastmodByUrl.get(canonicalizeUrl(doc.url));
       if (newLastmod && (!doc.sitemap_lastmod || new Date(newLastmod) > new Date(doc.sitemap_lastmod))) {
         stale.push({ id: doc.id, lastmod: newLastmod, wasEmbedded: doc.status === "embedded" });
       }
     }
+
     const willResetEmbedded = stale.filter((s) => s.wasEmbedded).length;
 
     const preview = {
