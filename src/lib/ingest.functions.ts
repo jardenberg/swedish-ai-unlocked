@@ -617,22 +617,28 @@ export const embedBatch = createServerFn({ method: "POST" })
   });
 
 // ──────────────────────────────────────────────────────────────────
-// refreshSitemap — diff sitemap lastmod, mark stale docs as pending
+// refreshSitemap — diff sitemap lastmod, mark stale docs as pending.
+// Same guard as mapSource: > EMBEDDED_DROP_GUARD reset requires force.
 // ──────────────────────────────────────────────────────────────────
+const RefreshInput = z.object({
+  sourceSlug: z.enum(["rise", "ai_sweden"]),
+  force: z.boolean().optional(),
+});
+
 export const refreshSitemap = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => SourceSlug.parse(data))
+  .inputValidator((data: unknown) => RefreshInput.parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { fetchSitemap } = await import("./firecrawl.server");
 
+    const t0 = Date.now();
     const { data: source } = await supabaseAdmin
-      .from("sources")
-      .select("*")
-      .eq("slug", data.sourceSlug)
-      .single();
+      .from("sources").select("*").eq("slug", data.sourceSlug).single();
     if (!source) throw new Error("source not found");
+
+    const embeddedBefore = await countEmbedded(supabaseAdmin, source.id);
 
     const sitemap = await fetchSitemap(source.root_url);
     const { canonicalizeUrl } = await import("./url-canonical.server");
@@ -640,22 +646,68 @@ export const refreshSitemap = createServerFn({ method: "POST" })
 
     const { data: existing } = await supabaseAdmin
       .from("documents")
-      .select("id, url, sitemap_lastmod, fetched_at")
+      .select("id, url, status, sitemap_lastmod, fetched_at")
       .eq("source_id", source.id);
 
-    let stale = 0;
+    type Stale = { id: string; lastmod: string; wasEmbedded: boolean };
+    const stale: Stale[] = [];
     for (const doc of existing ?? []) {
       const newLastmod = lastmodByUrl.get(doc.url);
       if (newLastmod && (!doc.sitemap_lastmod || new Date(newLastmod) > new Date(doc.sitemap_lastmod))) {
-        await supabaseAdmin
-          .from("documents")
-          .update({ status: "pending", sitemap_lastmod: newLastmod })
-          .eq("id", doc.id);
-        stale++;
+        stale.push({ id: doc.id, lastmod: newLastmod, wasEmbedded: doc.status === "embedded" });
       }
     }
+    const willResetEmbedded = stale.filter((s) => s.wasEmbedded).length;
 
-    return { stale, totalInSitemap: sitemap.length };
+    const preview = {
+      op: "refresh",
+      source: data.sourceSlug,
+      willRefresh: stale.length,
+      willResetEmbedded,
+      embeddedBefore,
+    };
+
+    if (
+      embeddedBefore > 0 &&
+      willResetEmbedded / Math.max(embeddedBefore, 1) > EMBEDDED_DROP_GUARD &&
+      !data.force
+    ) {
+      throw new BulkGuardError(preview);
+    }
+
+    for (const s of stale) {
+      await supabaseAdmin
+        .from("documents")
+        .update({ status: "pending", sitemap_lastmod: s.lastmod })
+        .eq("id", s.id);
+    }
+
+    const embeddedAfter = await countEmbedded(supabaseAdmin, source.id);
+    const notes = writeRunNotes({
+      op: "refresh",
+      force: !!data.force,
+      stale: stale.length,
+      willResetEmbedded,
+      embeddedBefore,
+      embeddedAfter,
+      delta: embeddedAfter - embeddedBefore,
+      durationMs: Date.now() - t0,
+    });
+    await supabaseAdmin.from("ingest_runs").insert({
+      source_id: source.id,
+      kind: "refresh",
+      finished_at: new Date().toISOString(),
+      skipped: stale.length,
+      notes,
+    });
+
+    return {
+      stale: stale.length,
+      totalInSitemap: sitemap.length,
+      embeddedBefore,
+      embeddedAfter,
+      delta: embeddedAfter - embeddedBefore,
+    };
   });
 
 // ──────────────────────────────────────────────────────────────────
