@@ -240,14 +240,16 @@ async function main() {
     }
     if (totalPending === 0 && totalScraped === 0) {
       console.log("DONE — nothing left pending/scraped");
+      console.log(`Filter misses: ${filterMissCount}; empty-after-fallback: ${emptyAfterFallback}`);
       try {
         const { runSmokeTests } = await import("/dev-server/src/lib/ingest-smoke.server.ts");
         const report = await runSmokeTests(sb);
-        console.log(`SMOKE: ${report.summary}`);
+        const extra = ` | filter_miss=${filterMissCount} empty_after_fallback=${emptyAfterFallback}`;
+        console.log(`SMOKE: ${report.summary}${extra}`);
         await sb.from("ingest_runs").insert({
           kind: "smoke",
           finished_at: new Date().toISOString(),
-          notes: report.summary,
+          notes: report.summary + extra,
         });
       } catch (e) {
         console.error("smoke err", (e as Error).message);
