@@ -20,27 +20,33 @@ export type Database = {
           document_id: string
           embedding: string | null
           id: string
+          lang: string | null
           ord: number
           text: string
           token_count: number | null
+          tsv: unknown
         }
         Insert: {
           created_at?: string
           document_id: string
           embedding?: string | null
           id?: string
+          lang?: string | null
           ord: number
           text: string
           token_count?: number | null
+          tsv?: unknown
         }
         Update: {
           created_at?: string
           document_id?: string
           embedding?: string | null
           id?: string
+          lang?: string | null
           ord?: number
           text?: string
           token_count?: number | null
+          tsv?: unknown
         }
         Relationships: [
           {
@@ -62,6 +68,7 @@ export type Database = {
           hidden: boolean
           id: string
           lang: string | null
+          page_type: string | null
           published_at: string | null
           published_at_source: string | null
           raw_markdown: string | null
@@ -83,6 +90,7 @@ export type Database = {
           hidden?: boolean
           id?: string
           lang?: string | null
+          page_type?: string | null
           published_at?: string | null
           published_at_source?: string | null
           raw_markdown?: string | null
@@ -104,6 +112,7 @@ export type Database = {
           hidden?: boolean
           id?: string
           lang?: string | null
+          page_type?: string | null
           published_at?: string | null
           published_at_source?: string | null
           raw_markdown?: string | null
@@ -259,26 +268,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      match_chunks: {
+      chunk_tsv: { Args: { _lang: string; _text: string }; Returns: unknown }
+      derive_page_type: { Args: { _url: string }; Returns: string }
+      find_mentions_chunks: {
         Args: {
           filter_lang?: string
+          filter_page_type?: string
           filter_source?: string
           match_count?: number
-          query_embedding: string
+          query_text: string
         }
         Returns: {
-          chunk_id: string
           document_id: string
           fetched_at: string
           lang: string
-          similarity: number
+          match_mode: string
+          page_type: string
+          rank: number
           snippet: string
           source_name: string
           source_slug: string
@@ -286,6 +292,87 @@ export type Database = {
           url: string
         }[]
       }
+      find_mentions_total: {
+        Args: {
+          filter_lang?: string
+          filter_page_type?: string
+          filter_source?: string
+          query_text: string
+        }
+        Returns: number
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      lexical_match_chunks: {
+        Args: {
+          filter_lang?: string
+          filter_page_type?: string
+          filter_source?: string
+          match_count?: number
+          query_text: string
+        }
+        Returns: {
+          chunk_id: string
+          document_id: string
+          fetched_at: string
+          lang: string
+          page_type: string
+          rank: number
+          snippet: string
+          source_name: string
+          source_slug: string
+          title: string
+          url: string
+        }[]
+      }
+      match_chunks:
+        | {
+            Args: {
+              filter_lang?: string
+              filter_source?: string
+              match_count?: number
+              query_embedding: string
+            }
+            Returns: {
+              chunk_id: string
+              document_id: string
+              fetched_at: string
+              lang: string
+              similarity: number
+              snippet: string
+              source_name: string
+              source_slug: string
+              title: string
+              url: string
+            }[]
+          }
+        | {
+            Args: {
+              filter_lang?: string
+              filter_page_type?: string
+              filter_source?: string
+              match_count?: number
+              query_embedding: string
+            }
+            Returns: {
+              chunk_id: string
+              document_id: string
+              fetched_at: string
+              lang: string
+              page_type: string
+              similarity: number
+              snippet: string
+              source_name: string
+              source_slug: string
+              title: string
+              url: string
+            }[]
+          }
       match_similar_documents: {
         Args: {
           filter_lang?: string
@@ -305,6 +392,8 @@ export type Database = {
           url: string
         }[]
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "user"
