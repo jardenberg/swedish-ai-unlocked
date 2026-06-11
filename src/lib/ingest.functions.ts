@@ -849,10 +849,16 @@ export const discoverPdfs = createServerFn({ method: "POST" })
       .from("sources").select("*").eq("slug", data.sourceSlug).single();
     if (!source) throw new Error("source not found");
 
-    // Pull existing URLs (set) to skip duplicates cheaply
-    const { data: existing } = await supabaseAdmin
-      .from("documents").select("url").eq("source_id", source.id);
-    const known = new Set((existing ?? []).map((d) => d.url));
+    // Pull existing URLs (set) to skip duplicates cheaply. Paginate — the
+    // PostgREST 1k cap would otherwise let duplicates through.
+    const { fetchAllPages } = await import("./ingest-helpers.server");
+    const existing = await fetchAllPages<{ url: string }>((from, to) =>
+      supabaseAdmin
+        .from("documents").select("url").eq("source_id", source.id)
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
+    const known = new Set(existing.map((d) => d.url));
 
     // Stream over scraped docs in pages of 200
     const PDF_RE = /\(([^)\s]+\.pdf)(?:[?#][^)\s]*)?\)|href=["']([^"'\s]+\.pdf)(?:[?#][^"'\s]*)?["']/gi;
