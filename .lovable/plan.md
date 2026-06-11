@@ -1,137 +1,121 @@
+# Plan: A → B → C, with D throughout
 
-# Agent-readiness pass (app-level only)
+Sequence is the safety order. A and B ship together and get verified against the live corpus with the zero-touch remap proof. C is then built on top of the new run metadata. D fixes are slotted into whichever phase touches the relevant surface.
 
-Six small additions, in the order you specified. All TanStack app code, no Cloudflare config.
+---
 
-## 1. `public/robots.txt` — Content-Signal
+## A. Root-cause fix: non-destructive re-map
 
-Append one line above the `Sitemap:` directive:
+The current `mapSource` builds rows with `status: 'pending'` for every URL it sees and `upsert(..., { ignoreDuplicates: false })`, which overwrites `status`, `sitemap_lastmod`, `lang`, and `content_type` on every existing row. That is what nuked the corpus.
 
-```
-Content-Signal: ai-train=yes, search=yes, ai-input=yes
-```
+Replace the blind upsert with a diff against existing rows:
 
-Keep the existing `facebookexternalhit`, `Facebot`, and `*` allow blocks intact.
+1. Read existing `{ id, url, status, sitemap_lastmod, fetched_at }` for every URL in the map set (chunked `IN` queries).
+2. Partition the incoming URLs:
+   - **New** → insert with `status='pending'`.
+   - **Existing, no lastmod change** (or both null) → skip entirely. Do not touch the row.
+   - **Existing, lastmod newer than `fetched_at`** (or row in `failed`/`pending`) → update `sitemap_lastmod` and set `status='pending'`. This is the legitimate refresh path.
+3. Report `{ inserted, refreshed, unchanged, sitemapOnly, mapOnly }` and write the deltas into `ingest_runs.notes`.
 
-## 2. MCP Server Card — `src/routes/.well-known/mcp/server-card[.]json.ts`
+**Atomic re-embed (no search gap).** Today re-scraping an embedded doc deletes its chunks before the new embed lands, so the doc disappears from search mid-cycle. Fix in the embed path:
 
-New TanStack server route returning static JSON with `Content-Type: application/json` and `Cache-Control: public, max-age=3600`. GET only; other methods → 405.
+- Embed into a staging set keyed by `document_id` + a `generation` int (or insert new chunks with `generation = old + 1`, then in one transaction delete the old generation and flip the doc's current generation pointer).
+- Simpler implementation: build the new chunk rows in memory, then in a single transaction `DELETE FROM chunks WHERE document_id = $1` + `INSERT` the new ones + `UPDATE documents SET status='embedded'`. Old chunks remain searchable until the swap commits.
+- Scrape no longer deletes chunks; only embed does, and only inside that transaction.
 
-Payload (single source of truth for `VERSION` imported from a tiny shared constant so the landing page and server card stay in sync; new file `src/lib/build-version.ts`):
+---
 
-```json
-{
-  "$schemaNote": "Tracks MCP SEP-1649 server-card draft (revision 2025-05); update as the spec lands.",
-  "serverInfo": {
-    "name": "rise-ai-sweden",
-    "version": "v202606102145",
-    "title": "RISE & AI Sweden Public MCP"
-  },
-  "transport": {
-    "type": "streamable-http",
-    "endpoint": "https://rise-ai-sweden.jardenberg.org/api/mcp"
-  },
-  "authentication": { "type": "none", "note": "Public, no auth, no API key. Rate limited to 60 req / 5 min per IP." },
-  "capabilities": {
-    "tools": [
-      { "name": "search_swedish_ai", "description": "Semantic search across RISE and AI Sweden publications (sv/en)." },
-      { "name": "list_latest", "description": "Newest documents across both sources; lightweight metadata only." },
-      { "name": "find_similar", "description": "Given an indexed URL, return semantically nearest other documents." },
-      { "name": "get_document", "description": "Full cleaned markdown for a single indexed URL." },
-      { "name": "list_sources", "description": "Sources covered, document counts, language breakdown, last-updated." }
-    ]
-  },
-  "documentation": "https://rise-ai-sweden.jardenberg.org/",
-  "contact": { "email": "joakim@jardenberg.com" }
-}
+## B. Guardrails on destructive operations
+
+**B1 — Backend hard guard (RPC level, can't be clicked through).**
+
+New server fn `previewBulkOp({ op, sourceSlug })` returns:
+
+```text
+{ op, source, willInsert, willRefresh, willResetEmbedded,
+  embeddedBefore, embeddedAfterEstimate, estCredits, estDurationMin }
 ```
 
-Refactor `src/routes/index.tsx` to import `VERSION` from the new shared file.
+Every bulk fn (`mapSource`, `refreshSitemap`, `scrapeBatch` drain, future re-clean) accepts `{ force?: boolean }` and:
 
-## 3. `/llms.txt` — `src/routes/llms[.]txt.ts`
+- Computes the same impact preview at call time.
+- If `willResetEmbedded / embeddedBefore > 0.10` and `force !== true`, throws `BulkGuardError` with the preview attached. UI surfaces it; raw POST also gets blocked.
 
-TanStack server route returning `text/plain; charset=utf-8`. Static markdown body, compressed landing page for agent readers:
+**B2 — Pre-flight UI.** Every bulk button calls `previewBulkOp` first and opens an AlertDialog showing the numbers verbatim ("add 1,057 new pending · reset 1,283 embedded · ~2h corpus downtime · ~2,340 credits"). Confirm dispatches with `force: true` only if the preview included a guard hit and the operator typed/clicked through.
 
-- H1 + one-line blockquote summary
-- What it is, who runs it (RISE + AI Sweden, built by Joakim Jardenberg)
-- MCP endpoint URL + "no auth"
-- `## Tools` — the five tools with one-liners
-- `## Rate limit` — 60 req / 5 min per IP
-- `## Sources` — RISE and AI Sweden, with live corpus counts fetched at request time via `supabaseAdmin` (same query shape as `list_sources` tool, just rendered as markdown). Short cache header (`max-age=600`).
-- `## Links` — canonical landing page, server card, agent-skills index
+**B3 — Post-op delta report.** Every bulk fn writes to `ingest_runs.notes` (JSON):
 
-## 4. Link header on `/`
-
-Add a `loader` to `src/routes/index.tsx` (or a tiny `beforeLoad`) that calls `setResponseHeader` from `@tanstack/react-start/server`:
-
-```
-Link: </.well-known/mcp/server-card.json>; rel="service-desc", </llms.txt>; rel="describedby"
+```text
+{ embeddedBefore, embeddedAfter, delta, creditsUsed, durationMs, op, force }
 ```
 
-The loader will be a no-op data-wise (`return null`) — purely for the header side effect. Safe on the public `/` route (no auth middleware, runs at SSR).
+---
 
-## 5. Agent-skills — two new server routes
+## A+B verification (report stop)
 
-**`src/routes/.well-known/agent-skills/index[.]json.ts`** returns JSON per Cloudflare agent-skills RFC v0.2.0:
+Before C:
+- Run `Map URLs` on each source with no upstream changes. Expect `inserted=0, refreshed=0, unchanged=ALL`. SQL before/after on `count(*) filter (status='embedded')` must be identical.
+- Simulate `>10%` drop (test fixture or dry-run flag) → confirm `BulkGuardError` without `force`, allowed with `force`.
+- Full smoke green; lexical canary green; Helsingborg event still findable with `page_type='event'`.
+- Report back with the proof, then proceed.
 
-```json
-{
-  "$schema": "https://agent-skills.cloudflare.com/schema/v0.2.0.json",
-  "skills": [
-    {
-      "name": "query-swedish-ai",
-      "type": "markdown",
-      "description": "How to query the RISE & AI Sweden MCP effectively.",
-      "url": "https://rise-ai-sweden.jardenberg.org/.well-known/agent-skills/query-swedish-ai/SKILL.md",
-      "sha256": "<computed at request time>"
-    }
-  ]
-}
+---
+
+## C. Admin rebuild for observability
+
+New layout under `/_authenticated/admin`:
+
+```text
+┌──────────────────────────────────────────────────────────────────────┐
+│ Corpus Health (sticky)                                               │
+│  rise: 1,283 searchable (▲ +12 / 24h)   ai_sweden: 257 (▼ -8)        │
+│  total chunks 18,402   failed 1   hidden 3                           │
+│  Smoke: ● green  12 min ago        Build v202606112120               │
+│  [⚠ corpus degraded: 41 docs below 24h peak — run #8af2]             │
+├──────────────────────────────────────────────────────────────────────┤
+│ Tabs: [Pipeline] [Timeline] [Smoke] [Search Console] [Documents]     │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-`sha256` is computed at request time from the SKILL.md string constant (both files import the same `SKILL_MD` constant from `src/lib/agent-skills/query-swedish-ai.ts`) so the hash can never drift from the served content. Uses Web Crypto `crypto.subtle.digest('SHA-256', ...)` — Worker-safe.
+**C1 Corpus health header** — server fn `getCorpusHealth()` returns per-source live embedded count, 24h delta vs. a `corpus_snapshots` table (new, daily cron-friendly + on every bulk op end), 24h high-water mark, failed/hidden, last smoke result, build version. Yellow banner when `embedded < highWater24h`.
 
-**`src/routes/.well-known/agent-skills/query-swedish-ai/SKILL[.]md.ts`** returns the same `SKILL_MD` string as `text/markdown; charset=utf-8`. Content covers:
+**C2 Pipeline view** — per source: pending → scraped → embedded → failed as a horizontal flow with counts plus docs/min over the last 10 min (from `ingest_runs` deltas) and ETA. The drain progress line stays, but persisted per-source in a small `drain_progress` map so it survives navigation.
 
-- When to use `search_swedish_ai` (semantic query) vs `list_latest` (freshness) vs `find_similar` (more-like-this)
-- `lang` and `source` filter values
-- That `get_document` returns full cleaned markdown for a single URL
-- That every result includes the original publisher URL — agents should cite/link those, not the MCP
-- Rate limit reminder
+**C3 Operations timeline** — `ingest_runs` reverse-chron feed: op, trigger (user vs cron), duration, docs touched, embedded delta (red when negative), credits, notes JSON expandable.
 
-## 6. `/.well-known/*` returns clean 404 instead of 500
+**C4 Smoke panel** — "Run smoke now" button; per-check pass/fail with measured value vs threshold; last 20 runs as a sparkline per check.
 
-Currently any unmatched `/.well-known/*` path 500s (caught by the scanner on `/api-catalog`). Add a splat fallback:
+**C5 Search Console tab** — form fields for `search_swedish_ai` / `find_mentions` / `find_similar` with all parameters; calls go through the same MCP-layer code (not duplicated SQL); raw JSON pane with copy button.
 
-**`src/routes/.well-known/$.ts`** — server route at `/.well-known/$` whose GET handler returns `new Response('Not Found', { status: 404, headers: { 'Content-Type': 'text/plain' } })`. TanStack matches more specific routes first, so this only fires for unmatched paths.
+**C6 Document drill-down** — row click in documents table → side sheet: status, page_type, lang, all date fields with sources (sitemap_lastmod, fetched_at, published_at), chunk count, cleaned markdown preview, per-doc op history (filtered `ingest_runs` join via a `document_ops` audit table or by document_id in notes), retry/hide actions.
 
-(If the existing 500 turns out to come from somewhere other than a missing route — e.g. a thrown error in `__root` for unmatched server paths — I'll trace it during implementation and fix at the actual source. The splat route is the expected fix.)
+**C7 Credits** — sum `credits_used` from `ingest_runs` for current run, today, current month; if Firecrawl exposes balance via API, fetch and show — otherwise omit cleanly.
 
-## File list
+---
 
-New:
-- `src/lib/build-version.ts` (shared `VERSION` constant)
-- `src/lib/agent-skills/query-swedish-ai.ts` (shared `SKILL_MD` string)
-- `src/routes/.well-known/mcp/server-card[.]json.ts`
-- `src/routes/.well-known/agent-skills/index[.]json.ts`
-- `src/routes/.well-known/agent-skills/query-swedish-ai/SKILL[.]md.ts`
-- `src/routes/.well-known/$.ts`
-- `src/routes/llms[.]txt.ts`
+## D. Housekeeping (slotted in)
 
-Edited:
-- `public/robots.txt` (one line)
-- `src/routes/index.tsx` (import `VERSION`, add loader that sets Link header)
+1. Identify the 1 failed `ai_sweden` doc from the events drain (`SELECT url, error FROM documents WHERE source='ai_sweden' AND status='failed'`), retry once; if it fails again, hide and note. (During A+B.)
+2. Confirm landing-page stats are server-rendered (no `0 documents` flash). If a client-only fetch is hiding behind a loader, move to a public server fn called from the loader. (During C.)
+3. Update `llms.txt` corpus counts (docs, chunks, events included) and bump `build-version.ts`. (At the end.)
 
-## Verification
+---
 
-After implementation, from the published URL:
+## Acceptance (verified before declaring done)
 
-1. `curl -I https://rise-ai-sweden.jardenberg.org/` — assert Link header present
-2. `curl -i` each of: `/.well-known/mcp/server-card.json`, `/llms.txt`, `/.well-known/agent-skills/index.json`, `/.well-known/agent-skills/query-swedish-ai/SKILL.md` — assert 200 + correct content-type
-3. `curl -i https://rise-ai-sweden.jardenberg.org/.well-known/nonsense` — assert 404
-4. `sha256sum` the served SKILL.md, compare to the `sha256` field in the served index.json
-5. POST to `https://isitagentready.com/api/scan` and report the score delta
+1. Re-running `Map URLs` on either source with no upstream changes touches zero embedded docs (SQL before/after).
+2. Simulated >10% embedded drop blocked without `force: true`, allowed with it.
+3. Every bulk button shows the pre-flight summary dialog.
+4. Smoke fully green: lexical canary + Helsingborg event findable with `page_type='event'`.
+5. Admin corpus health header numbers match direct SQL exactly.
 
-## Out of scope (explicit)
+---
 
-API catalog, OAuth/PRM/auth.md, WebMCP, DNS-AID — skipped per your call.
+## Technical notes
+
+- **Schema additions** (one migration): `corpus_snapshots(id, source_id, embedded_count, chunks_count, captured_at)`; optional `document_ops(id, document_id, op, ingest_run_id, delta, at)` if the timeline join from `ingest_runs.notes` proves too clunky. `ingest_runs.notes` already exists — use JSONB writes.
+- **No new RLS surface**: admin-only fns gated by `assertAdmin` + `requireSupabaseAuth`; tables `service_role` only.
+- **`previewBulkOp`** is read-only and reused by the actual fn at execution time (single source of truth for the guard math).
+- **Atomic re-embed transaction** uses `supabaseAdmin.rpc('replace_chunks', { p_doc, p_rows })` — new SQL function that runs `DELETE` + bulk `INSERT` + `UPDATE documents` in one statement block.
+- **Drain** stays in the UI but every iteration now goes through the guarded fn; the per-iteration preview is collapsed into a single up-front preview ("drain will touch ~N docs").
+- **Search Console** calls the existing MCP tool execute functions directly server-side to avoid drift.

@@ -371,6 +371,10 @@ export type Database = {
           url: string
         }[]
       }
+      replace_chunks: {
+        Args: { p_document_id: string; p_rows: Json }
+        Returns: number
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
