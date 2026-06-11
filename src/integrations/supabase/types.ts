@@ -60,6 +60,7 @@ export type Database = {
       }
       documents: {
         Row: {
+          bytes_replaced_at: string | null
           content_type: string
           created_at: string
           error: string | null
@@ -82,6 +83,7 @@ export type Database = {
           url: string
         }
         Insert: {
+          bytes_replaced_at?: string | null
           content_type?: string
           created_at?: string
           error?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           url: string
         }
         Update: {
+          bytes_replaced_at?: string | null
           content_type?: string
           created_at?: string
           error?: string | null
