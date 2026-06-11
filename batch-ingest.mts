@@ -83,11 +83,15 @@ async function scrapeOne(sourceId: string): Promise<number> {
         // onlyMainContent. NEVER an unfiltered fallback. Mark filter_miss.
         if (!got || got.markdown.length <= 100) {
           try {
-            const retry: any = await fc.scrape(doc.url, {
+            const retryOpts: any = {
               formats: ["markdown", "rawHtml"],
               onlyMainContent: true,
               waitFor: 1500,
-            } as any);
+            };
+            // Apply per-source excludeTags on fallback too — onlyMainContent
+            // leaves skip-links and form widgets on some templates.
+            if (filters.exclude_tags.length) retryOpts.excludeTags = filters.exclude_tags;
+            const retry: any = await fc.scrape(doc.url, retryOpts as any);
             if (retry?.markdown && retry.markdown.length > 100) {
               got = { markdown: retry.markdown, title: retry?.metadata?.title, rawHtml: retry?.rawHtml };
               filterMiss = true;

@@ -206,24 +206,36 @@ export async function runSmokeTests(sb: AnySb): Promise<SmokeReport> {
     };
   });
 
-  // 8. published_at coverage for HTML docs (expect big jump from 0).
-  await wrap("html published_at coverage", async () => {
+  // 8. Usable-date coverage for HTML docs. list_latest ranks by
+  //    published_at OR sitemap_lastmod OR path-month, so any of those
+  //    counts. Meta-only coverage is what the sites emit (~10%); the
+  //    combined metric is what actually matters and should be ≥ 95%.
+  await wrap("html usable-date coverage", async () => {
     const { count: total } = await sb
       .from("documents")
       .select("*", { count: "exact", head: true })
       .eq("content_type", "html")
       .eq("status", "embedded");
-    const { count: withPub } = await sb
-      .from("documents")
-      .select("*", { count: "exact", head: true })
-      .eq("content_type", "html")
-      .eq("status", "embedded")
-      .not("published_at", "is", null);
-    const pct = total ? ((withPub ?? 0) / total) * 100 : 0;
+    // Paginate to bypass PostgREST's default 1000-row limit.
+    const pathMonthRe = /\/(20\d{2})[-/](0[1-9]|1[0-2])(?:[-/]|$)/;
+    let withDate = 0;
+    const pageSize = 1000;
+    for (let from = 0; from < (total ?? 0); from += pageSize) {
+      const { data: rows } = await sb
+        .from("documents")
+        .select("url, published_at, sitemap_lastmod")
+        .eq("content_type", "html")
+        .eq("status", "embedded")
+        .range(from, from + pageSize - 1);
+      for (const d of (rows ?? []) as Array<{ url: string; published_at: string | null; sitemap_lastmod: string | null }>) {
+        if (d.published_at || d.sitemap_lastmod || pathMonthRe.test(d.url)) withDate++;
+      }
+    }
+    const pct = total ? (withDate / total) * 100 : 0;
     return {
-      name: "html published_at coverage",
-      pass: pct >= 30, // expect a big jump from 0; tune as needed
-      detail: `${withPub ?? 0}/${total ?? 0} HTML embedded docs have published_at (${pct.toFixed(1)}%)`,
+      name: "html usable-date coverage",
+      pass: pct >= 95,
+      detail: `${withDate}/${total ?? 0} HTML embedded docs have a usable date (${pct.toFixed(1)}%)`,
     };
   });
 
