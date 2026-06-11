@@ -365,7 +365,8 @@ export const previewBulkOp = createServerFn({ method: "POST" })
         if (!row) { willInsert++; insertSample.push(url); continue; }
         const newer =
           lastmod &&
-          (!row.fetched_at || new Date(lastmod).getTime() > new Date(row.fetched_at).getTime());
+          row.fetched_at &&
+          new Date(lastmod).getTime() > new Date(row.fetched_at).getTime();
         if (newer) {
           willRefresh++;
           if (row.status === "embedded") willResetEmbedded++;
