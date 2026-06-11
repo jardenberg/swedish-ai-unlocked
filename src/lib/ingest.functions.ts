@@ -67,16 +67,26 @@ export const listSourcesAdmin = createServerFn({ method: "GET" })
   });
 
 // ──────────────────────────────────────────────────────────────────
-// mapSource — pull sitemap + Firecrawl map, filter, upsert documents
+// mapSource — pull sitemap + Firecrawl map, NON-DESTRUCTIVE diff upsert.
+// Only inserts new URLs as pending and refreshes existing rows whose
+// sitemap lastmod is strictly newer than fetched_at. Untouched URLs
+// stay completely untouched (including their status='embedded').
 // ──────────────────────────────────────────────────────────────────
+const MapInput = z.object({
+  sourceSlug: z.enum(["rise", "ai_sweden"]),
+  force: z.boolean().optional(),
+});
+
 export const mapSource = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => SourceSlug.parse(data))
+  .inputValidator((data: unknown) => MapInput.parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { getFirecrawl, fetchSitemap, detectLang, urlMatchesFilters } = await import("./firecrawl.server");
+    const { canonicalizeUrl } = await import("./url-canonical.server");
 
+    const t0 = Date.now();
     const { data: source, error } = await supabaseAdmin
       .from("sources")
       .select("*")
@@ -84,16 +94,9 @@ export const mapSource = createServerFn({ method: "POST" })
       .single();
     if (error || !source) throw new Error(`Source ${data.sourceSlug} not found`);
 
-    const { data: run } = await supabaseAdmin
-      .from("ingest_runs")
-      .insert({ source_id: source.id, kind: "map" })
-      .select()
-      .single();
+    const embeddedBefore = await countEmbedded(supabaseAdmin, source.id);
 
-    let mapped = 0;
-    let skipped = 0;
     let credits = 0;
-    const seen = new Set<string>();
 
     // 1. Sitemap (free, includes lastmod)
     const sitemapEntries = await fetchSitemap(source.root_url);
@@ -105,10 +108,7 @@ export const mapSource = createServerFn({ method: "POST" })
     let mapLinks: string[] = [];
     try {
       const fc = getFirecrawl();
-      const mapRes = await fc.map(source.root_url, {
-        limit: 5000,
-        includeSubdomains: false,
-      });
+      const mapRes = await fc.map(source.root_url, { limit: 5000, includeSubdomains: false });
       mapLinks = ((mapRes as { links?: Array<string | { url: string }> }).links ?? []).map((l) =>
         typeof l === "string" ? l : l.url,
       );
@@ -118,58 +118,232 @@ export const mapSource = createServerFn({ method: "POST" })
     }
 
     // Merge — sitemap entries have lastmod, map-only entries don't
-    const lastmodByUrl = new Map(filtered.map((e) => [e.url, e.lastmod]));
+    const lastmodByUrl = new Map<string, string | undefined>();
+    for (const e of filtered) lastmodByUrl.set(canonicalizeUrl(e.url), e.lastmod);
     for (const link of mapLinks) {
       if (urlMatchesFilters(link, source.url_filter_patterns, source.exclude_patterns)) {
-        if (!lastmodByUrl.has(link)) lastmodByUrl.set(link, undefined);
+        const u = canonicalizeUrl(link);
+        if (!lastmodByUrl.has(u)) lastmodByUrl.set(u, undefined);
       }
     }
 
-    // Upsert documents
-    const { canonicalizeUrl } = await import("./url-canonical.server");
-    const rows: Array<{
-      source_id: string;
-      url: string;
-      lang: string;
-      content_type: string;
-      sitemap_lastmod: string | null;
-      status: string;
+    // Load existing rows for this source so we can diff
+    const { data: existingRows } = await supabaseAdmin
+      .from("documents")
+      .select("id, url, status, sitemap_lastmod, fetched_at")
+      .eq("source_id", source.id);
+    const existing = new Map(
+      (existingRows ?? []).map((r) => [r.url, r] as const),
+    );
+
+    type Refresh = { id: string; sitemap_lastmod: string | null };
+    const toInsert: Array<{
+      source_id: string; url: string; lang: string; content_type: string;
+      sitemap_lastmod: string | null; status: string;
     }> = [];
-    for (const [rawUrl, lastmod] of lastmodByUrl) {
-      const url = canonicalizeUrl(rawUrl);
-      if (seen.has(url)) continue;
-      seen.add(url);
-      rows.push({
-        source_id: source.id,
-        url,
-        lang: detectLang(url),
-        content_type: url.toLowerCase().endsWith(".pdf") ? "pdf" : "html",
-        sitemap_lastmod: lastmod ?? null,
-        status: "pending",
-      });
-      mapped++;
+    const toRefresh: Refresh[] = [];
+    let unchanged = 0;
+
+    for (const [url, lastmod] of lastmodByUrl) {
+      const row = existing.get(url);
+      if (!row) {
+        toInsert.push({
+          source_id: source.id,
+          url,
+          lang: detectLang(url),
+          content_type: url.toLowerCase().endsWith(".pdf") ? "pdf" : "html",
+          sitemap_lastmod: lastmod ?? null,
+          status: "pending",
+        });
+        continue;
+      }
+      // Decide refresh purely on lastmod vs fetched_at.
+      const newer =
+        lastmod &&
+        (!row.fetched_at || new Date(lastmod).getTime() > new Date(row.fetched_at).getTime());
+      if (newer) {
+        toRefresh.push({ id: row.id, sitemap_lastmod: lastmod });
+      } else {
+        unchanged++;
+      }
     }
 
+    // Guard: a refresh resets embedded → pending. If too many, require force.
+    const wouldResetEmbedded = toRefresh.filter((r) => {
+      const row = existingRows!.find((x) => x.id === r.id)!;
+      return row.status === "embedded";
+    }).length;
 
-    // Batch upsert (ignore conflicts on url)
-    const batchSize = 500;
-    for (let i = 0; i < rows.length; i += batchSize) {
-      const slice = rows.slice(i, i + batchSize);
+    const preview = {
+      op: "map",
+      source: data.sourceSlug,
+      willInsert: toInsert.length,
+      willRefresh: toRefresh.length,
+      willResetEmbedded: wouldResetEmbedded,
+      unchanged,
+      embeddedBefore,
+      estCredits: credits,
+    };
+
+    if (
+      embeddedBefore > 0 &&
+      wouldResetEmbedded / Math.max(embeddedBefore, 1) > EMBEDDED_DROP_GUARD &&
+      !data.force
+    ) {
+      throw new BulkGuardError(preview);
+    }
+
+    const { data: run } = await supabaseAdmin
+      .from("ingest_runs")
+      .insert({ source_id: source.id, kind: "map" })
+      .select()
+      .single();
+
+    // Inserts — onConflict ignore in case of a race (another concurrent map)
+    let inserted = 0;
+    for (let i = 0; i < toInsert.length; i += 500) {
+      const slice = toInsert.slice(i, i + 500);
       const { error: upErr } = await supabaseAdmin
         .from("documents")
-        .upsert(slice, { onConflict: "url", ignoreDuplicates: false });
-      if (upErr) {
-        console.error("[map] upsert error:", upErr.message);
-        skipped += slice.length;
-      }
+        .upsert(slice, { onConflict: "url", ignoreDuplicates: true });
+      if (!upErr) inserted += slice.length;
+      else console.error("[map] insert error:", upErr.message);
     }
+
+    // Refreshes — flip just the changed rows
+    let refreshed = 0;
+    for (const r of toRefresh) {
+      const { error: uErr } = await supabaseAdmin
+        .from("documents")
+        .update({ status: "pending", sitemap_lastmod: r.sitemap_lastmod })
+        .eq("id", r.id);
+      if (!uErr) refreshed++;
+    }
+
+    const embeddedAfter = await countEmbedded(supabaseAdmin, source.id);
+    const notes = writeRunNotes({
+      op: "map",
+      force: !!data.force,
+      inserted,
+      refreshed,
+      unchanged,
+      sitemapUrls: filtered.length,
+      mapUrls: mapLinks.length,
+      embeddedBefore,
+      embeddedAfter,
+      delta: embeddedAfter - embeddedBefore,
+      creditsUsed: credits,
+      durationMs: Date.now() - t0,
+    });
 
     await supabaseAdmin
       .from("ingest_runs")
-      .update({ finished_at: new Date().toISOString(), mapped, skipped, credits_used: credits })
+      .update({
+        finished_at: new Date().toISOString(),
+        mapped: inserted,
+        skipped: refreshed,
+        credits_used: credits,
+        notes,
+      })
       .eq("id", run!.id);
 
-    return { mapped, skipped, credits, runId: run!.id };
+    return {
+      mapped: inserted,
+      inserted,
+      refreshed,
+      unchanged,
+      embeddedBefore,
+      embeddedAfter,
+      delta: embeddedAfter - embeddedBefore,
+      credits,
+      runId: run!.id,
+    };
+  });
+
+// ──────────────────────────────────────────────────────────────────
+// previewBulkOp — dry-run impact analysis for guard-eligible ops.
+// Same code path as the actual fns, but never writes.
+// ──────────────────────────────────────────────────────────────────
+const PreviewInput = z.object({
+  op: z.enum(["map", "refresh"]),
+  sourceSlug: z.enum(["rise", "ai_sweden"]),
+});
+
+export const previewBulkOp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => PreviewInput.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { fetchSitemap, urlMatchesFilters } = await import("./firecrawl.server");
+    const { canonicalizeUrl } = await import("./url-canonical.server");
+
+    const { data: source } = await supabaseAdmin
+      .from("sources").select("*").eq("slug", data.sourceSlug).single();
+    if (!source) throw new Error(`Source ${data.sourceSlug} not found`);
+
+    const embeddedBefore = await countEmbedded(supabaseAdmin, source.id);
+    const sitemapEntries = await fetchSitemap(source.root_url);
+    const filtered = sitemapEntries.filter((e) =>
+      urlMatchesFilters(e.url, source.url_filter_patterns, source.exclude_patterns),
+    );
+    const lastmodByUrl = new Map<string, string | undefined>(
+      filtered.map((e) => [canonicalizeUrl(e.url), e.lastmod]),
+    );
+
+    const { data: existingRows } = await supabaseAdmin
+      .from("documents")
+      .select("id, url, status, sitemap_lastmod, fetched_at")
+      .eq("source_id", source.id);
+
+    const existing = new Map((existingRows ?? []).map((r) => [r.url, r] as const));
+
+    let willInsert = 0;
+    let willRefresh = 0;
+    let willResetEmbedded = 0;
+    let unchanged = 0;
+
+    if (data.op === "map") {
+      for (const [url, lastmod] of lastmodByUrl) {
+        const row = existing.get(url);
+        if (!row) { willInsert++; continue; }
+        const newer =
+          lastmod &&
+          (!row.fetched_at || new Date(lastmod).getTime() > new Date(row.fetched_at).getTime());
+        if (newer) {
+          willRefresh++;
+          if (row.status === "embedded") willResetEmbedded++;
+        } else {
+          unchanged++;
+        }
+      }
+    } else {
+      // refresh: only diff against existing rows in DB
+      for (const row of existingRows ?? []) {
+        const lastmod = lastmodByUrl.get(row.url);
+        const newer =
+          lastmod &&
+          (!row.sitemap_lastmod || new Date(lastmod).getTime() > new Date(row.sitemap_lastmod).getTime());
+        if (newer) {
+          willRefresh++;
+          if (row.status === "embedded") willResetEmbedded++;
+        }
+      }
+    }
+
+    const guardFraction = embeddedBefore > 0 ? willResetEmbedded / embeddedBefore : 0;
+    return {
+      op: data.op,
+      source: data.sourceSlug,
+      willInsert,
+      willRefresh,
+      willResetEmbedded,
+      unchanged,
+      embeddedBefore,
+      guardFraction,
+      guardThreshold: EMBEDDED_DROP_GUARD,
+      guardTriggered: guardFraction > EMBEDDED_DROP_GUARD,
+    };
   });
 
 // ──────────────────────────────────────────────────────────────────
