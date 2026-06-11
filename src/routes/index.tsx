@@ -264,7 +264,7 @@ function Landing() {
 
             <ToolDoc
               name="find_similar"
-              summary="Given a URL already in the index, return semantically nearest other documents. Reuses an existing embedding, so no embedding-model call. Great for 'more like this' after picking a hit."
+              summary="Given a URL already in the index, return semantically nearest other documents. Uses the seed document's centroid embedding (average of all its chunks) so navigation chrome doesn't dominate matches. Great for 'more like this' after picking a hit. URL must match exactly — trailing slashes or query strings will miss."
               params={`{
   url: string,             // a URL from search_swedish_ai / list_latest
   source?: "rise" | "ai_sweden",
