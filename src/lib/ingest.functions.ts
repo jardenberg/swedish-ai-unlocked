@@ -755,7 +755,7 @@ export const recleanAndReembed = createServerFn({ method: "POST" })
     const since = new Date(Date.now() - data.sinceHours * 3600 * 1000).toISOString();
     const { data: docs } = await supabaseAdmin
       .from("documents")
-      .select("id, raw_markdown")
+      .select("id, raw_markdown, lang")
       .gt("updated_at", since)
       .eq("status", "embedded")
       .not("raw_markdown", "is", null)
