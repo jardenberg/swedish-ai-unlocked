@@ -870,8 +870,9 @@ export const listRecentDocs = createServerFn({ method: "GET" })
     let q = supabaseAdmin
       .from("documents")
       .select(
-        "id, url, title, lang, content_type, status, error, fetched_at, hidden, published_at, published_at_source, sources(slug)",
+        "id, url, title, lang, content_type, status, error, fetched_at, hidden, published_at, published_at_source, bytes_replaced_at, storage_path, sources(slug)",
       )
+
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (data.status) q = q.eq("status", data.status);
@@ -918,6 +919,7 @@ const UploadPdfInput = z.object({
   lang: z.enum(["en", "sv"]),
   fileBase64: z.string().min(1).max(70_000_000), // ~52 MB decoded
   mimeType: z.string().refine((m) => m === "application/pdf", "must be application/pdf"),
+  mode: z.enum(["create", "replace"]).default("create"),
 });
 
 export const uploadManualPdf = createServerFn({ method: "POST" })
@@ -935,16 +937,57 @@ export const uploadManualPdf = createServerFn({ method: "POST" })
       .from("sources").select("id").eq("slug", data.sourceSlug).single();
     if (!source) throw new Error("source not found");
 
-    // Dedupe on canonical URL
+    // Look up existing row by canonical URL
     const { data: existing } = await supabaseAdmin
-      .from("documents").select("id").eq("url", url).maybeSingle();
-    if (existing) throw new Error("A document with this canonical URL already exists");
+      .from("documents")
+      .select("id, storage_path")
+      .eq("url", url)
+      .maybeSingle();
+
+    if (data.mode === "create" && existing) {
+      throw new Error("A document with this canonical URL already exists");
+    }
+    if (data.mode === "replace" && !existing) {
+      throw new Error("No existing document with this canonical URL to replace");
+    }
 
     // Decode base64 → bytes
     const bytes = Uint8Array.from(atob(data.fileBase64), (c) => c.charCodeAt(0));
     if (bytes.length > 55 * 1024 * 1024) throw new Error("File exceeds 55 MB limit");
 
-    // Storage path
+    if (data.mode === "replace" && existing) {
+      // Write new bytes to a fresh storage path; keep document id + URL.
+      const newStoragePath = `${data.sourceSlug}/${existing.id}-${Date.now()}.pdf`;
+      const { error: upErr } = await supabaseAdmin.storage
+        .from("manual-pdfs")
+        .upload(newStoragePath, bytes, { contentType: "application/pdf", upsert: false });
+      if (upErr) throw new Error(`storage upload failed: ${upErr.message}`);
+
+      const { error: updErr } = await supabaseAdmin
+        .from("documents")
+        .update({
+          storage_path: newStoragePath,
+          content_type: "pdf",
+          status: "pending",
+          error: null,
+          title: data.title,
+          lang: data.lang,
+          bytes_replaced_at: new Date().toISOString(),
+        })
+        .eq("id", existing.id);
+      if (updErr) {
+        await supabaseAdmin.storage.from("manual-pdfs").remove([newStoragePath]);
+        throw new Error(`document update failed: ${updErr.message}`);
+      }
+
+      // Remove the previous stored object (best-effort).
+      if (existing.storage_path && existing.storage_path !== newStoragePath) {
+        await supabaseAdmin.storage.from("manual-pdfs").remove([existing.storage_path]);
+      }
+      return { id: existing.id, url, storagePath: newStoragePath, replaced: true };
+    }
+
+    // Create mode
     const id = crypto.randomUUID();
     const storagePath = `${data.sourceSlug}/${id}.pdf`;
     const { error: upErr } = await supabaseAdmin.storage
@@ -952,7 +995,6 @@ export const uploadManualPdf = createServerFn({ method: "POST" })
       .upload(storagePath, bytes, { contentType: "application/pdf", upsert: false });
     if (upErr) throw new Error(`storage upload failed: ${upErr.message}`);
 
-    // Insert document
     const { data: doc, error: insErr } = await supabaseAdmin
       .from("documents")
       .insert({
@@ -967,13 +1009,13 @@ export const uploadManualPdf = createServerFn({ method: "POST" })
       .select()
       .single();
     if (insErr) {
-      // Roll back storage on insert failure
       await supabaseAdmin.storage.from("manual-pdfs").remove([storagePath]);
       throw new Error(`document insert failed: ${insErr.message}`);
     }
 
-    return { id: doc.id, url, storagePath };
+    return { id: doc.id, url, storagePath, replaced: false };
   });
+
 
 // ──────────────────────────────────────────────────────────────────
 // retryDocument / retryFailed — reset failed docs back to pending so

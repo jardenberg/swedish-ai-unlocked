@@ -119,10 +119,29 @@ export const searchTool = defineTool({
       }
     });
 
-    const merged = [...byDoc.values()]
+    const mergedRaw = [...byDoc.values()]
       .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map(({ doc, score, armScores }) => ({
+      .slice(0, limit);
+
+    // Look up bytes_replaced_at for the shown docs so we can surface a
+    // contentNote that tells the AI client the stored copy was manually
+    // replaced (canonical publisher URL is unchanged).
+    const docIds = mergedRaw.map((m) => m.doc.document_id);
+    const replacedMap = new Map<string, string>();
+    if (docIds.length) {
+      const { data: replRows } = await supabaseAdmin
+        .from("documents")
+        .select("id, bytes_replaced_at")
+        .in("id", docIds);
+      for (const r of replRows ?? []) {
+        const v = (r as { bytes_replaced_at?: string | null }).bytes_replaced_at;
+        if (v) replacedMap.set((r as { id: string }).id, v);
+      }
+    }
+
+    const merged = mergedRaw.map(({ doc, score, armScores }) => {
+      const replacedAt = replacedMap.get(doc.document_id) ?? null;
+      return {
         url: doc.url,
         title: doc.title,
         source: doc.source_slug,
@@ -136,7 +155,12 @@ export const searchTool = defineTool({
         },
         snippet: doc.snippet,
         fetchedAt: doc.fetched_at,
-      }));
+        bytesReplacedAt: replacedAt,
+        contentNote: replacedAt
+          ? `Stored copy manually replaced on ${replacedAt.slice(0, 10)}; the canonical source remains the publisher URL.`
+          : null,
+      };
+    });
 
     return JSON.stringify({
       query,
@@ -146,3 +170,4 @@ export const searchTool = defineTool({
     }, null, 2);
   },
 });
+
