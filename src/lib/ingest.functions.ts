@@ -207,10 +207,12 @@ export const mapSource = createServerFn({ method: "POST" })
         });
         continue;
       }
-      // Decide refresh purely on lastmod vs fetched_at.
+      // Refresh ONLY when the row has been scraped before and sitemap is newer.
+      // Rows still pending (no fetched_at) are already queued — leave alone.
       const newer =
         lastmod &&
-        (!row.fetched_at || new Date(lastmod).getTime() > new Date(row.fetched_at).getTime());
+        row.fetched_at &&
+        new Date(lastmod).getTime() > new Date(row.fetched_at).getTime();
       if (newer) {
         toRefresh.push({ id: row.id, sitemap_lastmod: lastmod });
       } else {
