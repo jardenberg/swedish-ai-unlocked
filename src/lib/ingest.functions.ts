@@ -31,6 +31,40 @@ function writeRunNotes(payload: Record<string, unknown>): string {
   return JSON.stringify(payload);
 }
 
+// Build a canonical-URL → row lookup from raw documents rows. Stored URLs may
+// predate canonicalizeUrl (bare host, trailing slash, mixed case), so the diff
+// MUST canonicalize both sides — otherwise existing rows look like new inserts.
+// If two rows collapse to the same canonical key, prefer embedded; tiebreak by
+// most recent fetched_at. Returns the dup count so callers can log it.
+type ExistingRow = {
+  id: string;
+  url: string;
+  status: string;
+  sitemap_lastmod: string | null;
+  fetched_at: string | null;
+};
+function buildCanonicalExistingMap<R extends ExistingRow>(
+  rows: R[],
+  canon: (u: string) => string,
+): { existing: Map<string, R>; dupes: number } {
+  const existing = new Map<string, R>();
+  let dupes = 0;
+  for (const r of rows) {
+    const key = canon(r.url);
+    const prev = existing.get(key);
+    if (!prev) { existing.set(key, r); continue; }
+    dupes++;
+    const prevEmb = prev.status === "embedded";
+    const curEmb = r.status === "embedded";
+    if (curEmb && !prevEmb) { existing.set(key, r); continue; }
+    if (prevEmb && !curEmb) continue;
+    const prevT = prev.fetched_at ? new Date(prev.fetched_at).getTime() : 0;
+    const curT = r.fetched_at ? new Date(r.fetched_at).getTime() : 0;
+    if (curT > prevT) existing.set(key, r);
+  }
+  return { existing, dupes };
+}
+
 export class BulkGuardError extends Error {
   preview: Record<string, unknown>;
   constructor(preview: Record<string, unknown>) {
@@ -132,9 +166,8 @@ export const mapSource = createServerFn({ method: "POST" })
       .from("documents")
       .select("id, url, status, sitemap_lastmod, fetched_at")
       .eq("source_id", source.id);
-    const existing = new Map(
-      (existingRows ?? []).map((r) => [r.url, r] as const),
-    );
+    const { existing, dupes: mapDupes } = buildCanonicalExistingMap(existingRows ?? [], canonicalizeUrl);
+    if (mapDupes > 0) console.warn(`[map] ${mapDupes} legacy duplicate URL rows collapsed (canonical form). Clean up later.`);
 
     type Refresh = { id: string; sitemap_lastmod: string | null };
     const toInsert: Array<{
@@ -174,6 +207,10 @@ export const mapSource = createServerFn({ method: "POST" })
       return row.status === "embedded";
     }).length;
 
+    const willInsertSample = toInsert
+      .map((r) => r.url)
+      .sort()
+      .slice(0, 20);
     const preview = {
       op: "map",
       source: data.sourceSlug,
@@ -183,6 +220,7 @@ export const mapSource = createServerFn({ method: "POST" })
       unchanged,
       embeddedBefore,
       estCredits: credits,
+      willInsertSample,
     };
 
     if (
@@ -296,17 +334,19 @@ export const previewBulkOp = createServerFn({ method: "POST" })
       .select("id, url, status, sitemap_lastmod, fetched_at")
       .eq("source_id", source.id);
 
-    const existing = new Map((existingRows ?? []).map((r) => [r.url, r] as const));
+    const { existing, dupes } = buildCanonicalExistingMap(existingRows ?? [], canonicalizeUrl);
+    if (dupes > 0) console.warn(`[preview] ${dupes} legacy duplicate URL rows collapsed.`);
 
     let willInsert = 0;
     let willRefresh = 0;
     let willResetEmbedded = 0;
     let unchanged = 0;
+    const insertSample: string[] = [];
 
     if (data.op === "map") {
       for (const [url, lastmod] of lastmodByUrl) {
         const row = existing.get(url);
-        if (!row) { willInsert++; continue; }
+        if (!row) { willInsert++; insertSample.push(url); continue; }
         const newer =
           lastmod &&
           (!row.fetched_at || new Date(lastmod).getTime() > new Date(row.fetched_at).getTime());
@@ -318,9 +358,10 @@ export const previewBulkOp = createServerFn({ method: "POST" })
         }
       }
     } else {
-      // refresh: only diff against existing rows in DB
+      // refresh: only diff against existing rows in DB (canonical key)
       for (const row of existingRows ?? []) {
-        const lastmod = lastmodByUrl.get(row.url);
+        const key = canonicalizeUrl(row.url);
+        const lastmod = lastmodByUrl.get(key);
         const newer =
           lastmod &&
           (!row.sitemap_lastmod || new Date(lastmod).getTime() > new Date(row.sitemap_lastmod).getTime());
@@ -343,6 +384,7 @@ export const previewBulkOp = createServerFn({ method: "POST" })
       guardFraction,
       guardThreshold: EMBEDDED_DROP_GUARD,
       guardTriggered: guardFraction > EMBEDDED_DROP_GUARD,
+      willInsertSample: insertSample.sort().slice(0, 20),
     };
   });
 
@@ -652,7 +694,7 @@ export const refreshSitemap = createServerFn({ method: "POST" })
     type Stale = { id: string; lastmod: string; wasEmbedded: boolean };
     const stale: Stale[] = [];
     for (const doc of existing ?? []) {
-      const newLastmod = lastmodByUrl.get(doc.url);
+      const newLastmod = lastmodByUrl.get(canonicalizeUrl(doc.url));
       if (newLastmod && (!doc.sitemap_lastmod || new Date(newLastmod) > new Date(doc.sitemap_lastmod))) {
         stale.push({ id: doc.id, lastmod: newLastmod, wasEmbedded: doc.status === "embedded" });
       }

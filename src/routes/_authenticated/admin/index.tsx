@@ -258,6 +258,20 @@ function SourcesPage() {
                     ⚠ Backend guard triggered ({(pendingPreview.guardFraction * 100).toFixed(1)}% &gt; {(pendingPreview.guardThreshold * 100).toFixed(0)}%). This will create a search-corpus gap. Requires force.
                   </div>
                 )}
+                {pendingPreview?._op === "map" && pendingPreview.willInsert > 0 && pendingPreview.willInsertSample && pendingPreview.willInsertSample.length > 0 && (
+                  <details className="rounded border border-border bg-muted/30 p-2">
+                    <summary className="cursor-pointer text-xs font-medium">
+                      Sample of new URLs (first {pendingPreview.willInsertSample.length} of {pendingPreview.willInsert})
+                    </summary>
+                    <ul className="mt-2 space-y-1 font-mono text-xs">
+                      {pendingPreview.willInsertSample.map((u) => (
+                        <li key={u} className="truncate">
+                          <a href={u} target="_blank" rel="noreferrer" className="hover:underline">{u}</a>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
