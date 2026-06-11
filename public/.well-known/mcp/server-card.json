@@ -3,7 +3,7 @@
   "serverInfo": {
     "name": "rise-ai-sweden",
     "title": "RISE & AI Sweden Public MCP",
-    "version": "v202606102145"
+    "version": "v202606112120"
   },
   "transport": {
     "type": "streamable-http",
@@ -15,12 +15,14 @@
   },
   "capabilities": {
     "tools": [
-      { "name": "search_swedish_ai", "description": "Semantic search across RISE and AI Sweden publications (Swedish and English)." },
-      { "name": "list_latest", "description": "Newest indexed documents across both sources; lightweight metadata only." },
+      { "name": "search_swedish_ai", "description": "Hybrid semantic + lexical search across RISE and AI Sweden publications (Swedish and English). Filters: source, lang, page_type. Limit 1–50 (default 20)." },
+      { "name": "find_mentions", "description": "Lexical 'everything that mentions X' primitive: stemmed tsquery + exact-substring fallback. Includes a parity total. Filters: source, lang, page_type. Limit 1–100 (default 25)." },
+      { "name": "list_latest", "description": "Newest indexed documents across both sources; lightweight metadata only. Filters: source, lang, page_type. Limit 1–50 (default 20)." },
       { "name": "find_similar", "description": "Given an indexed URL, return semantically nearest other documents." },
       { "name": "get_document", "description": "Full cleaned markdown for a single indexed URL." },
       { "name": "list_sources", "description": "Sources covered, document counts, language breakdown, last-updated." }
-    ]
+    ],
+    "pageTypes": ["event", "news", "project", "page"]
   },
   "documentation": "https://rise-ai-sweden.jardenberg.org/",
   "contact": { "email": "joakim@jardenberg.com" }
