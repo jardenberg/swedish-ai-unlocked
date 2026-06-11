@@ -19,11 +19,12 @@ const CHROME_LINE_RES: RegExp[] = [
 export function cleanMarkdown(md: string): string {
   if (!md) return md;
   let s = md.replace(/\r\n/g, "\n");
-  // Drop empty fenced code blocks (Firecrawl sometimes emits these around
-  // hidden controls even when the rest of the chrome is filtered).
   s = s.replace(EMPTY_FENCE_RE, "");
   s = s.replace(/```\s*```/g, "");
-  // Collapse runs of >1 blank lines, strip trailing whitespace, drop chrome.
+  // reCAPTCHA newsletter widgets render as a multi-line block at the bottom
+  // of certain ai.se pages (signup forms). Truncate from the first marker.
+  const reCapIdx = s.search(/\n\s*reCAPTCHA\s*\n/i);
+  if (reCapIdx >= 0) s = s.slice(0, reCapIdx);
   const lines = s.split("\n").map((l) => l.replace(/[ \t]+$/g, ""));
   const out: string[] = [];
   let blanks = 0;
