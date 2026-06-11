@@ -852,12 +852,13 @@ export const discoverPdfs = createServerFn({ method: "POST" })
     // Pull existing URLs (set) to skip duplicates cheaply. Paginate — the
     // PostgREST 1k cap would otherwise let duplicates through.
     const { fetchAllPages } = await import("./ingest-helpers.server");
-    const existing = await fetchAllPages<{ url: string }>((from, to) =>
-      supabaseAdmin
+    const existing = await fetchAllPages<{ url: string }>(async (from, to) => {
+      const res = await supabaseAdmin
         .from("documents").select("url").eq("source_id", source.id)
         .order("id", { ascending: true })
-        .range(from, to),
-    );
+        .range(from, to);
+      return { data: res.data, error: res.error };
+    });
     const known = new Set(existing.map((d) => d.url));
 
     // Stream over scraped docs in pages of 200
