@@ -1033,17 +1033,16 @@ export const recleanAndReembed = createServerFn({ method: "POST" })
           const vecs = await embedTexts(chunks.slice(i, i + 20).map((c) => c.text));
           all.push(...vecs);
         }
-        await supabaseAdmin.from("chunks").delete().eq("document_id", doc.id);
-        await supabaseAdmin.from("chunks").insert(
-          chunks.map((c, i) => ({
-            document_id: doc.id,
+        await supabaseAdmin.rpc("replace_chunks", {
+          p_document_id: doc.id,
+          p_rows: chunks.map((c, i) => ({
             ord: c.ord,
             text: c.text,
             token_count: c.tokenCount,
-            embedding: all[i] as unknown as string,
+            embedding: `[${(all[i] as unknown as number[]).join(",")}]`,
             lang: doc.lang ?? null,
           })),
-        );
+        });
         processed++;
       } catch (e) {
         console.error("[reclean] failed", doc.id, (e as Error).message);
