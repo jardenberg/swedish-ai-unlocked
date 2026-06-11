@@ -181,12 +181,9 @@ export const mapSource = createServerFn({ method: "POST" })
       }
     }
 
-    // Load existing rows for this source so we can diff
-    const { data: existingRows } = await supabaseAdmin
-      .from("documents")
-      .select("id, url, status, sitemap_lastmod, fetched_at")
-      .eq("source_id", source.id);
-    const { existing, dupes: mapDupes } = buildCanonicalExistingMap(existingRows ?? [], canonicalizeUrl);
+    // Load existing rows for this source so we can diff (paginated — PostgREST 1k cap)
+    const existingRows = await fetchAllDocuments(supabaseAdmin, source.id);
+    const { existing, dupes: mapDupes } = buildCanonicalExistingMap(existingRows, canonicalizeUrl);
     if (mapDupes > 0) console.warn(`[map] ${mapDupes} legacy duplicate URL rows collapsed (canonical form). Clean up later.`);
 
     type Refresh = { id: string; sitemap_lastmod: string | null };
