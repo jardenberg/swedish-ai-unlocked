@@ -106,17 +106,22 @@ export const listSourcesAdmin = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: sources } = await supabaseAdmin.from("sources").select("*").order("name");
     const stats: Record<string, { pending: number; scraped: number; embedded: number; failed: number }> = {};
+    const statuses = ["pending", "scraped", "embedded", "failed"] as const;
     for (const s of sources ?? []) {
-      const { data: counts } = await supabaseAdmin
-        .from("documents")
-        .select("status", { count: "exact", head: false })
-        .eq("source_id", s.id);
       const c = { pending: 0, scraped: 0, embedded: 0, failed: 0 };
-      (counts ?? []).forEach((r: { status: string }) => {
-        if (r.status in c) c[r.status as keyof typeof c]++;
-      });
+      await Promise.all(
+        statuses.map(async (st) => {
+          const { count } = await supabaseAdmin
+            .from("documents")
+            .select("id", { count: "exact", head: true })
+            .eq("source_id", s.id)
+            .eq("status", st);
+          c[st] = count ?? 0;
+        }),
+      );
       stats[s.id] = c;
     }
+
     return { sources: sources ?? [], stats };
   });
 
