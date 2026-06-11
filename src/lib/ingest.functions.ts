@@ -147,8 +147,9 @@ export const mapSource = createServerFn({ method: "POST" })
 // ──────────────────────────────────────────────────────────────────
 const ScrapeBatchInput = z.object({
   sourceSlug: z.enum(["rise", "ai_sweden"]),
-  batchSize: z.number().int().min(1).max(100).default(25),
+  batchSize: z.number().int().min(1).max(200).default(50),
 });
+
 
 export const scrapeBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
