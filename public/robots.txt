@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rise-ai-sweden.jardenberg.org/sitemap.xml
