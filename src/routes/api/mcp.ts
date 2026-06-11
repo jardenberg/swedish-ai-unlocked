@@ -6,14 +6,15 @@ import { listSourcesTool } from "@/lib/mcp/tools/list-sources";
 import { listLatestTool } from "@/lib/mcp/tools/list-latest";
 import { findSimilarTool } from "@/lib/mcp/tools/find-similar";
 import { searchTool } from "@/lib/mcp/tools/search";
+import { findMentionsTool } from "@/lib/mcp/tools/find-mentions";
 import { checkRateLimit, getClientIp } from "@/lib/mcp/rate-limit.server";
 
 const mcp = createMcpServer({
   name: "swedish-ai-librarian",
-  version: "0.2.0",
+  version: "0.3.0",
   instructions:
-    "Tools for searching AI-relevant content published by Sweden's two government-funded AI organizations: RISE (Research Institutes of Sweden, ri.se) and AI Sweden (ai.se). Covers research projects, reports, blog posts, sector initiatives, AI labs, language models, and adoption stories in both English and Swedish. Start with search_swedish_ai for topical queries, list_latest for a 'what's new' view, find_similar for more-like-this, and get_document for full text. Use list_sources to discover scope and freshness.",
-  tools: [searchTool, listLatestTool, findSimilarTool, getDocumentTool, listSourcesTool],
+    "Tools for searching AI-relevant content published by Sweden's two government-funded AI organizations: RISE (Research Institutes of Sweden, ri.se) and AI Sweden (ai.se). Covers research projects, reports, blog posts, sector initiatives, AI labs, language models, and adoption stories in both English and Swedish. Use search_swedish_ai (hybrid semantic + lexical) for topical queries; find_mentions for proper-noun / recall-style 'everything that mentions X' lookups; list_latest for a 'what's new' view; find_similar for more-like-this; get_document for full text; list_sources for scope and freshness. Most tools accept a page_type filter (event | news | project | page).",
+  tools: [searchTool, findMentionsTool, listLatestTool, findSimilarTool, getDocumentTool, listSourcesTool],
 });
 
 const methodNotAllowed = () =>
