@@ -330,49 +330,28 @@ export type Database = {
           url: string
         }[]
       }
-      match_chunks:
-        | {
-            Args: {
-              filter_lang?: string
-              filter_source?: string
-              match_count?: number
-              query_embedding: string
-            }
-            Returns: {
-              chunk_id: string
-              document_id: string
-              fetched_at: string
-              lang: string
-              similarity: number
-              snippet: string
-              source_name: string
-              source_slug: string
-              title: string
-              url: string
-            }[]
-          }
-        | {
-            Args: {
-              filter_lang?: string
-              filter_page_type?: string
-              filter_source?: string
-              match_count?: number
-              query_embedding: string
-            }
-            Returns: {
-              chunk_id: string
-              document_id: string
-              fetched_at: string
-              lang: string
-              page_type: string
-              similarity: number
-              snippet: string
-              source_name: string
-              source_slug: string
-              title: string
-              url: string
-            }[]
-          }
+      match_chunks: {
+        Args: {
+          filter_lang?: string
+          filter_page_type?: string
+          filter_source?: string
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_id: string
+          document_id: string
+          fetched_at: string
+          lang: string
+          page_type: string
+          similarity: number
+          snippet: string
+          source_name: string
+          source_slug: string
+          title: string
+          url: string
+        }[]
+      }
       match_similar_documents: {
         Args: {
           filter_lang?: string
