@@ -700,14 +700,11 @@ export const refreshSitemap = createServerFn({ method: "POST" })
     const { canonicalizeUrl } = await import("./url-canonical.server");
     const lastmodByUrl = new Map(sitemap.map((e) => [canonicalizeUrl(e.url), e.lastmod]));
 
-    const { data: existing } = await supabaseAdmin
-      .from("documents")
-      .select("id, url, status, sitemap_lastmod, fetched_at")
-      .eq("source_id", source.id);
+    const existing = await fetchAllDocuments(supabaseAdmin, source.id);
 
     type Stale = { id: string; lastmod: string; wasEmbedded: boolean };
     const stale: Stale[] = [];
-    for (const doc of existing ?? []) {
+    for (const doc of existing) {
       const newLastmod = lastmodByUrl.get(canonicalizeUrl(doc.url));
       if (newLastmod && (!doc.sitemap_lastmod || new Date(newLastmod) > new Date(doc.sitemap_lastmod))) {
         stale.push({ id: doc.id, lastmod: newLastmod, wasEmbedded: doc.status === "embedded" });
