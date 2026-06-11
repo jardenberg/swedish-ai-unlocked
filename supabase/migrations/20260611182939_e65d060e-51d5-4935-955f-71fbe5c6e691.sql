@@ -1,0 +1,2 @@
+ALTER TABLE public.documents ADD COLUMN IF NOT EXISTS extraction_method text;
+COMMENT ON COLUMN public.documents.extraction_method IS 'For PDFs: which extractor produced raw_markdown — unpdf (primary, in-process) or firecrawl (OCR fallback). Null for HTML.';

@@ -128,19 +128,31 @@ export const searchTool = defineTool({
     // replaced (canonical publisher URL is unchanged).
     const docIds = mergedRaw.map((m) => m.doc.document_id);
     const replacedMap = new Map<string, string>();
+    const extractionMap = new Map<string, string>();
     if (docIds.length) {
       const { data: replRows } = await supabaseAdmin
         .from("documents")
-        .select("id, bytes_replaced_at")
+        .select("id, bytes_replaced_at, extraction_method")
         .in("id", docIds);
       for (const r of replRows ?? []) {
-        const v = (r as { bytes_replaced_at?: string | null }).bytes_replaced_at;
-        if (v) replacedMap.set((r as { id: string }).id, v);
+        const row = r as { id: string; bytes_replaced_at?: string | null; extraction_method?: string | null };
+        if (row.bytes_replaced_at) replacedMap.set(row.id, row.bytes_replaced_at);
+        if (row.extraction_method) extractionMap.set(row.id, row.extraction_method);
       }
     }
 
     const merged = mergedRaw.map(({ doc, score, armScores }) => {
       const replacedAt = replacedMap.get(doc.document_id) ?? null;
+      const extractionMethod = extractionMap.get(doc.document_id) ?? null;
+      const noteParts: string[] = [];
+      if (replacedAt) {
+        noteParts.push(
+          `Stored copy manually replaced on ${replacedAt.slice(0, 10)}; the canonical source remains the publisher URL.`,
+        );
+      }
+      if (extractionMethod === "firecrawl") {
+        noteParts.push("Text was extracted via Firecrawl OCR (in-process parser was bypassed for this file).");
+      }
       return {
         url: doc.url,
         title: doc.title,
@@ -156,9 +168,8 @@ export const searchTool = defineTool({
         snippet: doc.snippet,
         fetchedAt: doc.fetched_at,
         bytesReplacedAt: replacedAt,
-        contentNote: replacedAt
-          ? `Stored copy manually replaced on ${replacedAt.slice(0, 10)}; the canonical source remains the publisher URL.`
-          : null,
+        extractionMethod,
+        contentNote: noteParts.length ? noteParts.join(" ") : null,
       };
     });
 

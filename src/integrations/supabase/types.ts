@@ -64,6 +64,7 @@ export type Database = {
           content_type: string
           created_at: string
           error: string | null
+          extraction_method: string | null
           fetched_at: string | null
           filter_miss: boolean
           hidden: boolean
@@ -87,6 +88,7 @@ export type Database = {
           content_type?: string
           created_at?: string
           error?: string | null
+          extraction_method?: string | null
           fetched_at?: string | null
           filter_miss?: boolean
           hidden?: boolean
@@ -110,6 +112,7 @@ export type Database = {
           content_type?: string
           created_at?: string
           error?: string | null
+          extraction_method?: string | null
           fetched_at?: string | null
           filter_miss?: boolean
           hidden?: boolean
