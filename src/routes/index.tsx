@@ -292,16 +292,22 @@ function Landing() {
 
             <ToolDoc
               name="get_document"
-              summary="Fetch full cleaned markdown for a single indexed URL. Use after search_swedish_ai to load complete context on the best hit."
+              summary="Fetch full cleaned markdown for a single indexed URL. Use after search_swedish_ai to load complete context on the best hit. Body is capped at 80 000 chars — check `truncated` before assuming you have the whole document. `contentNote` / `extractionMethod` surface provenance (e.g. Firecrawl OCR for image-only PDFs, manually replaced stored copies)."
               params={`{ url: string }`}
               example={`{
   "url": "https://www.ai.se/en/project/...",
   "title": "Project title",
   "lang": "en",
+  "pageType": "project",
   "contentType": "html",
   "source": "ai_sweden",
   "sourceName": "AI Sweden",
+  "publishedAt": "2026-05-14T00:00:00Z",
+  "publishedAtSource": "meta",
   "fetchedAt": "2026-06-08T09:01:44Z",
+  "bytesReplacedAt": null,
+  "extractionMethod": null,
+  "contentNote": null,
   "content": "# Project title\\n\\nFull markdown body...",
   "truncated": false
 }`}
