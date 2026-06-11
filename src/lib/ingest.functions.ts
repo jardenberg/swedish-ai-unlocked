@@ -334,17 +334,19 @@ export const previewBulkOp = createServerFn({ method: "POST" })
       .select("id, url, status, sitemap_lastmod, fetched_at")
       .eq("source_id", source.id);
 
-    const existing = new Map((existingRows ?? []).map((r) => [r.url, r] as const));
+    const { existing, dupes } = buildCanonicalExistingMap(existingRows ?? [], canonicalizeUrl);
+    if (dupes > 0) console.warn(`[preview] ${dupes} legacy duplicate URL rows collapsed.`);
 
     let willInsert = 0;
     let willRefresh = 0;
     let willResetEmbedded = 0;
     let unchanged = 0;
+    const insertSample: string[] = [];
 
     if (data.op === "map") {
       for (const [url, lastmod] of lastmodByUrl) {
         const row = existing.get(url);
-        if (!row) { willInsert++; continue; }
+        if (!row) { willInsert++; insertSample.push(url); continue; }
         const newer =
           lastmod &&
           (!row.fetched_at || new Date(lastmod).getTime() > new Date(row.fetched_at).getTime());
@@ -356,9 +358,10 @@ export const previewBulkOp = createServerFn({ method: "POST" })
         }
       }
     } else {
-      // refresh: only diff against existing rows in DB
+      // refresh: only diff against existing rows in DB (canonical key)
       for (const row of existingRows ?? []) {
-        const lastmod = lastmodByUrl.get(row.url);
+        const key = canonicalizeUrl(row.url);
+        const lastmod = lastmodByUrl.get(key);
         const newer =
           lastmod &&
           (!row.sitemap_lastmod || new Date(lastmod).getTime() > new Date(row.sitemap_lastmod).getTime());
@@ -381,6 +384,7 @@ export const previewBulkOp = createServerFn({ method: "POST" })
       guardFraction,
       guardThreshold: EMBEDDED_DROP_GUARD,
       guardTriggered: guardFraction > EMBEDDED_DROP_GUARD,
+      willInsertSample: insertSample.sort().slice(0, 20),
     };
   });
 
