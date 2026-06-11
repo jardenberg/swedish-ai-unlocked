@@ -216,16 +216,21 @@ export async function runSmokeTests(sb: AnySb): Promise<SmokeReport> {
       .select("*", { count: "exact", head: true })
       .eq("content_type", "html")
       .eq("status", "embedded");
-    // Path-month: URL contains /YYYY/MM/ or /YYYY-MM/ segments.
-    const { data: rows } = await sb
-      .from("documents")
-      .select("url, published_at, sitemap_lastmod")
-      .eq("content_type", "html")
-      .eq("status", "embedded");
+    // Paginate to bypass PostgREST's default 1000-row limit.
     const pathMonthRe = /\/(20\d{2})[-/](0[1-9]|1[0-2])(?:[-/]|$)/;
-    const withDate = (rows ?? []).filter((d: { url: string; published_at: string | null; sitemap_lastmod: string | null }) =>
-      d.published_at || d.sitemap_lastmod || pathMonthRe.test(d.url),
-    ).length;
+    let withDate = 0;
+    const pageSize = 1000;
+    for (let from = 0; from < (total ?? 0); from += pageSize) {
+      const { data: rows } = await sb
+        .from("documents")
+        .select("url, published_at, sitemap_lastmod")
+        .eq("content_type", "html")
+        .eq("status", "embedded")
+        .range(from, from + pageSize - 1);
+      for (const d of (rows ?? []) as Array<{ url: string; published_at: string | null; sitemap_lastmod: string | null }>) {
+        if (d.published_at || d.sitemap_lastmod || pathMonthRe.test(d.url)) withDate++;
+      }
+    }
     const pct = total ? (withDate / total) * 100 : 0;
     return {
       name: "html usable-date coverage",
