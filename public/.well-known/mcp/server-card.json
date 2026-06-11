@@ -1,0 +1,27 @@
+{
+  "$schemaNote": "Tracks MCP SEP-1649 server-card draft (revision 2025-05). Update field names as the spec lands.",
+  "serverInfo": {
+    "name": "rise-ai-sweden",
+    "title": "RISE & AI Sweden Public MCP",
+    "version": "v202606102145"
+  },
+  "transport": {
+    "type": "streamable-http",
+    "endpoint": "https://rise-ai-sweden.jardenberg.org/api/mcp"
+  },
+  "authentication": {
+    "type": "none",
+    "note": "Public, no auth, no API key. Rate limited to 60 requests / 5 minutes per IP."
+  },
+  "capabilities": {
+    "tools": [
+      { "name": "search_swedish_ai", "description": "Semantic search across RISE and AI Sweden publications (Swedish and English)." },
+      { "name": "list_latest", "description": "Newest indexed documents across both sources; lightweight metadata only." },
+      { "name": "find_similar", "description": "Given an indexed URL, return semantically nearest other documents." },
+      { "name": "get_document", "description": "Full cleaned markdown for a single indexed URL." },
+      { "name": "list_sources", "description": "Sources covered, document counts, language breakdown, last-updated." }
+    ]
+  },
+  "documentation": "https://rise-ai-sweden.jardenberg.org/",
+  "contact": { "email": "joakim@jardenberg.com" }
+}

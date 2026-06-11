@@ -1,0 +1,12 @@
+{
+  "$schema": "https://agent-skills.cloudflare.com/schema/v0.2.0.json",
+  "skills": [
+    {
+      "name": "query-swedish-ai",
+      "type": "markdown",
+      "description": "How to query the RISE & AI Sweden MCP effectively: tool selection, filters, citation guidance.",
+      "url": "https://rise-ai-sweden.jardenberg.org/.well-known/agent-skills/query-swedish-ai/SKILL.md",
+      "sha256": "ee16627ad93891cd53a68f60602a70edb1307ca736736a45156f12d4717829b2"
+    }
+  ]
+}
