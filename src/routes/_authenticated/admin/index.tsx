@@ -33,6 +33,7 @@ function SourcesPage() {
   const embedFn = useServerFn(embedBatch);
   const refreshFn = useServerFn(refreshSitemap);
   const [busy, setBusy] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
 
   async function run(label: string, fn: () => Promise<unknown>) {
     setBusy(label);
@@ -46,6 +47,36 @@ function SourcesPage() {
       setBusy(null);
     }
   }
+
+  // Loop a batch fn until it processes 0 items, or until safety cap reached.
+  async function drain(
+    label: string,
+    fn: () => Promise<{ scraped?: number; embedded?: number; failed?: number }>,
+    countKey: "scraped" | "embedded",
+    maxIterations = 200,
+  ) {
+    setBusy(label);
+    let total = 0;
+    let iterations = 0;
+    try {
+      while (iterations < maxIterations) {
+        iterations++;
+        setProgress(`${label}: iteration ${iterations}, ${total} done so far…`);
+        const res = await fn();
+        const n = (res[countKey] ?? 0) as number;
+        total += n;
+        qc.invalidateQueries({ queryKey: ["admin-sources"] });
+        if (n === 0) break;
+      }
+      toast.success(`${label}: ${total} total over ${iterations} batches`);
+    } catch (e) {
+      toast.error(`${label} failed after ${total}: ${(e as Error).message}`);
+    } finally {
+      setBusy(null);
+      setProgress(null);
+    }
+  }
+
 
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
 
@@ -90,17 +121,51 @@ function SourcesPage() {
                     size="sm"
                     variant="outline"
                     disabled={!!busy}
-                    onClick={() => run(`scrape ${slug}`, () => scrapeFn({ data: { sourceSlug: slug, batchSize: 25 } }))}
+                    onClick={() => run(`scrape ${slug}`, () => scrapeFn({ data: { sourceSlug: slug, batchSize: 50 } }))}
                   >
-                    2. Scrape batch (25)
+                    2. Scrape batch (50)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    disabled={!!busy}
+                    onClick={() =>
+                      drain(
+                        `drain scrape ${slug}`,
+                        () =>
+                          scrapeFn({ data: { sourceSlug: slug, batchSize: 100 } }) as Promise<{
+                            scraped?: number;
+                          }>,
+                        "scraped",
+                      )
+                    }
+                  >
+                    Drain scrape
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     disabled={!!busy}
-                    onClick={() => run(`embed ${slug}`, () => embedFn({ data: { sourceSlug: slug, batchSize: 10 } }))}
+                    onClick={() => run(`embed ${slug}`, () => embedFn({ data: { sourceSlug: slug, batchSize: 25 } }))}
                   >
-                    3. Embed batch (10)
+                    3. Embed batch (25)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    disabled={!!busy}
+                    onClick={() =>
+                      drain(
+                        `drain embed ${slug}`,
+                        () =>
+                          embedFn({ data: { sourceSlug: slug, batchSize: 50 } }) as Promise<{
+                            embedded?: number;
+                          }>,
+                        "embedded",
+                      )
+                    }
+                  >
+                    Drain embed
                   </Button>
                   <Button
                     size="sm"
@@ -116,7 +181,10 @@ function SourcesPage() {
           );
         })}
       </div>
-      {busy && <p className="text-sm text-muted-foreground">Running: {busy}…</p>}
+      {busy && (
+        <p className="text-sm text-muted-foreground">{progress ?? `Running: ${busy}…`}</p>
+      )}
     </div>
+
   );
 }
