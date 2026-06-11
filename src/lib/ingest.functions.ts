@@ -373,7 +373,7 @@ export const previewBulkOp = createServerFn({ method: "POST" })
       }
     } else {
       // refresh: only diff against existing rows in DB (canonical key)
-      for (const row of existingRows ?? []) {
+      for (const row of existingRows) {
         const key = canonicalizeUrl(row.url);
         const lastmod = lastmodByUrl.get(key);
         const newer =
