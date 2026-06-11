@@ -3,15 +3,25 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
 import { publicStats } from "@/lib/ingest.functions";
+import { VERSION, PUBLISHED, MCP_ENDPOINT as MCP_URL, MCP_NAME } from "@/lib/build-version";
 
-// Bump on each meaningful deploy. Format: v + YYYYMMDDHHMM (UTC-ish, short).
-const VERSION = "v202606102145";
-const PUBLISHED = "June 10, 2026";
-const MCP_URL = "https://rise-ai-sweden.jardenberg.org/api/mcp";
-const MCP_NAME = "rise-ai-sweden";
 const PAGE_TITLE = "RISE & AI Sweden — Public MCP Server";
 
 export const Route = createFileRoute("/")({
+  loader: async () => {
+    if (typeof window === "undefined") {
+      try {
+        const { setResponseHeader } = await import("@tanstack/react-start/server");
+        setResponseHeader(
+          "Link",
+          '</.well-known/mcp/server-card.json>; rel="service-desc", </llms.txt>; rel="describedby"',
+        );
+      } catch {
+        // not in a server request context (e.g. prerender) — ignore
+      }
+    }
+    return null;
+  },
   head: () => ({
     meta: [
       { title: PAGE_TITLE },
