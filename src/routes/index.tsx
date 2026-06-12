@@ -352,6 +352,16 @@ function Landing() {
         <section className="mt-12">
           <h2 className="text-xl font-semibold">FAQ</h2>
           <dl className="mt-4 space-y-5 text-sm">
+            <Faq q="Is this open source?">
+              Yes — code lives at{" "}
+              <a
+                href="https://github.com/jardenberg/swedish-ai-unlocked"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                github.com/jardenberg/swedish-ai-unlocked
+              </a>
+              . Issues and PRs welcome.
+            </Faq>
             <Faq q="Do I need an API key?">
               No. Public endpoint, no auth. Rate limit: 60 requests / 5 minutes per IP.
             </Faq>
