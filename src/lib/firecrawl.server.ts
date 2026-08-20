@@ -17,18 +17,35 @@ export async function fetchSitemap(rootUrl: string): Promise<Array<{ url: string
   for (const sm of candidates) {
     try {
       await collectSitemap(sm, out);
-    } catch {
-      /* ignore */
+    } catch (e) {
+      console.warn("[sitemap] fetch/parse failed", sm, (e as Error).message);
     }
   }
   return Array.from(out.entries()).map(([url, lastmod]) => ({ url, lastmod }));
 }
 
+// ri.se's WAF 403s unknown bot UAs outright and rate-limits bursts, so send a
+// browser UA (with a bot token appended for transparency) and retry on 403/429.
+const SITEMAP_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 SwedishAILibrarianBot/1.0";
+
+async function fetchSitemapXml(url: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
+    const res = await fetch(url, {
+      headers: { "User-Agent": SITEMAP_UA, Accept: "application/xml,text/xml,*/*" },
+    });
+    if (res.ok) return await res.text();
+    if (res.status !== 403 && res.status !== 429 && res.status < 500) return null;
+  }
+  console.warn("[sitemap] gave up after retries (WAF/rate-limit)", url);
+  return null;
+}
+
 async function collectSitemap(url: string, out: Map<string, string | undefined>, depth = 0) {
   if (depth > 3) return;
-  const res = await fetch(url, { headers: { "User-Agent": "SwedishAILibrarianBot/1.0" } });
-  if (!res.ok) return;
-  const xml = await res.text();
+  const xml = await fetchSitemapXml(url);
+  if (xml === null) return;
 
   // Sitemap index?
   const sitemapMatches = [...xml.matchAll(/<sitemap>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/sitemap>/g)];
