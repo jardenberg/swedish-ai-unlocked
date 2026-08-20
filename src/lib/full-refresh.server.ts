@@ -16,7 +16,12 @@ export interface SourceReport {
   failed: number;
   blocked: boolean;
   /** Guard preview when the >10% embedded-drop guard tripped. */
-  guardPreview?: Record<string, unknown>;
+  guardPreview?: {
+    willRefresh: number;
+    willResetEmbedded: number;
+    embeddedBefore: number;
+    newInserted: number;
+  };
   error?: string;
 }
 
@@ -60,7 +65,13 @@ export async function runFullPipeline(opts: {
       rep.error = message;
       if (e instanceof BulkGuardError) {
         rep.blocked = true;
-        rep.guardPreview = e.preview;
+        const p = e.preview as Record<string, unknown>;
+        rep.guardPreview = {
+          willRefresh: Number(p.willRefresh ?? 0),
+          willResetEmbedded: Number(p.willResetEmbedded ?? 0),
+          embeddedBefore: Number(p.embeddedBefore ?? 0),
+          newInserted: Number(p.newInserted ?? 0),
+        };
         rep.newInserted = Number(e.preview.newInserted ?? 0);
         // ingest_runs row already written by the core with blocked: true.
       } else {
