@@ -159,21 +159,14 @@ export async function refreshSitemapCore(
       embeddedBefore,
     };
 
-    if (
+    const guardTripped =
       embeddedBefore > 0 &&
       willResetEmbedded / Math.max(embeddedBefore, 1) > EMBEDDED_DROP_GUARD &&
-      !data.force
-    ) {
-      throw new BulkGuardError(preview);
-    }
+      !data.force;
 
-    for (const s of stale) {
-      await supabaseAdmin
-        .from("documents")
-        .update({ status: "pending", sitemap_lastmod: s.lastmod })
-        .eq("id", s.id);
-    }
-
+    // Inserts are non-destructive (they reset nothing), so they run even when
+    // the reset guard trips — new publications must never be gated behind an
+    // orchestrator decision about stale-row resets.
     let newInserted = 0;
     for (let i = 0; i < toInsert.length; i += 500) {
       const slice = toInsert.slice(i, i + 500);
@@ -182,6 +175,24 @@ export async function refreshSitemapCore(
         .upsert(slice, { onConflict: "url", ignoreDuplicates: true, count: "exact" });
       if (insErr) throw new Error(`insert new docs failed: ${insErr.message}`);
       newInserted += count ?? slice.length;
+    }
+
+    if (guardTripped) {
+      await supabaseAdmin.from("ingest_runs").insert({
+        source_id: source.id,
+        kind: "refresh",
+        trigger,
+        finished_at: new Date().toISOString(),
+        notes: writeRunNotes({ ...preview, blocked: true, newInserted }),
+      });
+      throw new BulkGuardError({ ...preview, newInserted });
+    }
+
+    for (const s of stale) {
+      await supabaseAdmin
+        .from("documents")
+        .update({ status: "pending", sitemap_lastmod: s.lastmod })
+        .eq("id", s.id);
     }
 
     const embeddedAfter = await countEmbedded(supabaseAdmin, source.id);
