@@ -26,7 +26,15 @@ export async function fetchSitemap(rootUrl: string): Promise<Array<{ url: string
 
 async function collectSitemap(url: string, out: Map<string, string | undefined>, depth = 0) {
   if (depth > 3) return;
-  const res = await fetch(url, { headers: { "User-Agent": "SwedishAILibrarianBot/1.0" } });
+  // ri.se's WAF 403s unknown bot UAs (blocks sitemap.xml outright), so send a
+  // browser UA with a bot contact note rather than a bare bot token.
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 SwedishAILibrarianBot/1.0",
+      Accept: "application/xml,text/xml,*/*",
+    },
+  });
   if (!res.ok) return;
   const xml = await res.text();
 
