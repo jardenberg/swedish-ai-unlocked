@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 
 import { getPipelineRates } from "@/lib/admin-observability.functions";
 import { Card } from "@/components/ui/card";
+import { FullRefreshPanel } from "@/components/admin/FullRefreshPanel";
 
 export const Route = createFileRoute("/_authenticated/admin/pipeline")({
   component: PipelinePage,
@@ -20,6 +21,7 @@ function PipelinePage() {
           Per-source queue depth, throughput (last 10 min), and ETA to drain. Polls every 15 s.
         </p>
       </div>
+      <FullRefreshPanel />
       {SOURCES.map((slug) => (
         <PipelineStrip key={slug} slug={slug} />
       ))}
