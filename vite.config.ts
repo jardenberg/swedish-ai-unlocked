@@ -6,8 +6,25 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import type { Plugin } from "vite";
 
 const firecrawlStub = fileURLToPath(new URL("./src/lib/firecrawl-client-stub.ts", import.meta.url));
+
+// The Firecrawl SDK is server-only (it imports node:events). API route files live in
+// the client route tree, so their dynamic server imports would otherwise drag the SDK
+// into the browser bundle and break the build. Swap it for a throwing stub client-side.
+function stubFirecrawlInClient(): Plugin {
+  return {
+    name: "stub-firecrawl-in-client",
+    enforce: "pre",
+    resolveId(source) {
+      if (source === "@mendable/firecrawl-js" && this.environment?.name === "client") {
+        return firecrawlStub;
+      }
+      return null;
+    },
+  };
+}
 
 export default defineConfig({
   tanstackStart: {
@@ -16,15 +33,6 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    environments: {
-      client: {
-        resolve: {
-          alias: {
-            // Server-only SDK (pulls in node:events). Never bundle it for the browser.
-            "@mendable/firecrawl-js": firecrawlStub,
-          },
-        },
-      },
-    },
+    plugins: [stubFirecrawlInClient()],
   },
 });
