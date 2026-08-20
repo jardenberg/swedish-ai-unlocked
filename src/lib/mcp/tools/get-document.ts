@@ -10,6 +10,10 @@ export const getDocumentTool = defineTool({
   }),
   execute: async ({ url }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { canonicalizeUrl } = await import("@/lib/url-canonical.server");
+    // Stored URLs are canonical; canonicalize the caller's input so bare-host,
+    // trailing-slash, and tracking-param variants resolve to the same document.
+    url = canonicalizeUrl(url);
     const { data, error } = await supabaseAdmin
       .from("documents")
       .select(

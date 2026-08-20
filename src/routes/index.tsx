@@ -271,7 +271,7 @@ function Landing() {
 
             <ToolDoc
               name="find_similar"
-              summary="Given a URL already in the index, return semantically nearest other documents. Uses the seed document's centroid embedding (average of all its chunks) so navigation chrome doesn't dominate matches. Great for 'more like this' after picking a hit. URL must match exactly — trailing slashes or query strings will miss."
+              summary="Given a URL already in the index, return semantically nearest other documents. Uses the seed document's centroid embedding (average of all its chunks) so navigation chrome doesn't dominate matches. Great for 'more like this' after picking a hit. URLs are canonicalized on input, so bare-host, trailing-slash, and tracking-param variants all resolve."
               params={`{
   url: string,             // a URL from search_swedish_ai / list_latest
   source?: "rise" | "ai_sweden",
@@ -371,8 +371,20 @@ function Landing() {
               current counts and the most recent fetch per source.
             </Faq>
             <Faq q="How fresh is it?">
-              Sitemaps are re-checked daily. New documents are scraped, cleaned, chunked,
-              and embedded in the same pass.
+              Sitemaps are re-checked automatically every day at 04:15 UTC. New and
+              changed documents are scraped, cleaned, chunked, and embedded in the same
+              pass.{" "}
+              {data?.lastRefresh ? (
+                <>
+                  Last completed refresh:{" "}
+                  <strong>
+                    {new Date(data.lastRefresh).toISOString().replace("T", " ").slice(0, 16)} UTC
+                  </strong>
+                  .
+                </>
+              ) : null}{" "}
+              <code className="rounded bg-muted px-1">list_sources</code> always reports the
+              live per-source last-fetch timestamps.
             </Faq>
             <Faq q="Why does find_mentions return fewer rows than `total`?">
               <code className="rounded bg-muted px-1">total</code> is a reconciliation

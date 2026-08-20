@@ -25,6 +25,12 @@ export const findMentionsTool = defineTool({
   }),
   execute: async ({ term, source, lang, page_type, limit }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // If the caller passes a URL as the term, canonicalize it so it matches
+    // the stored canonical form.
+    if (/^https?:\/\//i.test(term)) {
+      const { canonicalizeUrl } = await import("@/lib/url-canonical.server");
+      term = canonicalizeUrl(term);
+    }
 
     let filterSource: string | null = null;
     if (source) {

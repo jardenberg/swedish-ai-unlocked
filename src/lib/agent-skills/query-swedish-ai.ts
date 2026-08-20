@@ -58,6 +58,33 @@ the server's job is honest labeling.
 - Always pass \`page_type\` when the user explicitly wants one slice
   (e.g. "upcoming events" → \`page_type: "event"\`).
 
+## Quirks and gotchas
+
+- **URLs are canonicalized on input.** \`get_document\`, \`find_similar\`, and
+  URL-shaped \`find_mentions\` terms are normalized (https, \`www.\` host form,
+  no fragment, no tracking params, no trailing slash) before lookup — so
+  \`https://ai.se/x/\` and \`https://www.ai.se/x?utm_source=y\` both resolve.
+- **Offsite event redirects are excluded.** Many \`ai.se\` event pages
+  301-redirect to third-party platforms (Invajo, Meetup). Those are parked as
+  \`skipped_offsite\` and never indexed, so some event URLs in ai.se's sitemap
+  have no document here. This is deliberate: only content served from
+  \`ri.se\`/\`ai.se\` is stored.
+- **Dates can be inferred.** \`publishedAt\` may come from page metadata,
+  the sitemap \`lastmod\`, or a date in the URL path. Check
+  \`publishedAtSource\` before treating it as authoritative.
+- **Some PDFs are OCR'd.** When the in-process parser finds no text layer, the
+  document is routed through Firecrawl OCR; \`extractionMethod\` and
+  \`contentNote\` in \`get_document\` say so. OCR text can contain minor
+  character errors.
+- **A few PDFs were manually replaced** by the maintainer (oversized or corrupt
+  originals). \`bytesReplacedAt\` marks those; the publisher URL is still
+  canonical.
+- **Short queries go literal.** \`search_swedish_ai\` weights the lexical arm
+  2x for queries of ≤2 tokens. Add a word if a one-word topical query feels too
+  keyword-y.
+- **Freshness.** Sitemaps are re-checked daily (04:15 UTC) and changed pages
+  re-scraped. \`list_sources\` reports the live last-fetch per source.
+
 ## Citing results
 
 **Every result includes the original publisher URL** (\`ri.se\` or \`ai.se\`).
