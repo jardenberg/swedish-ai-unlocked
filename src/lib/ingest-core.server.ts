@@ -93,7 +93,7 @@ export async function refreshSitemapCore(
   const data = args;
   const trigger: Trigger = args.trigger ?? "manual";
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { fetchSitemap } = await import("./firecrawl.server");
+    const { fetchSitemap, urlMatchesFilters, detectLang } = await import("./firecrawl.server");
 
     const t0 = Date.now();
     const { data: source } = await supabaseAdmin
@@ -104,13 +104,22 @@ export async function refreshSitemapCore(
 
     const sitemap = await fetchSitemap(source.root_url);
     const { canonicalizeUrl } = await import("./url-canonical.server");
-    const lastmodByUrl = new Map(sitemap.map((e) => [canonicalizeUrl(e.url), e.lastmod]));
+    // SCOPE: identical per-source inclusion filtering to mapSource — shared
+    // urlMatchesFilters + the source's own url_filter_patterns/exclude_patterns.
+    // Without this, refresh would insert the full ~17.6k-page ri.se sitemap.
+    const scoped = sitemap.filter((e) =>
+      urlMatchesFilters(e.url, source.url_filter_patterns, source.exclude_patterns),
+    );
+    const lastmodByUrl = new Map<string, string | undefined>();
+    for (const e of scoped) lastmodByUrl.set(canonicalizeUrl(e.url), e.lastmod);
 
-    const existing = await fetchAllDocuments(supabaseAdmin, source.id);
+    const existingRows = await fetchAllDocuments(supabaseAdmin, source.id);
+    const { existing, dupes } = buildCanonicalExistingMap(existingRows, canonicalizeUrl);
+    if (dupes > 0) console.warn(`[refresh] ${dupes} legacy duplicate URL rows collapsed`);
 
     type Stale = { id: string; lastmod: string; wasEmbedded: boolean };
     const stale: Stale[] = [];
-    for (const doc of existing) {
+    for (const doc of existingRows) {
       // skipped_offsite rows are permanently parked — never resurrect.
       if (doc.status === "skipped_offsite") continue;
       const newLastmod = lastmodByUrl.get(canonicalizeUrl(doc.url));
@@ -119,12 +128,33 @@ export async function refreshSitemapCore(
       }
     }
 
+    // NEW URL DISCOVERY: sitemap entries with no existing row (canonical on
+    // both sides) become pending docs. Inserts reset nothing, so they don't
+    // count against the embedded-drop guard.
+    const toInsert: Array<{
+      source_id: string; url: string; lang: string; content_type: string;
+      sitemap_lastmod: string | null; status: string;
+    }> = [];
+    for (const [url, lastmod] of lastmodByUrl) {
+      if (existing.has(url)) continue;
+      toInsert.push({
+        source_id: source.id,
+        url,
+        lang: detectLang(url),
+        content_type: url.toLowerCase().endsWith(".pdf") ? "pdf" : "html",
+        sitemap_lastmod: lastmod ?? null,
+        status: "pending",
+      });
+    }
+
     const willResetEmbedded = stale.filter((s) => s.wasEmbedded).length;
 
     const preview = {
       op: "refresh",
       source: data.sourceSlug,
       willRefresh: stale.length,
+      willInsert: toInsert.length,
+      willInsertSample: toInsert.map((r) => r.url).sort().slice(0, 20),
       willResetEmbedded,
       embeddedBefore,
     };
@@ -144,11 +174,23 @@ export async function refreshSitemapCore(
         .eq("id", s.id);
     }
 
+    let newInserted = 0;
+    for (let i = 0; i < toInsert.length; i += 500) {
+      const slice = toInsert.slice(i, i + 500);
+      const { error: insErr, count } = await supabaseAdmin
+        .from("documents")
+        .upsert(slice, { onConflict: "url", ignoreDuplicates: true, count: "exact" });
+      if (insErr) throw new Error(`insert new docs failed: ${insErr.message}`);
+      newInserted += count ?? slice.length;
+    }
+
     const embeddedAfter = await countEmbedded(supabaseAdmin, source.id);
     const notes = writeRunNotes({
       op: "refresh",
       force: !!data.force,
       stale: stale.length,
+      newInserted,
+      newInsertedSample: toInsert.map((r) => r.url).sort().slice(0, 20),
       willResetEmbedded,
       embeddedBefore,
       embeddedAfter,
@@ -169,7 +211,9 @@ export async function refreshSitemapCore(
 
     return {
       stale: stale.length,
+      newInserted,
       totalInSitemap: sitemap.length,
+      scopedInSitemap: scoped.length,
       embeddedBefore,
       embeddedAfter,
       delta: embeddedAfter - embeddedBefore,
