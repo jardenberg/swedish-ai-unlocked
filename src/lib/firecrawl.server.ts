@@ -17,8 +17,8 @@ export async function fetchSitemap(rootUrl: string): Promise<Array<{ url: string
   for (const sm of candidates) {
     try {
       await collectSitemap(sm, out);
-    } catch {
-      /* ignore */
+    } catch (e) {
+      console.warn("[sitemap] fetch/parse failed", sm, (e as Error).message);
     }
   }
   return Array.from(out.entries()).map(([url, lastmod]) => ({ url, lastmod }));
