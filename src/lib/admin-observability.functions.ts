@@ -458,3 +458,32 @@ export const runSearchConsole = createServerFn({ method: "POST" })
       error,
     };
   });
+
+// ───────────────────────────────────────────────────────────────
+// runFullRefresh — "Run full refresh now": the exact cron pipeline
+// (refresh + new-URL discovery → drain scrape/embed → snapshot) for both
+// sources, written to ingest_runs with trigger='manual'. Never forces the
+// embedded-drop guard unless the caller explicitly opts in per source.
+// ───────────────────────────────────────────────────────────────
+export const runFullRefresh = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        force: z
+          .object({ rise: z.boolean().optional(), ai_sweden: z.boolean().optional() })
+          .optional(),
+        budgetMs: z.number().int().min(10_000).max(240_000).optional(),
+      })
+      .optional()
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { runFullPipeline } = await import("./full-refresh.server");
+    return await runFullPipeline({
+      trigger: "manual",
+      force: data?.force,
+      budgetMs: data?.budgetMs ?? 120_000,
+    });
+  });
