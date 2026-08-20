@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
 import { runFullRefresh } from "@/lib/admin-observability.functions";
+import type { FullPipelineReport, SourceReport } from "@/lib/full-refresh.server";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -17,8 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type Report = Awaited<ReturnType<typeof runFullRefresh>>;
-type SourceReport = Report["sources"][number];
+type Report = FullPipelineReport;
 
 export function FullRefreshPanel() {
   const fn = useServerFn(runFullRefresh);
