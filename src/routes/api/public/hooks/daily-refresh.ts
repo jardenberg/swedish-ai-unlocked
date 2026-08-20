@@ -38,7 +38,27 @@ export const Route = createFileRoute("/api/public/hooks/daily-refresh")({
           try {
             refresh[slug] = await refreshSitemapCore({ sourceSlug: slug, trigger: "cron" });
           } catch (e) {
-            refresh[slug] = { error: (e as Error).message };
+            const message = (e as Error).message;
+            refresh[slug] = { error: message };
+            // Record guard-blocked / failed cron refreshes so the admin run
+            // history shows them instead of them vanishing into logs.
+            try {
+              const { supabaseAdmin: sb } = await import(
+                "@/integrations/supabase/client.server"
+              );
+              const { data: src } = await sb
+                .from("sources")
+                .select("id")
+                .eq("slug", slug)
+                .maybeSingle();
+              await sb.from("ingest_runs").insert({
+                source_id: src?.id ?? null,
+                kind: "refresh",
+                trigger: "cron",
+                finished_at: new Date().toISOString(),
+                notes: JSON.stringify({ op: "refresh", blocked: true, error: message }),
+              });
+            } catch { /* best-effort */ }
           }
         }
         report.refresh = refresh;
