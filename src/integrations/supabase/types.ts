@@ -199,6 +199,7 @@ export type Database = {
           skipped: number | null
           source_id: string | null
           started_at: string
+          trigger: string
         }
         Insert: {
           credits_used?: number | null
@@ -213,6 +214,7 @@ export type Database = {
           skipped?: number | null
           source_id?: string | null
           started_at?: string
+          trigger?: string
         }
         Update: {
           credits_used?: number | null
@@ -227,6 +229,7 @@ export type Database = {
           skipped?: number | null
           source_id?: string | null
           started_at?: string
+          trigger?: string
         }
         Relationships: [
           {

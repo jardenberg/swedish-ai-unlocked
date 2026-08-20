@@ -31,6 +31,16 @@ Every document is labeled with a URL-derived `page_type`:
 
 Relevance filtering is the client's job; our job is labeling.
 
+## Freshness
+
+Both sitemaps are re-checked automatically every day at 04:15 UTC; new and changed pages are scraped, cleaned, chunked, and embedded in the same pass. `list_sources` reports the live per-source last-fetch timestamp.
+
+## URL handling
+
+URL inputs to `get_document` and `find_similar` (and URL-shaped `find_mentions` terms) are canonicalized before lookup: https scheme, canonical host (`www.ai.se`), no fragment, no tracking params, no trailing slash. Bare-host and query-decorated variants resolve to the same document.
+
+Event pages on ai.se that 301-redirect off-domain (Invajo, Meetup, etc.) are deliberately not indexed.
+
 ## Rate limit
 
 60 requests / 5 minutes per IP.

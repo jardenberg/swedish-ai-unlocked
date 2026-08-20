@@ -13,6 +13,8 @@ export const findSimilarTool = defineTool({
   }),
   execute: async ({ url, limit, source, lang }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { canonicalizeUrl } = await import("@/lib/url-canonical.server");
+    url = canonicalizeUrl(url);
 
     const { data: doc } = await supabaseAdmin
       .from("documents")

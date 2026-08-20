@@ -1,0 +1,1 @@
+ALTER TABLE public.ingest_runs ADD COLUMN IF NOT EXISTS "trigger" text NOT NULL DEFAULT 'manual';

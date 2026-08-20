@@ -23,6 +23,7 @@ import { Route as AuthenticatedAdminSearchRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminRunsRouteImport } from './routes/_authenticated/admin/runs'
 import { Route as AuthenticatedAdminPipelineRouteImport } from './routes/_authenticated/admin/pipeline'
 import { Route as AuthenticatedAdminDocumentsRouteImport } from './routes/_authenticated/admin/documents'
+import { Route as ApiPublicHooksDailyRefreshRouteImport } from './routes/api/public/hooks/daily-refresh'
 import { Route as AuthenticatedAdminDocumentsDocumentIdRouteImport } from './routes/_authenticated/admin/documents.$documentId'
 import { Route as DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRouteImport } from './routes/[.]well-known/agent-skills/query-swedish-ai/SKILL[.]md'
 
@@ -99,6 +100,12 @@ const AuthenticatedAdminDocumentsRoute =
     path: '/documents',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiPublicHooksDailyRefreshRoute =
+  ApiPublicHooksDailyRefreshRouteImport.update({
+    id: '/api/public/hooks/daily-refresh',
+    path: '/api/public/hooks/daily-refresh',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminDocumentsDocumentIdRoute =
   AuthenticatedAdminDocumentsDocumentIdRouteImport.update({
     id: '/$documentId',
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/.well-known/agent-skills/query-swedish-ai/SKILL.md': typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
   '/admin/documents/$documentId': typeof AuthenticatedAdminDocumentsDocumentIdRoute
+  '/api/public/hooks/daily-refresh': typeof ApiPublicHooksDailyRefreshRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -144,6 +152,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/.well-known/agent-skills/query-swedish-ai/SKILL.md': typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
   '/admin/documents/$documentId': typeof AuthenticatedAdminDocumentsDocumentIdRoute
+  '/api/public/hooks/daily-refresh': typeof ApiPublicHooksDailyRefreshRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -163,6 +172,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/.well-known/agent-skills/query-swedish-ai/SKILL.md': typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
   '/_authenticated/admin/documents/$documentId': typeof AuthenticatedAdminDocumentsDocumentIdRoute
+  '/api/public/hooks/daily-refresh': typeof ApiPublicHooksDailyRefreshRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
     | '/admin/documents/$documentId'
+    | '/api/public/hooks/daily-refresh'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
     | '/admin/documents/$documentId'
+    | '/api/public/hooks/daily-refresh'
   id:
     | '__root__'
     | '/'
@@ -216,6 +228,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/.well-known/agent-skills/query-swedish-ai/SKILL.md'
     | '/_authenticated/admin/documents/$documentId'
+    | '/api/public/hooks/daily-refresh'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -226,6 +239,7 @@ export interface RootRouteChildren {
   DotwellKnownSplatRoute: typeof DotwellKnownSplatRoute
   ApiMcpRoute: typeof ApiMcpRoute
   DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute: typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
+  ApiPublicHooksDailyRefreshRoute: typeof ApiPublicHooksDailyRefreshRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -328,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDocumentsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/hooks/daily-refresh': {
+      id: '/api/public/hooks/daily-refresh'
+      path: '/api/public/hooks/daily-refresh'
+      fullPath: '/api/public/hooks/daily-refresh'
+      preLoaderRoute: typeof ApiPublicHooksDailyRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/documents/$documentId': {
       id: '/_authenticated/admin/documents/$documentId'
       path: '/$documentId'
@@ -404,7 +425,18 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMcpRoute: ApiMcpRoute,
   DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute:
     DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute,
+  ApiPublicHooksDailyRefreshRoute: ApiPublicHooksDailyRefreshRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

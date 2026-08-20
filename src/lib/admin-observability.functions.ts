@@ -243,6 +243,7 @@ export const listRunsDetailed = createServerFn({ method: "POST" })
         delta,
         durationMs,
         force,
+        trigger: (r as { trigger?: string | null }).trigger ?? "manual",
       };
     });
     return { runs: parsed };

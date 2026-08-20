@@ -69,6 +69,11 @@ function RunsPage() {
                     ) : (
                       r.kind
                     )}
+                    {r.trigger === "cron" && (
+                      <span className="ml-1 rounded bg-sky-100 px-1 py-0.5 text-[10px] text-sky-900 dark:bg-sky-900/40 dark:text-sky-200">
+                        CRON
+                      </span>
+                    )}
                     {r.force && (
                       <span className="ml-1 rounded bg-amber-100 px-1 py-0.5 text-[10px] text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
                         FORCE
