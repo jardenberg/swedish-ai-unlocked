@@ -1,10 +1,11 @@
-import { buildProvenance } from "./provenance.server";
+import { buildProvenance, buildLegacyProvenance } from "./provenance.server";
 import {
   canonicalJson,
   signStructuredContent,
   signWrapper,
   SPEC_NAMESPACE,
 } from "./signing.server";
+
 
 type JsonRpcMessage = {
   jsonrpc?: string;
@@ -26,7 +27,7 @@ type JsonRpcMessage = {
  *
  * - Signs a wrapper `{ iat, payload, payload_digest, content_digest, provenance }`
  *   — RFC 8785 (JCS) canonical. Both digests live INSIDE the signature.
- * - Envelope lives at `result._meta["org.jardenberg.verifiable-mcp"]` and holds
+ * - Envelope lives at `result._meta["org.jardenberg/verifiable-mcp"]` and holds
  *   only `{ spec, alg, kid, signed, jws }` — nothing security-bearing outside.
  * - Content binding is by digest: `content_digest` is SHA-256 over the exact
  *   served bytes of `content[0].text` (which remains canonical JSON here).
@@ -49,10 +50,10 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
       payload = null;
     }
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-      // Tool-level error (isError) or non-JSON text: sign an error wrapper and
-      // leave the human-readable text arm untouched.
+      // Tool-level error (isError) or non-JSON text: signed like any tools/call
+      // result, wrapper payload = { isError: true, message: <text arm> }.
       if (result.isError && typeof first.text === "string") {
-        const errObj = { id: msg.id ?? null, error: { code: -32000, message: first.text } };
+        const errObj = { isError: true, message: first.text };
         const prov = await buildProvenance(errObj);
         const signedErr = await signWrapper(errObj, prov, first.text);
         if (signedErr) {
@@ -69,7 +70,7 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     first.text = canonicalJson(base);
 
     // v0.1 (deprecated): structuredContent keeps the provenance mirror.
-    const structuredContent = { ...base, provenance };
+    const structuredContent = { ...base, provenance: await buildLegacyProvenance(base) };
     result.structuredContent = structuredContent;
     const legacy = await signStructuredContent(structuredContent);
     if (legacy) result.signature = legacy;
@@ -79,29 +80,44 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     if (signed) {
       result._meta = { ...(result._meta ?? {}), [SPEC_NAMESPACE]: signed.meta };
     }
+
     return msg;
   } catch {
     return msg;
   }
 }
 
-/** ITEM 6 — signed JSON-RPC errors: wrapper payload = { id, error }. */
+/**
+ * Signed JSON-RPC errors: wrapper payload = { id, error }; the envelope rides
+ * in `error.data[SPEC_NAMESPACE]` — strict SDKs drop unknown members of `error`,
+ * `data` is the sanctioned carrier.
+ */
 async function augmentError(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
   try {
-    const error = msg.error;
+    const error = msg.error as Record<string, unknown> | undefined;
     if (!error || typeof error !== "object") return msg;
-    const errPayload = { id: msg.id ?? null, error };
+    // Signed payload is the error frame WITHOUT the envelope itself; verifiers
+    // remove error.data["org.jardenberg/verifiable-mcp"] before comparing.
+    const errPayload = { id: msg.id ?? null, error: { ...error } };
     const provenance = await buildProvenance(errPayload);
     const signed = await signWrapper(errPayload, provenance);
+
     if (signed) {
-      const existing = (msg._meta as Record<string, unknown> | undefined) ?? {};
-      msg._meta = { ...existing, [SPEC_NAMESPACE]: signed.meta };
+      const data = error.data;
+      const dataObj =
+        data && typeof data === "object" && !Array.isArray(data)
+          ? (data as Record<string, unknown>)
+          : data === undefined
+            ? {}
+            : { value: data };
+      error.data = { ...dataObj, [SPEC_NAMESPACE]: signed.meta };
     }
     return msg;
   } catch {
     return msg;
   }
 }
+
 
 
 async function augmentMessage(msg: JsonRpcMessage): Promise<JsonRpcMessage> {

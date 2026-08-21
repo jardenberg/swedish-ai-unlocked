@@ -3,7 +3,8 @@ import { MCP_SIGNING_PUBLIC_JWK, MCP_SIGNING_KEY_URL, MCP_SIGNING_KID } from "@/
 
 const body = JSON.stringify(
   {
-    spec: "org.jardenberg.verifiable-mcp/0.2",
+    spec: "org.jardenberg/verifiable-mcp",
+    spec_version: "0.2",
     name: "rise-ai-sweden",
     title: "RISE & AI Sweden Public MCP",
     documentation: "https://rise-ai-sweden.jardenberg.org/",
@@ -12,13 +13,18 @@ const body = JSON.stringify(
     transport: "streamable-http",
     authentication: { type: "none" },
     signing: {
+      spec: "org.jardenberg/verifiable-mcp",
+      spec_version: "0.2",
       alg: "EdDSA",
+      typ: "verifiable-mcp+jws",
       kid: MCP_SIGNING_KID,
       previous_kids: [],
       canonicalization: "RFC 8785 (JCS)",
+      meta_key: "org.jardenberg/verifiable-mcp",
       signed_scopes: [
-        'tools/call _meta["org.jardenberg.verifiable-mcp"] — wrapper { iat, payload, payload_digest, content_digest, provenance }',
-        "JSON-RPC errors — wrapper payload is { id, error }",
+        'tools/call result._meta["org.jardenberg/verifiable-mcp"] — wrapper { iat, payload, payload_digest, content_digest, provenance }',
+        'JSON-RPC errors — envelope at error.data["org.jardenberg/verifiable-mcp"]; wrapper payload is { id, error } with the envelope removed',
+        'tool-level isError results — wrapper payload is { isError: true, message }',
         "tools/call result.signature — structuredContent (v0.1, deprecated, removed in v0.3)",
       ],
       envelope_fields: ["spec", "alg", "kid", "signed", "jws"],
@@ -30,25 +36,28 @@ const body = JSON.stringify(
       key_url: MCP_SIGNING_KEY_URL,
       card_path_note:
         "This /.well-known/mcp.json path follows SEP-1649, which is not yet frozen upstream; the path may change. The dedicated key file is also served.",
+      jwks: { keys: [MCP_SIGNING_PUBLIC_JWK] },
     },
     jwks: { keys: [MCP_SIGNING_PUBLIC_JWK] },
-
   },
   null,
   2,
 );
 
+const respond = () =>
+  new Response(body, {
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+
 export const Route = createFileRoute("/.well-known/mcp.json")({
   server: {
     handlers: {
-      GET: async () =>
-        new Response(body, {
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-            "Cache-Control": "public, max-age=3600",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }),
+      GET: async () => respond(),
+      HEAD: async () => new Response(null, { status: 200, headers: respond().headers }),
     },
   },
 });

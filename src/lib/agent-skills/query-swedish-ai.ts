@@ -48,6 +48,10 @@ the server's job is honest labeling.
 - **\`list_sources\`** — Discovery only. Returns source slugs, document
   counts per language, and last-updated timestamp.
 
+- **\`server_info\`** — Server identity: name, origin, verifiable-response spec
+  id, build version, dataset statistics (documents per source, total chunks),
+  last-updated.
+
 ## Heuristics
 
 - Topical, multi-word query → \`search_swedish_ai\`.
@@ -90,16 +94,22 @@ the server's job is honest labeling.
 Every \`tools/call\` response carries a signed envelope. Everything here is
 **additive** — tool data fields are unchanged.
 
-- \`result._meta["org.jardenberg.verifiable-mcp"]\` =
+- \`result._meta["org.jardenberg/verifiable-mcp"]\` =
   \`{ spec: "0.2", alg: "EdDSA", kid, signed: "wrapper", jws }\`. Nothing
   security-bearing lives outside the JWS — trust only values recovered from the
   verified wrapper.
 - The compact JWS covers a **wrapper**:
   \`{ iat, payload, payload_digest, content_digest, provenance }\`, where
   \`payload\` is the tool result data (no provenance mirrored inside) and
-  \`provenance\` holds \`server_operator\`, \`server\`, \`content_publisher\`,
-  \`canonical_origin\`, \`publishers\`, \`legal_basis\`, \`content_hash\`,
-  \`dataset_version\`, \`last_updated\`.
+  \`provenance\` holds \`server_operator\`, \`server\`, \`legal_basis\`,
+  \`dataset_version\`, \`last_updated\` — plus \`content_publisher\` and a
+  string \`canonical_origin\` for single-source responses, or a
+  \`publishers[]\` array (and no \`canonical_origin\`) when a response spans
+  both sources. There are no \`content_hash*\` keys inside the wrapper; the
+  digests below are the binding.
+
+- JWS protected header: \`alg: "EdDSA"\`, \`kid\`,
+  \`typ: "verifiable-mcp+jws"\` (RFC 8725 explicit typing).
 - Canonicalization is **RFC 8785 (JCS)** — normative for both the JWS payload
   and every digest.
 - \`payload_digest\` = \`sha256:<hex>\` over the RFC 8785 canonical \`payload\`.
@@ -111,8 +121,11 @@ Every \`tools/call\` response carries a signed envelope. Everything here is
   (\`kid\` = RFC 7638 thumbprint). The server-card path follows SEP-1649, which
   is not yet frozen upstream — the path may change, so both the card and the
   dedicated key file are served.
-- JSON-RPC **error** responses carry the same \`_meta\` envelope, with
-  \`{ id, error }\` (including the request id) as the wrapper payload.
+- JSON-RPC **error** frames carry the envelope at
+  \`error.data["org.jardenberg/verifiable-mcp"]\`; the wrapper payload is
+  \`{ id, error }\` (request id included) with the envelope key removed from
+  \`error.data\`. Tool-level \`isError\` results are signed like any result,
+  with wrapper payload \`{ isError: true, message }\`.
 - **Deprecated (removed in v0.3):** the v0.1 sibling \`result.signature\`
   (\`signed: "structuredContent"\`) and the \`provenance\` mirror inside
   \`structuredContent\` are still emitted for existing clients.
@@ -120,7 +133,7 @@ Every \`tools/call\` response carries a signed envelope. Everything here is
 Verify in three steps:
 
 1. Fetch \`/.well-known/mcp.json\` and pick the JWK whose \`kid\` matches
-   \`_meta["org.jardenberg.verifiable-mcp"].kid\`.
+   \`_meta["org.jardenberg/verifiable-mcp"].kid\`.
 2. Verify the compact JWS with EdDSA (\`jose\` in JS, \`python-jose\` / \`PyJWT\`
    in Python). The verified payload is the JCS-canonical wrapper.
 3. Check that SHA-256 of the served \`content[0].text\` equals
@@ -129,8 +142,8 @@ Verify in three steps:
 
 
 Content is published by RISE and AI Sweden and remains © its publisher; this
-server indexes it under the EU TDM exception (DSM art. 3-4) and claims no
-licence over it. If the signing key is unavailable, responses are served
+server indexes it under the EU TDM exception (DSM directive, art. 4), serving excerpts with source
+attribution, and claims no licence over it. If the signing key is unavailable, responses are served
 unsigned — signing never blocks a query.
 
 ## Citing results

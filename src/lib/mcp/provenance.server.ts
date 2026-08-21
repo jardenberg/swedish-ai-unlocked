@@ -3,7 +3,8 @@ import { canonicalJson, sha256Hex } from "./signing.server";
 export const SERVER_OPERATOR = "Studio Jardenberg";
 export const SERVER_HOST = "rise-ai-sweden.jardenberg.org";
 export const LEGAL_BASIS =
-  "EU TDM exception (DSM art. 3-4); all content remains © its publisher";
+  "Indexed under the EU TDM exception (DSM directive, art. 4); excerpts served with source attribution; all content remains © its publisher";
+
 
 const PUBLISHERS: Record<string, { publisher: string; canonical_origin: string }> = {
   rise: { publisher: "RISE", canonical_origin: "https://www.ri.se" },
@@ -82,14 +83,15 @@ export function collectSources(payload: unknown): string[] {
 export type Provenance = Record<string, unknown>;
 
 /**
- * Build the additive provenance block for a tool payload.
- * content_hash is SHA-256 over the canonical (sorted-keys, UTF-8) JSON of the
- * payload WITHOUT the provenance block itself — i.e. the result items as returned.
+ * Spec §5 provenance for the SIGNED wrapper.
+ * Required: server_operator, dataset_version, last_updated, exactly one rights
+ * field (legal_basis). Single-source responses carry `canonical_origin` as a
+ * STRING; multi-source responses omit it and carry `publishers[]` instead.
+ * No content_hash* keys — digests live in the wrapper itself (v0.2.1).
  */
 export async function buildProvenance(payloadWithoutProvenance: unknown): Promise<Provenance> {
   const slugs = collectSources(payloadWithoutProvenance);
   const fingerprint = await getFingerprint();
-  const content_hash = await sha256Hex(canonicalJson(payloadWithoutProvenance));
 
   const publishers = (slugs.length ? slugs : Object.keys(PUBLISHERS).sort()).map((slug) => ({
     source: slug,
@@ -97,20 +99,51 @@ export async function buildProvenance(payloadWithoutProvenance: unknown): Promis
     canonical_origin: PUBLISHERS[slug].canonical_origin,
   }));
 
+  const single = slugs.length === 1 ? PUBLISHERS[slugs[0]] : null;
+
   return {
     server_operator: SERVER_OPERATOR,
     server: SERVER_HOST,
-    content_publisher:
-      slugs.length === 1 ? PUBLISHERS[slugs[0]].publisher : publishers.map((p) => p.content_publisher),
-    canonical_origin:
-      slugs.length === 1 ? PUBLISHERS[slugs[0]].canonical_origin : publishers.map((p) => p.canonical_origin),
-    publishers,
+    ...(single
+      ? { content_publisher: single.publisher, canonical_origin: single.canonical_origin }
+      : { publishers }),
     legal_basis: LEGAL_BASIS,
-    content_hash,
-    content_hash_alg: "sha256",
-    content_hash_scope:
-      "SHA-256 over the canonical (sorted-keys, UTF-8, no whitespace) JSON of this response object with the `provenance` key removed",
     dataset_version: fingerprint.dataset_version,
     last_updated: fingerprint.last_updated,
   };
 }
+
+/**
+ * Deprecated v0.1 provenance mirror (inside `structuredContent`, outside the
+ * signature). Keeps its historical shape including content_hash*; removed in v0.3.
+ */
+export async function buildLegacyProvenance(
+  payloadWithoutProvenance: unknown,
+): Promise<Provenance> {
+  const slugs = collectSources(payloadWithoutProvenance);
+  const base = await buildProvenance(payloadWithoutProvenance);
+  const content_hash = await sha256Hex(canonicalJson(payloadWithoutProvenance));
+  const publishers = (slugs.length ? slugs : Object.keys(PUBLISHERS).sort()).map((slug) => ({
+    source: slug,
+    content_publisher: PUBLISHERS[slug].publisher,
+    canonical_origin: PUBLISHERS[slug].canonical_origin,
+  }));
+
+  return {
+    ...base,
+    content_publisher:
+      slugs.length === 1
+        ? PUBLISHERS[slugs[0]].publisher
+        : publishers.map((p) => p.content_publisher),
+    canonical_origin:
+      slugs.length === 1
+        ? PUBLISHERS[slugs[0]].canonical_origin
+        : publishers.map((p) => p.canonical_origin),
+    publishers,
+    content_hash,
+    content_hash_alg: "sha256",
+    content_hash_scope:
+      "SHA-256 over the canonical (sorted-keys, UTF-8, no whitespace) JSON of this response object with the `provenance` key removed",
+  };
+}
+

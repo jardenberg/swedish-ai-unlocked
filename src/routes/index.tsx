@@ -352,6 +352,34 @@ function Landing() {
   ]
 }`}
             />
+
+            <ToolDoc
+              name="server_info"
+              summary="Server identity and scope: name, origin, verifiable-response spec id, build version, dataset statistics (documents per source, total chunks), and last-updated."
+              params={`{}`}
+              example={`{
+  "name": "rise-ai-sweden",
+  "server": "rise-ai-sweden.jardenberg.org",
+  "origin": "https://rise-ai-sweden.jardenberg.org",
+  "endpoint": "https://rise-ai-sweden.jardenberg.org/api/mcp",
+  "serverOperator": "Studio Jardenberg",
+  "version": "v202608211730",
+  "spec": "org.jardenberg/verifiable-mcp",
+  "specVersion": "0.2",
+  "authentication": "none",
+  "rateLimit": "60 requests / 5 minutes per IP",
+  "stats": {
+    "documents": 2266,
+    "chunks": 41230,
+    "sources": [
+      { "source": "rise", "documents": 650, "lastUpdated": "2026-08-21T08:03:34Z" },
+      { "source": "ai_sweden", "documents": 1616, "lastUpdated": "2026-08-21T07:58:10Z" }
+    ]
+  },
+  "lastUpdated": "2026-08-21T08:03:34Z"
+}`}
+            />
+
           </div>
         </section>
 
@@ -361,7 +389,7 @@ function Landing() {
           <p className="mt-3 text-sm text-muted-foreground">
             Every <code className="rounded bg-muted px-1">tools/call</code> response is
             cryptographically signed and carries a provenance block (spec{" "}
-            <code className="rounded bg-muted px-1">org.jardenberg.verifiable-mcp/0.2</code>).
+            <code className="rounded bg-muted px-1">org.jardenberg/verifiable-mcp 0.2</code>).
             This is a working pilot of verifiable MCP responses — in the spirit of C2PA
             content credentials, but for tool output. No MCP client verifies these
             signatures automatically yet; the point is that you <em>can</em>, today, with
@@ -382,7 +410,7 @@ function Landing() {
             <li>
               Envelope location: the JSON-RPC result's{" "}
               <code className="rounded bg-muted px-1">
-                _meta["org.jardenberg.verifiable-mcp"]
+                _meta["org.jardenberg/verifiable-mcp"]
               </code>{" "}
               ={" "}
               <code className="rounded bg-muted px-1">
@@ -392,7 +420,9 @@ function Landing() {
               values recovered from the verified wrapper.
             </li>
             <li>
-              Algorithm: <strong>EdDSA (Ed25519)</strong>, compact JWS. Canonicalization:{" "}
+              Algorithm: <strong>EdDSA (Ed25519)</strong>, compact JWS, protected header{" "}
+              <code className="rounded bg-muted px-1">typ: "verifiable-mcp+jws"</code>{" "}
+              (RFC 8725 explicit typing). Canonicalization:{" "}
               <strong>RFC 8785 (JCS)</strong> — normative for the JWS payload and every
               digest.
             </li>
@@ -428,19 +458,37 @@ function Landing() {
               path may change, so both the card and the dedicated key file are served.
             </li>
             <li>
-              JSON-RPC <strong>error</strong> responses carry the same envelope, with{" "}
+              JSON-RPC <strong>error</strong> frames carry the envelope at{" "}
+              <code className="rounded bg-muted px-1">
+                error.data["org.jardenberg/verifiable-mcp"]
+              </code>{" "}
+              (strict SDKs drop unknown members of{" "}
+              <code className="rounded bg-muted px-1">error</code>), with{" "}
               <code className="rounded bg-muted px-1">{`{ id, error }`}</code> — including
-              the request id — as the wrapper payload.
+              the request id, envelope removed — as the wrapper payload. Tool-level{" "}
+              <code className="rounded bg-muted px-1">isError</code> results are signed like
+              any result, wrapper payload{" "}
+              <code className="rounded bg-muted px-1">{`{ isError: true, message }`}</code>.
             </li>
 
             <li>
-              Provenance per response: operator, content publisher(s) and their canonical
-              origins, legal basis, a SHA-256{" "}
-              <code className="rounded bg-muted px-1">content_hash</code>,{" "}
+              Provenance inside the wrapper:{" "}
+              <code className="rounded bg-muted px-1">server_operator</code>,{" "}
+              <code className="rounded bg-muted px-1">server</code>,{" "}
+              <code className="rounded bg-muted px-1">legal_basis</code>,{" "}
               <code className="rounded bg-muted px-1">dataset_version</code> and{" "}
-              <code className="rounded bg-muted px-1">last_updated</code>. Content is
-              published by RISE and AI Sweden and remains © its publisher — indexing rests
-              on the EU TDM exception (DSM art. 3–4). This server claims no licence over it.
+              <code className="rounded bg-muted px-1">last_updated</code> — plus{" "}
+              <code className="rounded bg-muted px-1">content_publisher</code> and a string{" "}
+              <code className="rounded bg-muted px-1">canonical_origin</code> for
+              single-source responses, or a{" "}
+              <code className="rounded bg-muted px-1">publishers[]</code> array (and no{" "}
+              <code className="rounded bg-muted px-1">canonical_origin</code>) when a
+              response spans both sources. No{" "}
+              <code className="rounded bg-muted px-1">content_hash*</code> keys — the two
+              digests above are the binding. Content is published by RISE and AI Sweden and
+              remains © its publisher: indexed under the EU TDM exception (DSM directive,
+              art. 4), excerpts served with source attribution. This server claims no
+              licence over it.
             </li>
             <li>
               <strong>Deprecated (removed in v0.3):</strong> the v0.1 sibling{" "}
@@ -488,7 +536,7 @@ const jwk = card.jwks.keys[0];
 const key = await importJWK({ kty: jwk.kty, crv: jwk.crv, x: jwk.x }, "EdDSA");
 
 const { result } = mcpResponse;                       // one tools/call result
-const env = result._meta["org.jardenberg.verifiable-mcp"];
+const env = result._meta["org.jardenberg/verifiable-mcp"];
 const { payload } = await compactVerify(env.jws, key);
 const wrapper = JSON.parse(new TextDecoder().decode(payload));
 
@@ -520,7 +568,7 @@ console.log(await sha(canon(wrapper.payload)) === wrapper.payload_digest);`}</pr
               <code className="rounded bg-muted px-1">{`{ iat, payload, provenance }`}</code>{" "}
               wrapper, RFC 8785 (JCS) canonical, in{" "}
               <code className="rounded bg-muted px-1">
-                result._meta["org.jardenberg.verifiable-mcp"]
+                result._meta["org.jardenberg/verifiable-mcp"]
               </code>
               . The deprecated v0.1{" "}
               <code className="rounded bg-muted px-1">result.signature</code> is still
