@@ -14,13 +14,27 @@ export interface DocCounts {
   failed: number;
   hidden: number;
   skipped_offsite: number;
+  parked_unscrapable: number;
 }
 
-const STATUSES = ["pending", "scraped", "embedded", "failed", "skipped_offsite"] as const;
+const STATUSES = [
+  "pending",
+  "scraped",
+  "embedded",
+  "failed",
+  "skipped_offsite",
+  "parked_unscrapable",
+] as const;
 
 export async function countBySource(sb: AnySb, sourceId: string): Promise<DocCounts> {
   const c: DocCounts = {
-    pending: 0, scraped: 0, embedded: 0, failed: 0, hidden: 0, skipped_offsite: 0,
+    pending: 0,
+    scraped: 0,
+    embedded: 0,
+    failed: 0,
+    hidden: 0,
+    skipped_offsite: 0,
+    parked_unscrapable: 0,
   };
   await Promise.all(
     STATUSES.map(async (st) => {
@@ -54,7 +68,10 @@ export async function countChunksBySource(sb: AnySb, sourceId: string): Promise<
 // Paginated select that bypasses the PostgREST 1k row cap. Use whenever
 // you actually need rows (not counts) from documents/chunks at scale.
 export async function fetchAllPages<T>(
-  build: (from: number, to: number) => Promise<{ data: T[] | null; error: { message: string } | null }>,
+  build: (
+    from: number,
+    to: number,
+  ) => Promise<{ data: T[] | null; error: { message: string } | null }>,
   pageSize = 1000,
 ): Promise<T[]> {
   const out: T[] = [];
@@ -90,7 +107,9 @@ export async function snapshotCorpusForSource(sb: AnySb, sourceId: string): Prom
 export async function snapshotAllSources(sb: AnySb): Promise<void> {
   try {
     const { data: sources } = await sb.from("sources").select("id");
-    await Promise.all((sources ?? []).map((s: { id: string }) => snapshotCorpusForSource(sb, s.id)));
+    await Promise.all(
+      (sources ?? []).map((s: { id: string }) => snapshotCorpusForSource(sb, s.id)),
+    );
   } catch (e) {
     console.warn("[snapshot] all-sources failed", (e as Error).message);
   }

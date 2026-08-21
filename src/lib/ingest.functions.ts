@@ -35,10 +35,19 @@ export const listSourcesAdmin = createServerFn({ method: "GET" })
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: sources } = await supabaseAdmin.from("sources").select("*").order("name");
-    const stats: Record<string, { pending: number; scraped: number; embedded: number; failed: number }> = {};
-    const statuses = ["pending", "scraped", "embedded", "failed"] as const;
+    const stats: Record<
+      string,
+      {
+        pending: number;
+        scraped: number;
+        embedded: number;
+        failed: number;
+        parked_unscrapable: number;
+      }
+    > = {};
+    const statuses = ["pending", "scraped", "embedded", "failed", "parked_unscrapable"] as const;
     for (const s of sources ?? []) {
-      const c = { pending: 0, scraped: 0, embedded: 0, failed: 0 };
+      const c = { pending: 0, scraped: 0, embedded: 0, failed: 0, parked_unscrapable: 0 };
       await Promise.all(
         statuses.map(async (st) => {
           const { count } = await supabaseAdmin
@@ -72,7 +81,8 @@ export const mapSource = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { getFirecrawl, fetchSitemap, detectLang, urlMatchesFilters } = await import("./firecrawl.server");
+    const { getFirecrawl, fetchSitemap, detectLang, urlMatchesFilters } =
+      await import("./firecrawl.server");
     const { canonicalizeUrl } = await import("./url-canonical.server");
 
     const t0 = Date.now();
@@ -119,12 +129,19 @@ export const mapSource = createServerFn({ method: "POST" })
     // Load existing rows for this source so we can diff (paginated — PostgREST 1k cap)
     const existingRows = await fetchAllDocuments(supabaseAdmin, source.id);
     const { existing, dupes: mapDupes } = buildCanonicalExistingMap(existingRows, canonicalizeUrl);
-    if (mapDupes > 0) console.warn(`[map] ${mapDupes} legacy duplicate URL rows collapsed (canonical form). Clean up later.`);
+    if (mapDupes > 0)
+      console.warn(
+        `[map] ${mapDupes} legacy duplicate URL rows collapsed (canonical form). Clean up later.`,
+      );
 
     type Refresh = { id: string; sitemap_lastmod: string | null };
     const toInsert: Array<{
-      source_id: string; url: string; lang: string; content_type: string;
-      sitemap_lastmod: string | null; status: string;
+      source_id: string;
+      url: string;
+      lang: string;
+      content_type: string;
+      sitemap_lastmod: string | null;
+      status: string;
     }> = [];
     const toRefresh: Refresh[] = [];
     let unchanged = 0;
@@ -144,7 +161,10 @@ export const mapSource = createServerFn({ method: "POST" })
       }
       // Leave skipped_offsite rows alone — re-scraping them would just hit the
       // same offsite redirect and waste credits. They stay parked, hidden.
-      if (row.status === "skipped_offsite") { unchanged++; continue; }
+      if (row.status === "skipped_offsite" || row.status === "parked_unscrapable") {
+        unchanged++;
+        continue;
+      }
       // Refresh ONLY when the row has been scraped before and sitemap is newer.
       // Rows still pending (no fetched_at) are already queued — leave alone.
       const newer =
@@ -157,7 +177,6 @@ export const mapSource = createServerFn({ method: "POST" })
         unchanged++;
       }
     }
-
 
     // Guard: a refresh resets embedded → pending. If too many, require force.
     const wouldResetEmbedded = toRefresh.filter((r) => {
@@ -278,7 +297,10 @@ export const previewBulkOp = createServerFn({ method: "POST" })
     const { canonicalizeUrl } = await import("./url-canonical.server");
 
     const { data: source } = await supabaseAdmin
-      .from("sources").select("*").eq("slug", data.sourceSlug).single();
+      .from("sources")
+      .select("*")
+      .eq("slug", data.sourceSlug)
+      .single();
     if (!source) throw new Error(`Source ${data.sourceSlug} not found`);
 
     const embeddedBefore = await countEmbedded(supabaseAdmin, source.id);
@@ -304,8 +326,15 @@ export const previewBulkOp = createServerFn({ method: "POST" })
     if (data.op === "map") {
       for (const [url, lastmod] of lastmodByUrl) {
         const row = existing.get(url);
-        if (!row) { willInsert++; insertSample.push(url); continue; }
-        if (row.status === "skipped_offsite") { unchanged++; continue; }
+        if (!row) {
+          willInsert++;
+          insertSample.push(url);
+          continue;
+        }
+        if (row.status === "skipped_offsite") {
+          unchanged++;
+          continue;
+        }
         const newer =
           lastmod &&
           row.fetched_at &&
@@ -325,14 +354,14 @@ export const previewBulkOp = createServerFn({ method: "POST" })
         const lastmod = lastmodByUrl.get(key);
         const newer =
           lastmod &&
-          (!row.sitemap_lastmod || new Date(lastmod).getTime() > new Date(row.sitemap_lastmod).getTime());
+          (!row.sitemap_lastmod ||
+            new Date(lastmod).getTime() > new Date(row.sitemap_lastmod).getTime());
         if (newer) {
           willRefresh++;
           if (row.status === "embedded") willResetEmbedded++;
         }
       }
     }
-
 
     const guardFraction = embeddedBefore > 0 ? willResetEmbedded / embeddedBefore : 0;
     return {
@@ -358,7 +387,6 @@ const ScrapeBatchInput = z.object({
   batchSize: z.number().int().min(1).max(200).default(50),
 });
 
-
 export const scrapeBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => ScrapeBatchInput.parse(data))
@@ -367,7 +395,6 @@ export const scrapeBatch = createServerFn({ method: "POST" })
     return await scrapeBatchCore({ ...data, trigger: "manual" });
   });
 
-
 // ──────────────────────────────────────────────────────────────────
 // embedBatch — pick N scraped docs, chunk, embed via Lovable AI, store
 // ──────────────────────────────────────────────────────────────────
@@ -375,7 +402,6 @@ const EmbedBatchInput = z.object({
   sourceSlug: z.enum(["rise", "ai_sweden"]).optional(),
   batchSize: z.number().int().min(1).max(100).default(25),
 });
-
 
 export const embedBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -415,7 +441,10 @@ export const discoverPdfs = createServerFn({ method: "POST" })
     const { detectLang, isJunkPdfUrl } = await import("./firecrawl.server");
 
     const { data: source } = await supabaseAdmin
-      .from("sources").select("*").eq("slug", data.sourceSlug).single();
+      .from("sources")
+      .select("*")
+      .eq("slug", data.sourceSlug)
+      .single();
     if (!source) throw new Error("source not found");
 
     // Pull existing URLs (set) to skip duplicates cheaply. Paginate — the
@@ -423,7 +452,9 @@ export const discoverPdfs = createServerFn({ method: "POST" })
     const { fetchAllPages } = await import("./ingest-helpers.server");
     const existing = await fetchAllPages<{ url: string }>(async (from, to) => {
       const res = await supabaseAdmin
-        .from("documents").select("url").eq("source_id", source.id)
+        .from("documents")
+        .select("url")
+        .eq("source_id", source.id)
         .order("id", { ascending: true })
         .range(from, to);
       return { data: res.data, error: res.error };
@@ -431,7 +462,8 @@ export const discoverPdfs = createServerFn({ method: "POST" })
     const known = new Set(existing.map((d) => d.url));
 
     // Stream over scraped docs in pages of 200
-    const PDF_RE = /\(([^)\s]+\.pdf)(?:[?#][^)\s]*)?\)|href=["']([^"'\s]+\.pdf)(?:[?#][^"'\s]*)?["']/gi;
+    const PDF_RE =
+      /\(([^)\s]+\.pdf)(?:[?#][^)\s]*)?\)|href=["']([^"'\s]+\.pdf)(?:[?#][^"'\s]*)?["']/gi;
     const found = new Set<string>();
     const baseHost = new URL(source.root_url).hostname.replace(/^www\./, "");
 
@@ -455,7 +487,9 @@ export const discoverPdfs = createServerFn({ method: "POST" })
           let abs: string;
           try {
             abs = new URL(raw, d.url).toString();
-          } catch { continue; }
+          } catch {
+            continue;
+          }
           const u = canonicalizeUrl(abs);
           if (!u.toLowerCase().endsWith(".pdf")) continue;
           if (isJunkPdfUrl(u)) continue;
@@ -463,10 +497,11 @@ export const discoverPdfs = createServerFn({ method: "POST" })
           try {
             const h = new URL(u).hostname.replace(/^www\./, "");
             if (h !== baseHost) continue;
-          } catch { continue; }
+          } catch {
+            continue;
+          }
           if (known.has(u) || found.has(u)) continue;
           found.add(u);
-
         }
       }
       if (page.length < PAGE) break;
@@ -491,7 +526,6 @@ export const discoverPdfs = createServerFn({ method: "POST" })
     }
     return { discovered: found.size, inserted };
   });
-
 
 // ──────────────────────────────────────────────────────────────────
 // Recent docs and runs for admin UI
@@ -524,7 +558,6 @@ export const listRecentDocs = createServerFn({ method: "GET" })
     return { docs: rows ?? [] };
   });
 
-
 export const listRuns = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -543,7 +576,10 @@ export const publicStats = createServerFn({ method: "GET" }).handler(async () =>
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const [{ count: docCount }, { count: chunkCount }, { data: sources }, { data: lastRun }] =
     await Promise.all([
-      supabaseAdmin.from("documents").select("*", { count: "exact", head: true }).eq("status", "embedded"),
+      supabaseAdmin
+        .from("documents")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "embedded"),
       supabaseAdmin.from("chunks").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("sources").select("slug, name"),
       supabaseAdmin
@@ -591,7 +627,10 @@ export const uploadManualPdf = createServerFn({ method: "POST" })
 
     // Resolve source
     const { data: source } = await supabaseAdmin
-      .from("sources").select("id").eq("slug", data.sourceSlug).single();
+      .from("sources")
+      .select("id")
+      .eq("slug", data.sourceSlug)
+      .single();
     if (!source) throw new Error("source not found");
 
     // Look up existing row by canonical URL
@@ -673,7 +712,6 @@ export const uploadManualPdf = createServerFn({ method: "POST" })
     return { id: doc.id, url, storagePath, replaced: false };
   });
 
-
 // ──────────────────────────────────────────────────────────────────
 // retryDocument / retryFailed — reset failed docs back to pending so
 // the next scrape/embed batch picks them up (with the improved logic).
@@ -711,17 +749,30 @@ export const retryAllFailed = createServerFn({ method: "POST" })
     let q = supabaseAdmin.from("documents").select("id, raw_markdown").eq("status", "failed");
     if (data.sourceSlug) {
       const { data: src } = await supabaseAdmin
-        .from("sources").select("id").eq("slug", data.sourceSlug).single();
+        .from("sources")
+        .select("id")
+        .eq("slug", data.sourceSlug)
+        .single();
       if (src) q = q.eq("source_id", src.id);
     }
     const { data: rows } = await q.limit(2000);
-    const toScraped = (rows ?? []).filter((r) => r.raw_markdown && r.raw_markdown.length > 100).map((r) => r.id);
-    const toPending = (rows ?? []).filter((r) => !(r.raw_markdown && r.raw_markdown.length > 100)).map((r) => r.id);
+    const toScraped = (rows ?? [])
+      .filter((r) => r.raw_markdown && r.raw_markdown.length > 100)
+      .map((r) => r.id);
+    const toPending = (rows ?? [])
+      .filter((r) => !(r.raw_markdown && r.raw_markdown.length > 100))
+      .map((r) => r.id);
     if (toScraped.length) {
-      await supabaseAdmin.from("documents").update({ status: "scraped", error: null }).in("id", toScraped);
+      await supabaseAdmin
+        .from("documents")
+        .update({ status: "scraped", error: null })
+        .in("id", toScraped);
     }
     if (toPending.length) {
-      await supabaseAdmin.from("documents").update({ status: "pending", error: null }).in("id", toPending);
+      await supabaseAdmin
+        .from("documents")
+        .update({ status: "pending", error: null })
+        .in("id", toPending);
     }
     return { reset: (rows ?? []).length, toScraped: toScraped.length, toPending: toPending.length };
   });
@@ -731,9 +782,7 @@ export const retryAllFailed = createServerFn({ method: "POST" })
 // ──────────────────────────────────────────────────────────────────
 export const setDocumentHidden = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({ id: z.string().uuid(), hidden: z.boolean() }).parse(d),
-  )
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), hidden: z.boolean() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -755,7 +804,12 @@ export const recleanAndReembed = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
       .object({
-        sinceHours: z.number().int().min(1).max(24 * 30).default(24),
+        sinceHours: z
+          .number()
+          .int()
+          .min(1)
+          .max(24 * 30)
+          .default(24),
         limit: z.number().int().min(1).max(500).default(100),
       })
       .parse(d),
@@ -819,9 +873,8 @@ export const backfillPublishedDates = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { extractPublishedAtFromHtml, extractPublishedAtFromPdfUrl } = await import(
-      "./published-date.server"
-    );
+    const { extractPublishedAtFromHtml, extractPublishedAtFromPdfUrl } =
+      await import("./published-date.server");
 
     const { data: docs } = await supabaseAdmin
       .from("documents")

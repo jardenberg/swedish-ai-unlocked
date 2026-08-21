@@ -48,14 +48,17 @@ export function CorpusHealthHeader() {
                     ? `(+${s.delta24h} vs 24h)`
                     : `(${s.delta24h} vs 24h)`}
             </span>
-            <span className="text-muted-foreground">
-              peak {s.embedded24hPeak}
-            </span>
+            <span className="text-muted-foreground">peak {s.embedded24hPeak}</span>
             <span>{s.chunks.toLocaleString()} chunks</span>
             <span>pending {s.pending}</span>
             <span>scraped {s.scraped}</span>
             {s.failed > 0 && (
               <span className="text-rose-600 dark:text-rose-400">failed {s.failed}</span>
+            )}
+            {s.parked_unscrapable > 0 && (
+              <span className="text-amber-700 dark:text-amber-400">
+                parked {s.parked_unscrapable}
+              </span>
             )}
             {s.hidden > 0 && <span className="text-muted-foreground">hidden {s.hidden}</span>}
           </div>
@@ -71,8 +74,8 @@ export function CorpusHealthHeader() {
                   : "text-rose-600 dark:text-rose-400"
               }
             >
-              smoke {data.smoke.pass}/{data.smoke.total}{" "}
-              ({new Date(data.smoke.at).toLocaleString()})
+              smoke {data.smoke.pass}/{data.smoke.total} ({new Date(data.smoke.at).toLocaleString()}
+              )
             </span>
           ) : (
             <span>no smoke run yet</span>
