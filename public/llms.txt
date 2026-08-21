@@ -41,16 +41,18 @@ URL inputs to `get_document` and `find_similar` (and URL-shaped `find_mentions` 
 
 Event pages on ai.se that 301-redirect off-domain (Invajo, Meetup, etc.) are deliberately not indexed.
 
-## Signed responses (provenance trust layer)
+## Signed responses (provenance trust layer) — spec org.jardenberg.verifiable-mcp/0.2
 
-Every `tools/call` response is signed and carries a provenance block. Additive only — all existing data fields are unchanged.
+Every `tools/call` response (and JSON-RPC error) is signed and carries a provenance block. Additive only — all existing data fields are unchanged.
 
-- `result.structuredContent` — the response JSON plus a `provenance` block: `server_operator` ("Studio Jardenberg"), `server`, `content_publisher` ("RISE" / "AI Sweden"), `canonical_origin` (https://www.ri.se / https://www.ai.se), `legal_basis` ("EU TDM exception (DSM art. 3-4); all content remains © its publisher"), `content_hash` (SHA-256), `dataset_version`, `last_updated`.
-- `result.signature` — `{ alg: "EdDSA", kid, signed: "structuredContent", jws }`; compact JWS.
-- Signed scope: `tools/call structuredContent`.
-- Canonicalization: JSON with lexicographically sorted keys, UTF-8, no insignificant whitespace.
-- Public key JWK: https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json (`kid` = RFC 7638 thumbprint, alg EdDSA/Ed25519).
-- `content_hash` = SHA-256 over the canonical JSON of the response object with the `provenance` key removed.
+- `result._meta["org.jardenberg.verifiable-mcp"]` = `{ spec: "0.2", alg: "EdDSA", kid, signed: "wrapper", iat, payload_digest, jws }`.
+- Signed scope: a wrapper `{ iat, payload, provenance }` where `payload` is the tool result data (no provenance mirrored inside it).
+- Canonicalization: **RFC 8785 (JCS)**, normative for the JWS payload and every digest.
+- `payload_digest` = `sha256:<hex>` over the RFC 8785 canonical `payload`.
+- Content binding: `content[0].text` is exactly the RFC 8785 canonical serialization of `payload`.
+- `provenance`: `server_operator` ("Studio Jardenberg"), `server`, `content_publisher` ("RISE" / "AI Sweden"), `canonical_origin` (https://www.ri.se / https://www.ai.se), `legal_basis` ("EU TDM exception (DSM art. 3-4); all content remains © its publisher"), `content_hash` (SHA-256), `dataset_version`, `last_updated`.
+- Key discovery: https://rise-ai-sweden.jardenberg.org/.well-known/mcp.json (server card + `jwks`), or the dedicated JWK at https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json (`kid` = RFC 7638 thumbprint, alg EdDSA/Ed25519).
+- Deprecated (removed in v0.3): the v0.1 sibling `result.signature` over `structuredContent`, and the `provenance` mirror inside `structuredContent`, are still emitted so existing clients keep working.
 - If the signing key is unavailable, responses are served unsigned; signing never blocks a query.
 - No MCP client verifies these signatures automatically yet — this is a working pilot of verifiable MCP responses.
 
@@ -65,7 +67,8 @@ Live document counts, language breakdown, and last-updated timestamps are availa
 ## Links
 
 - Landing page: https://rise-ai-sweden.jardenberg.org/
-- MCP Server Card: https://rise-ai-sweden.jardenberg.org/.well-known/mcp/server-card.json
+- MCP Server Card (v0.2, with JWKS): https://rise-ai-sweden.jardenberg.org/.well-known/mcp.json
+- MCP Server Card (legacy): https://rise-ai-sweden.jardenberg.org/.well-known/mcp/server-card.json
 - Agent skills index: https://rise-ai-sweden.jardenberg.org/.well-known/agent-skills/index.json
 - Public signing key (JWK): https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json
 - Sitemap: https://rise-ai-sweden.jardenberg.org/sitemap.xml
