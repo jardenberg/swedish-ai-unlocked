@@ -38,6 +38,29 @@ const rateLimited = () =>
     { status: 429, headers: { "Content-Type": "application/json" } },
   );
 
+const TOOL_NAMES = new Set(
+  [searchTool, findMentionsTool, listLatestTool, findSimilarTool, getDocumentTool, listSourcesTool, serverInfoTool].map(
+    (t) => t.name,
+  ),
+);
+
+/**
+ * Unknown tool → JSON-RPC error frame (signed at error.data), matching the
+ * sibling reference servers. Genuine tool-level failures still use isError.
+ */
+function unknownToolFrame(body: unknown): Record<string, unknown> | null {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
+  const m = body as { method?: string; id?: unknown; params?: { name?: unknown } };
+  if (m.method !== "tools/call") return null;
+  const name = m.params?.name;
+  if (typeof name !== "string" || TOOL_NAMES.has(name)) return null;
+  return {
+    jsonrpc: "2.0",
+    id: m.id ?? null,
+    error: { code: -32602, message: `Unknown tool: ${name}` },
+  };
+}
+
 export const Route = createFileRoute("/api/mcp")({
   server: {
     handlers: {
@@ -54,6 +77,20 @@ export const Route = createFileRoute("/api/mcp")({
         } catch {
           parsedBody = null;
         }
+
+        const { signMcpResponse } = await import("@/lib/mcp/sign-response.server");
+
+        const unknown = unknownToolFrame(parsedBody);
+        if (unknown) {
+          const errRes = new Response(JSON.stringify(unknown), {
+            status: 200,
+            headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+          });
+          const signedErr = await signMcpResponse(parsedBody, errRes);
+          signedErr.headers.set("X-RateLimit-Remaining", String(limit.remaining));
+          return signedErr;
+        }
+
         const forwarded = new Request(request.url, {
           method: "POST",
           headers: request.headers,
