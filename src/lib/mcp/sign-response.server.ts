@@ -87,23 +87,34 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
   }
 }
 
-/** ITEM 6 — signed JSON-RPC errors: wrapper payload = { id, error }. */
+/**
+ * Signed JSON-RPC errors: wrapper payload = { id, error }; the envelope rides
+ * in `error.data[SPEC_NAMESPACE]` — strict SDKs drop unknown members of `error`,
+ * `data` is the sanctioned carrier.
+ */
 async function augmentError(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
   try {
-    const error = msg.error;
+    const error = msg.error as Record<string, unknown> | undefined;
     if (!error || typeof error !== "object") return msg;
     const errPayload = { id: msg.id ?? null, error };
     const provenance = await buildProvenance(errPayload);
     const signed = await signWrapper(errPayload, provenance);
     if (signed) {
-      const existing = (msg._meta as Record<string, unknown> | undefined) ?? {};
-      msg._meta = { ...existing, [SPEC_NAMESPACE]: signed.meta };
+      const data = error.data;
+      const dataObj =
+        data && typeof data === "object" && !Array.isArray(data)
+          ? (data as Record<string, unknown>)
+          : data === undefined
+            ? {}
+            : { value: data };
+      error.data = { ...dataObj, [SPEC_NAMESPACE]: signed.meta };
     }
     return msg;
   } catch {
     return msg;
   }
 }
+
 
 
 async function augmentMessage(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
