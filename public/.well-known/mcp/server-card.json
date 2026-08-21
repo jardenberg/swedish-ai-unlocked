@@ -3,7 +3,7 @@
   "serverInfo": {
     "name": "rise-ai-sweden",
     "title": "RISE & AI Sweden Public MCP",
-    "version": "v202608211000"
+    "version": "v202608211500"
   },
   "transport": {
     "type": "streamable-http",
@@ -52,15 +52,22 @@
     "email": "joakim@jardenberg.com"
   },
   "signing": {
+    "spec": "org.jardenberg.verifiable-mcp/0.2",
     "alg": "EdDSA",
     "kty": "OKP",
     "crv": "Ed25519",
     "kid": "upCmqalkMBHA7ZBkcCNWakftZgIEKtGVvvvpSQL_2p8",
-    "signed": "tools/call structuredContent",
+    "previous_kids": [],
+    "signed": "wrapper { iat, payload, provenance }",
+    "envelope": "result._meta[\"org.jardenberg.verifiable-mcp\"]",
     "jws": "compact",
-    "canonicalization": "JSON with lexicographically sorted keys, UTF-8, no insignificant whitespace",
+    "canonicalization": "RFC 8785 (JCS)",
+    "payload_digest": "sha256 over the RFC 8785 canonical payload",
+    "content_binding": "content[0].text is the RFC 8785 canonical serialization of the payload",
     "publicKeyUrl": "https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json",
-    "note": "Additive: every tools/call result carries result.structuredContent (with a provenance block) and a sibling result.signature. Unsigned fallback if the key is unavailable."
+    "cardUrl": "https://rise-ai-sweden.jardenberg.org/.well-known/mcp.json",
+    "deprecated": "v0.1 result.signature over structuredContent and the in-payload provenance mirror are still emitted; removed in v0.3.",
+    "note": "Signed errors: JSON-RPC error responses carry the same _meta envelope. Unsigned fallback if the key is unavailable."
   },
   "provenance": {
     "server_operator": "Studio Jardenberg",

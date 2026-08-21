@@ -1,13 +1,20 @@
 import { buildProvenance } from "./provenance.server";
-import { signStructuredContent } from "./signing.server";
+import {
+  canonicalJson,
+  signStructuredContent,
+  signWrapper,
+  SPEC_NAMESPACE,
+} from "./signing.server";
 
 type JsonRpcMessage = {
   jsonrpc?: string;
   id?: unknown;
+  error?: unknown;
   result?: {
     content?: Array<{ type?: string; text?: string }>;
     structuredContent?: unknown;
     signature?: unknown;
+    _meta?: Record<string, unknown>;
     isError?: boolean;
     [k: string]: unknown;
   };
@@ -15,13 +22,17 @@ type JsonRpcMessage = {
 };
 
 /**
- * Additive trust layer: for a tools/call result whose text content is a JSON
- * object, attach `provenance` to the payload, expose it as `structuredContent`,
- * and attach a compact EdDSA JWS as a sibling `signature` object.
+ * v0.2 trust envelope (additive, dual-emitting v0.1).
+ *
+ * - Signs a wrapper `{ iat, payload, provenance }` — RFC 8785 (JCS) canonical.
+ * - Envelope lives at `result._meta["org.jardenberg.verifiable-mcp"]`.
+ * - `content[0].text` is the RFC 8785 canonical serialization of the payload.
+ * - Deprecated v0.1 `result.signature` and the in-payload provenance mirror on
+ *   `structuredContent` are kept unchanged until v0.3.
  *
  * Never throws — on any problem the original message is returned untouched.
  */
-async function augmentMessage(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
+async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
   try {
     const result = msg.result;
     if (!result || !Array.isArray(result.content)) return msg;
@@ -32,25 +43,65 @@ async function augmentMessage(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     try {
       payload = JSON.parse(first.text);
     } catch {
+      payload = null;
+    }
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      // Tool-level error (isError) or non-JSON text: sign an error wrapper and
+      // leave the human-readable text arm untouched (no content binding claim).
+      if (result.isError && typeof first.text === "string") {
+        const errObj = { error: { code: -32000, message: first.text } };
+        const prov = await buildProvenance(errObj);
+        const signedErr = await signWrapper(errObj, prov);
+        if (signedErr) {
+          result._meta = { ...(result._meta ?? {}), [SPEC_NAMESPACE]: signedErr.meta };
+        }
+      }
       return msg;
     }
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) return msg;
 
     const base = payload as Record<string, unknown>;
     const provenance = await buildProvenance(base);
+
+    // ITEM 4 — content binding: the text a model reads IS the canonical payload.
+    first.text = canonicalJson(base);
+
+    // v0.1 (deprecated): structuredContent keeps the provenance mirror.
     const structuredContent = { ...base, provenance };
-
-    // Keep the human-readable text arm byte-identical in shape (2-space JSON),
-    // now including the additive provenance block.
-    first.text = JSON.stringify(structuredContent, null, 2);
     result.structuredContent = structuredContent;
+    const legacy = await signStructuredContent(structuredContent);
+    if (legacy) result.signature = legacy;
 
-    const signature = await signStructuredContent(structuredContent);
-    if (signature) result.signature = signature;
+    // v0.2: signed wrapper in namespaced _meta.
+    const signed = await signWrapper(base, provenance);
+    if (signed) {
+      result._meta = { ...(result._meta ?? {}), [SPEC_NAMESPACE]: signed.meta };
+    }
     return msg;
   } catch {
     return msg;
   }
+}
+
+/** ITEM 6 — signed JSON-RPC errors: wrapper payload = the error object. */
+async function augmentError(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
+  try {
+    const error = msg.error;
+    if (!error || typeof error !== "object") return msg;
+    const provenance = await buildProvenance(error);
+    const signed = await signWrapper(error, provenance);
+    if (signed) {
+      const existing = (msg._meta as Record<string, unknown> | undefined) ?? {};
+      msg._meta = { ...existing, [SPEC_NAMESPACE]: signed.meta };
+    }
+    return msg;
+  } catch {
+    return msg;
+  }
+}
+
+async function augmentMessage(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
+  if (msg && typeof msg === "object" && msg.error) return augmentError(msg);
+  return augmentResult(msg);
 }
 
 function isToolsCall(body: unknown): boolean {
@@ -62,7 +113,7 @@ function isToolsCall(body: unknown): boolean {
 }
 
 /**
- * Post-process an MCP response, signing tools/call results.
+ * Post-process an MCP response, signing tools/call results and errors.
  * Handles both JSON and SSE (text/event-stream) transport shapes.
  */
 export async function signMcpResponse(
@@ -71,7 +122,7 @@ export async function signMcpResponse(
 ): Promise<Response> {
   try {
     if (!isToolsCall(requestBody)) return response;
-    if (!response.body || response.status !== 200) return response;
+    if (!response.body) return response;
 
     const contentType = response.headers.get("Content-Type") ?? "";
     const raw = await response.text();
