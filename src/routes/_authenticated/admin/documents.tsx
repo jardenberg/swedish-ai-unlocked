@@ -113,9 +113,7 @@ function DocumentsPage() {
   const smokeMut = useMutation({
     mutationFn: () => smoke(),
     onSuccess: (r) =>
-      r.fail === 0
-        ? toast.success(r.summary)
-        : toast.error(r.summary, { duration: 10000 }),
+      r.fail === 0 ? toast.success(r.summary) : toast.error(r.summary, { duration: 10000 }),
     onError: (e) => toast.error((e as Error).message),
   });
 
@@ -123,9 +121,11 @@ function DocumentsPage() {
     mutationFn: async (vars: { target: DocRow; file: File }) => {
       const { target, file } = vars;
       if (file.type !== "application/pdf") throw new Error("File must be application/pdf");
-      if (file.size > MAX_BYTES) throw new Error(`File exceeds 55 MB (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
+      if (file.size > MAX_BYTES)
+        throw new Error(`File exceeds 55 MB (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
       const slug = target.sources?.slug;
-      if (slug !== "rise" && slug !== "ai_sweden") throw new Error("Unsupported source for replace");
+      if (slug !== "rise" && slug !== "ai_sweden")
+        throw new Error("Unsupported source for replace");
       const lang = target.lang === "sv" ? "sv" : "en";
       const buf = new Uint8Array(await file.arrayBuffer());
       let bin = "";
@@ -147,7 +147,9 @@ function DocumentsPage() {
       });
     },
     onSuccess: () => {
-      toast.success("File replaced — row set to pending. The next scrape+embed run will reprocess it.");
+      toast.success(
+        "File replaced — row set to pending. The next scrape+embed run will reprocess it.",
+      );
       setReplaceTarget(null);
       qc.invalidateQueries({ queryKey: ["admin-docs"] });
     },
@@ -211,6 +213,7 @@ function DocumentsPage() {
             <option value="scraped">Scraped</option>
             <option value="embedded">Embedded</option>
             <option value="failed">Failed</option>
+            <option value="parked_unscrapable">Parked</option>
           </select>
         </div>
       </div>
@@ -229,7 +232,13 @@ function DocumentsPage() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && <tr><td colSpan={8} className="p-4 text-muted-foreground">Loading…</td></tr>}
+            {isLoading && (
+              <tr>
+                <td colSpan={8} className="p-4 text-muted-foreground">
+                  Loading…
+                </td>
+              </tr>
+            )}
             {(data?.docs as DocRow[] | undefined)?.map((d) => {
               const canReplace =
                 (d.content_type === "pdf" || d.status === "failed") &&
@@ -267,7 +276,9 @@ function DocumentsPage() {
                       <span className="text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-xs text-rose-600 dark:text-rose-400 truncate max-w-xs">{d.error}</td>
+                  <td className="px-3 py-2 text-xs text-rose-600 dark:text-rose-400 truncate max-w-xs">
+                    {d.error}
+                  </td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">
                     {d.status === "failed" && (
                       <Button
@@ -280,11 +291,7 @@ function DocumentsPage() {
                       </Button>
                     )}
                     {canReplace && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setReplaceTarget(d)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => setReplaceTarget(d)}>
                         Replace file…
                       </Button>
                     )}
@@ -340,10 +347,10 @@ function ReplaceFileDialog({
         <DialogHeader>
           <DialogTitle>Replace stored file</DialogTitle>
           <DialogDescription>
-            This replaces the stored bytes for this document. The canonical URL, document id,
-            and citation history are kept untouched; the row is set to <code>pending</code> and
-            reprocessed on the next scrape+embed run. The previous version stays searchable
-            until the new one is embedded.
+            This replaces the stored bytes for this document. The canonical URL, document id, and
+            citation history are kept untouched; the row is set to <code>pending</code> and
+            reprocessed on the next scrape+embed run. The previous version stays searchable until
+            the new one is embedded.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -366,8 +373,8 @@ function ReplaceFileDialog({
             )}
           </div>
           <p className="rounded border border-amber-300/50 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
-            Confirming will replace the stored file for <strong>{target?.url}</strong>. A
-            provenance marker is recorded and surfaced to API consumers as
+            Confirming will replace the stored file for <strong>{target?.url}</strong>. A provenance
+            marker is recorded and surfaced to API consumers as
             <code className="ml-1">contentNote</code>.
           </p>
         </div>
@@ -375,10 +382,7 @@ function ReplaceFileDialog({
           <Button variant="outline" onClick={onCancel} disabled={pending}>
             Cancel
           </Button>
-          <Button
-            disabled={!file || pending}
-            onClick={() => file && onSubmit(file)}
-          >
+          <Button disabled={!file || pending} onClick={() => file && onSubmit(file)}>
             {pending ? "Replacing…" : "Confirm replace"}
           </Button>
         </DialogFooter>
