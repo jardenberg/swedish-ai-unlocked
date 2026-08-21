@@ -98,7 +98,6 @@ export const Route = createFileRoute("/api/mcp")({
         });
 
         const raw = await mcp.handleRequest(forwarded);
-        const { signMcpResponse } = await import("@/lib/mcp/sign-response.server");
         const response = await signMcpResponse(parsedBody, raw);
         response.headers.set("X-RateLimit-Remaining", String(limit.remaining));
         response.headers.set("Cache-Control", "no-store");
