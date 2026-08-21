@@ -73,31 +73,50 @@ export async function signStructuredContent(
 }
 
 // ── v0.2 wrapper envelope ───────────────────────────────────────────────────
-export type Wrapper = { iat: number; payload: unknown; provenance: unknown };
+export type Wrapper = {
+  iat: number;
+  payload: unknown;
+  payload_digest: string;
+  content_digest?: string;
+  provenance: unknown;
+};
 
+/**
+ * The _meta envelope carries NO security-bearing values outside the JWS:
+ * everything a verifier trusts (iat, digests, provenance, payload) is recovered
+ * from the verified wrapper.
+ */
 export type MetaEnvelope = {
   spec: string;
   alg: "EdDSA";
   kid: string;
   signed: "wrapper";
-  iat: number;
-  payload_digest: string;
   jws: string;
 };
 
 /**
- * Sign a { iat, payload, provenance } wrapper, RFC 8785 canonicalized.
- * Returns the wrapper plus the _meta envelope, or null when unsigned.
+ * Sign a { iat, payload, payload_digest, content_digest?, provenance } wrapper,
+ * RFC 8785 canonicalized. `contentText` is the EXACT text arm bytes as served;
+ * its SHA-256 becomes content_digest (content binding by digest).
  */
 export async function signWrapper(
   payload: unknown,
   provenance: unknown,
+  contentText?: string,
 ): Promise<{ wrapper: Wrapper; meta: MetaEnvelope } | null> {
   const iat = Math.floor(Date.now() / 1000);
-  const wrapper: Wrapper = { iat, payload, provenance };
+  const payload_digest = "sha256:" + (await sha256Hex(canonicalJson(payload)));
+  const wrapper: Wrapper = {
+    iat,
+    payload,
+    payload_digest,
+    ...(contentText !== undefined
+      ? { content_digest: "sha256:" + (await sha256Hex(contentText)) }
+      : {}),
+    provenance,
+  };
   const signed = await signCanonical(wrapper);
   if (!signed) return null;
-  const payload_digest = "sha256:" + (await sha256Hex(canonicalJson(payload)));
   return {
     wrapper,
     meta: {
@@ -105,9 +124,8 @@ export async function signWrapper(
       alg: "EdDSA",
       kid: signed.kid,
       signed: "wrapper",
-      iat,
-      payload_digest,
       jws: signed.jws,
     },
   };
 }
+

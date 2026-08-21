@@ -45,16 +45,18 @@ Event pages on ai.se that 301-redirect off-domain (Invajo, Meetup, etc.) are del
 
 Every `tools/call` response (and JSON-RPC error) is signed and carries a provenance block. Additive only — all existing data fields are unchanged.
 
-- `result._meta["org.jardenberg.verifiable-mcp"]` = `{ spec: "0.2", alg: "EdDSA", kid, signed: "wrapper", iat, payload_digest, jws }`.
-- Signed scope: a wrapper `{ iat, payload, provenance }` where `payload` is the tool result data (no provenance mirrored inside it).
+- `result._meta["org.jardenberg.verifiable-mcp"]` = `{ spec: "0.2", alg: "EdDSA", kid, signed: "wrapper", jws }`. No security-bearing values live outside the JWS: a verifier trusts only what it recovers from the verified wrapper.
+- Signed scope: a wrapper `{ iat, payload, payload_digest, content_digest, provenance }` where `payload` is the tool result data (no provenance mirrored inside it). **Both digests live inside the signature.**
 - Canonicalization: **RFC 8785 (JCS)**, normative for the JWS payload and every digest.
 - `payload_digest` = `sha256:<hex>` over the RFC 8785 canonical `payload`.
-- Content binding: `content[0].text` is exactly the RFC 8785 canonical serialization of `payload`.
+- Content binding **by digest**: `content_digest` = `sha256:<hex>` over the exact served bytes of `content[0].text` (canonical JSON on this server). Verifiers hash the rendered text and compare against the signed digest.
 - `provenance`: `server_operator` ("Studio Jardenberg"), `server`, `content_publisher` ("RISE" / "AI Sweden"), `canonical_origin` (https://www.ri.se / https://www.ai.se), `legal_basis` ("EU TDM exception (DSM art. 3-4); all content remains © its publisher"), `content_hash` (SHA-256), `dataset_version`, `last_updated`.
-- Key discovery: https://rise-ai-sweden.jardenberg.org/.well-known/mcp.json (server card + `jwks`), or the dedicated JWK at https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json (`kid` = RFC 7638 thumbprint, alg EdDSA/Ed25519).
+- Signed errors: the wrapper payload is `{ id, error }`, including the JSON-RPC request id.
+- Key discovery: https://rise-ai-sweden.jardenberg.org/.well-known/mcp.json (server card + `jwks`), or the dedicated JWK at https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json (`kid` = RFC 7638 thumbprint, alg EdDSA/Ed25519). The server-card path follows SEP-1649, which is not yet frozen upstream — the path may change, so both the card and the dedicated key file are served.
 - Deprecated (removed in v0.3): the v0.1 sibling `result.signature` over `structuredContent`, and the `provenance` mirror inside `structuredContent`, are still emitted so existing clients keep working.
 - If the signing key is unavailable, responses are served unsigned; signing never blocks a query.
 - No MCP client verifies these signatures automatically yet — this is a working pilot of verifiable MCP responses.
+
 
 ## Rate limit
 

@@ -17,14 +17,22 @@ const body = JSON.stringify(
       previous_kids: [],
       canonicalization: "RFC 8785 (JCS)",
       signed_scopes: [
-        'tools/call _meta["org.jardenberg.verifiable-mcp"] — wrapper { iat, payload, provenance }',
+        'tools/call _meta["org.jardenberg.verifiable-mcp"] — wrapper { iat, payload, payload_digest, content_digest, provenance }',
+        "JSON-RPC errors — wrapper payload is { id, error }",
         "tools/call result.signature — structuredContent (v0.1, deprecated, removed in v0.3)",
       ],
-      payload_digest: "sha256 over the RFC 8785 canonical payload",
-      content_binding: "content[0].text is the RFC 8785 canonical serialization of the payload",
+      envelope_fields: ["spec", "alg", "kid", "signed", "jws"],
+      envelope_note:
+        "No security-bearing values outside the JWS; verifiers trust only values recovered from the verified wrapper.",
+      payload_digest: "sha256 over the RFC 8785 canonical payload (inside the signed wrapper)",
+      content_binding:
+        "content_digest (inside the signed wrapper) = sha256 over the exact served bytes of content[0].text",
       key_url: MCP_SIGNING_KEY_URL,
+      card_path_note:
+        "This /.well-known/mcp.json path follows SEP-1649, which is not yet frozen upstream; the path may change. The dedicated key file is also served.",
     },
     jwks: { keys: [MCP_SIGNING_PUBLIC_JWK] },
+
   },
   null,
   2,

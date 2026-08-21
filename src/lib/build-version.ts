@@ -1,5 +1,5 @@
 // Bump on each meaningful deploy. Format: v + YYYYMMDDHHMM (UTC-ish, short).
-export const VERSION = "v202608211500";
+export const VERSION = "v202608211600";
 export const PUBLISHED = "August 21, 2026";
 
 export const SITE_URL = "https://rise-ai-sweden.jardenberg.org";
