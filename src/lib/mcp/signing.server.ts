@@ -1,21 +1,16 @@
 import { CompactSign, importJWK, type CryptoKey, type KeyObject } from "jose";
+import jcs from "canonicalize";
 
-// ── Canonical JSON: lexicographically sorted object keys, no insignificant
-// whitespace, UTF-8. Arrays keep their order. This is the exact convention the
-// signature and content_hash are computed over.
+export const SPEC_NAMESPACE = "org.jardenberg.verifiable-mcp";
+export const SPEC_VERSION = "0.2";
+
+/**
+ * RFC 8785 (JCS) canonical JSON. Normative canonicalization for all signing and
+ * hashing in the trust layer — number serialization and lone-surrogate handling
+ * are defined by the RFC, not by us.
+ */
 export function canonicalJson(value: unknown): string {
-  return JSON.stringify(sortValue(value));
-}
-
-function sortValue(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(sortValue);
-  if (value && typeof value === "object") {
-    const src = value as Record<string, unknown>;
-    const out: Record<string, unknown> = {};
-    for (const k of Object.keys(src).sort()) out[k] = sortValue(src[k]);
-    return out;
-  }
-  return value;
+  return jcs(value as never) ?? "null";
 }
 
 export async function sha256Hex(input: string): Promise<string> {
@@ -47,6 +42,21 @@ async function getSigner(): Promise<Signer> {
   return signerPromise;
 }
 
+async function signCanonical(value: unknown): Promise<{ jws: string; kid: string } | null> {
+  const signer = await getSigner();
+  if (!signer) return null;
+  try {
+    const payload = new TextEncoder().encode(canonicalJson(value));
+    const jws = await new CompactSign(payload)
+      .setProtectedHeader({ alg: "EdDSA", kid: signer.kid, typ: "JOSE" })
+      .sign(signer.key);
+    return { jws, kid: signer.kid };
+  } catch {
+    return null;
+  }
+}
+
+// ── v0.1 (deprecated, removed in v0.3) ──────────────────────────────────────
 export type SignatureBlock = {
   alg: "EdDSA";
   kid: string;
@@ -54,22 +64,50 @@ export type SignatureBlock = {
   jws: string;
 };
 
-/**
- * Sign the canonicalized structuredContent as a compact EdDSA JWS.
- * Returns null when no signing key is configured (graceful degradation).
- */
 export async function signStructuredContent(
   structuredContent: unknown,
 ): Promise<SignatureBlock | null> {
-  const signer = await getSigner();
-  if (!signer) return null;
-  try {
-    const payload = new TextEncoder().encode(canonicalJson(structuredContent));
-    const jws = await new CompactSign(payload)
-      .setProtectedHeader({ alg: "EdDSA", kid: signer.kid, typ: "JOSE" })
-      .sign(signer.key);
-    return { alg: "EdDSA", kid: signer.kid, signed: "structuredContent", jws };
-  } catch {
-    return null;
-  }
+  const signed = await signCanonical(structuredContent);
+  if (!signed) return null;
+  return { alg: "EdDSA", kid: signed.kid, signed: "structuredContent", jws: signed.jws };
+}
+
+// ── v0.2 wrapper envelope ───────────────────────────────────────────────────
+export type Wrapper = { iat: number; payload: unknown; provenance: unknown };
+
+export type MetaEnvelope = {
+  spec: string;
+  alg: "EdDSA";
+  kid: string;
+  signed: "wrapper";
+  iat: number;
+  payload_digest: string;
+  jws: string;
+};
+
+/**
+ * Sign a { iat, payload, provenance } wrapper, RFC 8785 canonicalized.
+ * Returns the wrapper plus the _meta envelope, or null when unsigned.
+ */
+export async function signWrapper(
+  payload: unknown,
+  provenance: unknown,
+): Promise<{ wrapper: Wrapper; meta: MetaEnvelope } | null> {
+  const iat = Math.floor(Date.now() / 1000);
+  const wrapper: Wrapper = { iat, payload, provenance };
+  const signed = await signCanonical(wrapper);
+  if (!signed) return null;
+  const payload_digest = "sha256:" + (await sha256Hex(canonicalJson(payload)));
+  return {
+    wrapper,
+    meta: {
+      spec: SPEC_VERSION,
+      alg: "EdDSA",
+      kid: signed.kid,
+      signed: "wrapper",
+      iat,
+      payload_digest,
+      jws: signed.jws,
+    },
+  };
 }
