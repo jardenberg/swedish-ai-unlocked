@@ -352,6 +352,34 @@ function Landing() {
   ]
 }`}
             />
+
+            <ToolDoc
+              name="server_info"
+              summary="Server identity and scope: name, origin, verifiable-response spec id, build version, dataset statistics (documents per source, total chunks), and last-updated."
+              params={`{}`}
+              example={`{
+  "name": "rise-ai-sweden",
+  "server": "rise-ai-sweden.jardenberg.org",
+  "origin": "https://rise-ai-sweden.jardenberg.org",
+  "endpoint": "https://rise-ai-sweden.jardenberg.org/api/mcp",
+  "serverOperator": "Studio Jardenberg",
+  "version": "v202608211730",
+  "spec": "org.jardenberg/verifiable-mcp",
+  "specVersion": "0.2",
+  "authentication": "none",
+  "rateLimit": "60 requests / 5 minutes per IP",
+  "stats": {
+    "documents": 2266,
+    "chunks": 41230,
+    "sources": [
+      { "source": "rise", "documents": 650, "lastUpdated": "2026-08-21T08:03:34Z" },
+      { "source": "ai_sweden", "documents": 1616, "lastUpdated": "2026-08-21T07:58:10Z" }
+    ]
+  },
+  "lastUpdated": "2026-08-21T08:03:34Z"
+}`}
+            />
+
           </div>
         </section>
 
