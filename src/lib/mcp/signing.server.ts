@@ -4,7 +4,7 @@ import jcs from "canonicalize";
 export const SPEC_ID = "org.jardenberg/verifiable-mcp";
 /** MCP namespaced-key grammar: reverse-DNS prefix + "/" + name. */
 export const SPEC_NAMESPACE = SPEC_ID;
-export const SPEC_VERSION = "0.2";
+export const SPEC_VERSION = "0.2.1";
 /** RFC 8725 explicit typing for the trust-layer JWS. */
 export const JWS_TYP = "verifiable-mcp+jws";
 

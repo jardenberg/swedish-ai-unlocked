@@ -89,13 +89,13 @@ the server's job is honest labeling.
 - **Freshness.** Sitemaps are re-checked daily (04:15 UTC) and changed pages
   re-scraped. \`list_sources\` reports the live last-fetch per source.
 
-## Verification (signed responses) — spec 0.2
+## Verification (signed responses) — spec 0.2.1
 
 Every \`tools/call\` response carries a signed envelope. Everything here is
 **additive** — tool data fields are unchanged.
 
 - \`result._meta["org.jardenberg/verifiable-mcp"]\` =
-  \`{ spec: "0.2", alg: "EdDSA", kid, signed: "wrapper", jws }\`. Nothing
+  \`{ spec: "0.2.1", alg: "EdDSA", kid, signed: "wrapper", jws }\`. Nothing
   security-bearing lives outside the JWS — trust only values recovered from the
   verified wrapper.
 - The compact JWS covers a **wrapper**:
@@ -118,7 +118,7 @@ Every \`tools/call\` response carries a signed envelope. Everything here is
   rendered text and compare against the signed digest.
 - Key discovery: \`/.well-known/mcp.json\` (server card + JWKS) or the dedicated
   JWK at \`/.well-known/rise-ai-sweden-mcp-public-key.json\`
-  (\`kid\` = RFC 7638 thumbprint). The server-card path follows SEP-1649, which
+  (\`kid\` = RFC 7638 thumbprint). The server-card path follows SEP-2127 (which superseded SEP-1649 and settled /.well-known/mcp.json), which
   is not yet frozen upstream — the path may change, so both the card and the
   dedicated key file are served.
 - JSON-RPC **error** frames carry the envelope at
@@ -127,8 +127,9 @@ Every \`tools/call\` response carries a signed envelope. Everything here is
   \`error.data\`. Tool-level \`isError\` results are signed like any result,
   with wrapper payload \`{ isError: true, message }\`.
 - **Deprecated (removed in v0.3):** the v0.1 sibling \`result.signature\`
-  (\`signed: "structuredContent"\`) and the \`provenance\` mirror inside
-  \`structuredContent\` are still emitted for existing clients.
+  and a \`provenance\` mirror are still emitted, but as TOP-LEVEL \`result\`
+  siblings. \`structuredContent\` is now byte-identical (RFC 8785) to the
+  signed \`wrapper.payload\`.
 
 Verify in three steps:
 
