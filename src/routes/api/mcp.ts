@@ -44,11 +44,29 @@ export const Route = createFileRoute("/api/mcp")({
         const ip = getClientIp(request);
         const limit = await checkRateLimit(ip);
         if (!limit.ok) return rateLimited();
-        const response = await mcp.handleRequest(request);
+
+        // Read the body once so we can both forward it and inspect the method.
+        const bodyText = await request.text();
+        let parsedBody: unknown = null;
+        try {
+          parsedBody = JSON.parse(bodyText);
+        } catch {
+          parsedBody = null;
+        }
+        const forwarded = new Request(request.url, {
+          method: "POST",
+          headers: request.headers,
+          body: bodyText,
+        });
+
+        const raw = await mcp.handleRequest(forwarded);
+        const { signMcpResponse } = await import("@/lib/mcp/sign-response.server");
+        const response = await signMcpResponse(parsedBody, raw);
         response.headers.set("X-RateLimit-Remaining", String(limit.remaining));
         response.headers.set("Cache-Control", "no-store");
         return response;
       },
+
       GET: async () => methodNotAllowed(),
       DELETE: async () => methodNotAllowed(),
     },
