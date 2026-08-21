@@ -118,9 +118,9 @@ Every \`tools/call\` response carries a signed envelope. Everything here is
   rendered text and compare against the signed digest.
 - Key discovery: \`/.well-known/mcp.json\` (server card + JWKS) or the dedicated
   JWK at \`/.well-known/rise-ai-sweden-mcp-public-key.json\`
-  (\`kid\` = RFC 7638 thumbprint). The server-card path follows SEP-2127 (which superseded SEP-1649 and settled /.well-known/mcp.json), which
-  is not yet frozen upstream — the path may change, so both the card and the
-  dedicated key file are served.
+  (\`kid\` = RFC 7638 thumbprint). The server-card path follows SEP-2127, which
+  superseded SEP-1649 and settled \`/.well-known/mcp.json\` — both the card and
+  the dedicated key file are served.
 - JSON-RPC **error** frames carry the envelope at
   \`error.data["org.jardenberg/verifiable-mcp"]\`; the wrapper payload is
   \`{ id, error }\` (request id included) with the envelope key removed from
