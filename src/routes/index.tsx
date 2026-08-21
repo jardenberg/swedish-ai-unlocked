@@ -360,41 +360,71 @@ function Landing() {
           <h2 className="text-xl font-semibold">Trust &amp; verification</h2>
           <p className="mt-3 text-sm text-muted-foreground">
             Every <code className="rounded bg-muted px-1">tools/call</code> response is
-            cryptographically signed and carries a provenance block. This is a working
-            pilot of verifiable MCP responses — in the spirit of C2PA content credentials,
-            but for tool output. No MCP client verifies these signatures automatically
-            yet; the point is that you <em>can</em>, today, with any standard JOSE library.
+            cryptographically signed and carries a provenance block (spec{" "}
+            <code className="rounded bg-muted px-1">org.jardenberg.verifiable-mcp/0.2</code>).
+            This is a working pilot of verifiable MCP responses — in the spirit of C2PA
+            content credentials, but for tool output. No MCP client verifies these
+            signatures automatically yet; the point is that you <em>can</em>, today, with
+            any standard JOSE library.
           </p>
 
           <h3 className="mt-6 font-medium">What is signed</h3>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
             <li>
-              Scope: the response's{" "}
-              <code className="rounded bg-muted px-1">structuredContent</code> — the same
-              JSON object as the text arm, including its{" "}
-              <code className="rounded bg-muted px-1">provenance</code> block.
+              Scope: a <strong>wrapper</strong> object{" "}
+              <code className="rounded bg-muted px-1">
+                {`{ iat, payload, provenance }`}
+              </code>{" "}
+              — <code className="rounded bg-muted px-1">payload</code> is the tool result
+              data exactly as returned (no provenance mirrored inside it).
             </li>
             <li>
-              Algorithm: <strong>EdDSA (Ed25519)</strong>, compact JWS, attached as a
-              sibling <code className="rounded bg-muted px-1">signature</code> object:{" "}
+              Envelope location: the JSON-RPC result's{" "}
               <code className="rounded bg-muted px-1">
-                {`{ alg, kid, signed: "structuredContent", jws }`}
+                _meta["org.jardenberg.verifiable-mcp"]
+              </code>{" "}
+              ={" "}
+              <code className="rounded bg-muted px-1">
+                {`{ spec, alg, kid, signed: "wrapper", iat, payload_digest, jws }`}
               </code>
               .
             </li>
             <li>
-              Canonicalization: JSON with lexicographically sorted object keys, UTF-8, no
-              insignificant whitespace.
+              Algorithm: <strong>EdDSA (Ed25519)</strong>, compact JWS. Canonicalization:{" "}
+              <strong>RFC 8785 (JCS)</strong> — normative for the JWS payload and every
+              digest.
             </li>
             <li>
-              Public key (JWK, with <code className="rounded bg-muted px-1">kid</code> =
-              RFC 7638 thumbprint):{" "}
+              <strong>Content binding:</strong>{" "}
+              <code className="rounded bg-muted px-1">content[0].text</code> is exactly the
+              RFC 8785 canonical serialization of{" "}
+              <code className="rounded bg-muted px-1">payload</code>, and{" "}
+              <code className="rounded bg-muted px-1">payload_digest</code> is{" "}
+              <code className="rounded bg-muted px-1">sha256:&lt;hex&gt;</code> over those
+              same bytes — so a gateway can check the text a model reads is what was
+              signed.
+            </li>
+            <li>
+              Key discovery:{" "}
+              <a
+                href="/.well-known/mcp.json"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                /.well-known/mcp.json
+              </a>{" "}
+              (server card with a <code className="rounded bg-muted px-1">jwks</code> key
+              set), or the dedicated JWK at{" "}
               <a
                 href="/.well-known/rise-ai-sweden-mcp-public-key.json"
                 className="underline underline-offset-4 hover:text-foreground"
               >
                 /.well-known/rise-ai-sweden-mcp-public-key.json
-              </a>
+              </a>{" "}
+              (<code className="rounded bg-muted px-1">kid</code> = RFC 7638 thumbprint).
+            </li>
+            <li>
+              JSON-RPC <strong>error</strong> responses carry the same envelope, with the
+              error object as the wrapper payload.
             </li>
             <li>
               Provenance per response: operator, content publisher(s) and their canonical
@@ -405,59 +435,65 @@ function Landing() {
               published by RISE and AI Sweden and remains © its publisher — indexing rests
               on the EU TDM exception (DSM art. 3–4). This server claims no licence over it.
             </li>
+            <li>
+              <strong>Deprecated (removed in v0.3):</strong> the v0.1 sibling{" "}
+              <code className="rounded bg-muted px-1">result.signature</code> over{" "}
+              <code className="rounded bg-muted px-1">structuredContent</code>, and the{" "}
+              <code className="rounded bg-muted px-1">provenance</code> mirror inside{" "}
+              <code className="rounded bg-muted px-1">structuredContent</code>, are still
+              emitted so existing clients keep working.
+            </li>
           </ul>
 
           <h3 className="mt-6 font-medium">Verify it yourself — three steps</h3>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
             <li>
-              Fetch the JWK from{" "}
-              <code className="rounded bg-muted px-1">
-                /.well-known/rise-ai-sweden-mcp-public-key.json
-              </code>{" "}
-              and check that its <code className="rounded bg-muted px-1">kid</code> matches
-              the one in the response signature.
+              Fetch <code className="rounded bg-muted px-1">/.well-known/mcp.json</code> and
+              pick the JWK from <code className="rounded bg-muted px-1">jwks.keys</code>{" "}
+              whose <code className="rounded bg-muted px-1">kid</code> matches the envelope.
             </li>
             <li>
-              Split the compact JWS (
-              <code className="rounded bg-muted px-1">header.payload.signature</code>) and
-              verify it with EdDSA — <code className="rounded bg-muted px-1">jose</code>{" "}
-              (JS) or <code className="rounded bg-muted px-1">python-jose</code> / {""}
-              <code className="rounded bg-muted px-1">PyJWT</code> (Python).
+              Verify the compact JWS (
+              <code className="rounded bg-muted px-1">header.payload.signature</code>) with
+              EdDSA — <code className="rounded bg-muted px-1">jose</code> (JS) or{" "}
+              <code className="rounded bg-muted px-1">python-jose</code> /{" "}
+              <code className="rounded bg-muted px-1">PyJWT</code> (Python). The verified
+              payload is the JCS-canonical wrapper.
             </li>
             <li>
-              Re-canonicalize the response's{" "}
-              <code className="rounded bg-muted px-1">structuredContent</code> (sorted
-              keys, UTF-8) and confirm it is byte-identical to the verified JWS payload.
-              Then drop the <code className="rounded bg-muted px-1">provenance</code> key,
-              canonicalize the rest, and SHA-256 it — that reproduces{" "}
-              <code className="rounded bg-muted px-1">provenance.content_hash</code>.
+              Canonicalize <code className="rounded bg-muted px-1">wrapper.payload</code>{" "}
+              with RFC 8785 and confirm it is byte-identical to{" "}
+              <code className="rounded bg-muted px-1">content[0].text</code>, and that its
+              SHA-256 equals{" "}
+              <code className="rounded bg-muted px-1">payload_digest</code>.
             </li>
           </ol>
 
           <div className="mt-4">
-            <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs">{`// Node — npm i jose
+            <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs">{`// Node — npm i jose canonicalize
 import { compactVerify, importJWK } from "jose";
+import canon from "canonicalize";                     // RFC 8785 (JCS)
 
-const canon = (v) => JSON.stringify(sort(v));
-const sort = (v) =>
-  Array.isArray(v) ? v.map(sort)
-  : v && typeof v === "object"
-    ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sort(v[k])]))
-    : v;
-
-const jwk = await (await fetch(
-  "${SITE}/.well-known/rise-ai-sweden-mcp-public-key.json"
-)).json();
+const card = await (await fetch("${SITE}/.well-known/mcp.json")).json();
+const jwk = card.jwks.keys[0];
 const key = await importJWK({ kty: jwk.kty, crv: jwk.crv, x: jwk.x }, "EdDSA");
 
 const { result } = mcpResponse;                       // one tools/call result
-const { payload } = await compactVerify(result.signature.jws, key);
-console.log(new TextDecoder().decode(payload) === canon(result.structuredContent));`}</pre>
+const env = result._meta["org.jardenberg.verifiable-mcp"];
+const { payload } = await compactVerify(env.jws, key);
+const wrapper = JSON.parse(new TextDecoder().decode(payload));
+
+const canonPayload = canon(wrapper.payload);
+console.log(canonPayload === result.content[0].text);  // content binding
+const digest = [...new Uint8Array(await crypto.subtle.digest(
+  "SHA-256", new TextEncoder().encode(canonPayload)))]
+  .map((b) => b.toString(16).padStart(2, "0")).join("");
+console.log("sha256:" + digest === env.payload_digest);`}</pre>
           </div>
 
           <p className="mt-3 text-sm text-muted-foreground">
             If the signing key is ever unavailable, responses are served unsigned — signing
-            never blocks a query. Data fields are unchanged by this layer; signature and
+            never blocks a query. Data fields are unchanged by this layer; the envelope and
             provenance are purely additive.
           </p>
         </section>
