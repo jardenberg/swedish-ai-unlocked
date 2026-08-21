@@ -1,9 +1,9 @@
 {
-  "$schemaNote": "Tracks MCP SEP-1649 server-card draft (revision 2025-05). Update field names as the spec lands.",
+  "$schemaNote": "Tracks MCP SEP-2127 server-card (which superseded SEP-1649 and settled /.well-known/mcp.json).",
   "serverInfo": {
     "name": "rise-ai-sweden",
     "title": "RISE & AI Sweden Public MCP",
-    "version": "v202608211730"
+    "version": "v202608211830"
   },
   "transport": {
     "type": "streamable-http",
@@ -70,12 +70,13 @@
     "content_binding": "content_digest (inside the signed wrapper) = sha256 over the exact served bytes of content[0].text",
     "publicKeyUrl": "https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json",
     "cardUrl": "https://rise-ai-sweden.jardenberg.org/.well-known/mcp.json",
-    "cardPathNote": "The /.well-known/mcp.json server-card path follows SEP-1649, not yet frozen upstream; the path may change. Both the card and the dedicated key file are served.",
-    "deprecated": "v0.1 result.signature over structuredContent and the in-payload provenance mirror are still emitted; removed in v0.3.",
+    "cardPathNote": "The /.well-known/mcp.json server-card path follows SEP-2127, which superseded SEP-1649 and settled the path. Both the card and the dedicated key file are served.",
+    "deprecated": "v0.1 result.signature and the result.provenance mirror are emitted as top-level result siblings (never inside structuredContent); removed in v0.3.",
     "note": "Signed errors: JSON-RPC error frames carry the envelope at error.data[\"org.jardenberg/verifiable-mcp\"]; the signed payload is { id, error } with the envelope removed. Tool-level isError results are signed as { isError: true, message }. Unsigned fallback if the key is unavailable.",
-    "spec_version": "0.2",
+    "spec_version": "0.2.1",
     "typ": "verifiable-mcp+jws",
-    "meta_key": "org.jardenberg/verifiable-mcp"
+    "meta_key": "org.jardenberg/verifiable-mcp",
+    "structured_content": "structuredContent is byte-identical (RFC 8785) to the signed wrapper.payload."
   },
   "provenance": {
     "server_operator": "Studio Jardenberg",

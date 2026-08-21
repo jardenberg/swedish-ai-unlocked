@@ -83,6 +83,16 @@ export function collectSources(payload: unknown): string[] {
 export type Provenance = Record<string, unknown>;
 
 /**
+ * Spec §5 `canonical_url`: emitted only when the response describes exactly one
+ * document (e.g. get_document), i.e. the payload carries a top-level `url`.
+ */
+function singleCanonicalUrl(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  const url = (payload as Record<string, unknown>).url;
+  return typeof url === "string" && /^https?:\/\//.test(url) ? url : null;
+}
+
+/**
  * Spec §5 provenance for the SIGNED wrapper.
  * Required: server_operator, dataset_version, last_updated, exactly one rights
  * field (legal_basis). Single-source responses carry `canonical_origin` as a
@@ -100,10 +110,12 @@ export async function buildProvenance(payloadWithoutProvenance: unknown): Promis
   }));
 
   const single = slugs.length === 1 ? PUBLISHERS[slugs[0]] : null;
+  const canonicalUrl = singleCanonicalUrl(payloadWithoutProvenance);
 
   return {
     server_operator: SERVER_OPERATOR,
     server: SERVER_HOST,
+    ...(canonicalUrl ? { canonical_url: canonicalUrl } : {}),
     ...(single
       ? { content_publisher: single.publisher, canonical_origin: single.canonical_origin }
       : { publishers }),

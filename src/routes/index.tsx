@@ -365,7 +365,7 @@ function Landing() {
   "serverOperator": "Studio Jardenberg",
   "version": "v202608211730",
   "spec": "org.jardenberg/verifiable-mcp",
-  "specVersion": "0.2",
+  "specVersion": "0.2.1",
   "authentication": "none",
   "rateLimit": "60 requests / 5 minutes per IP",
   "stats": {
@@ -389,7 +389,7 @@ function Landing() {
           <p className="mt-3 text-sm text-muted-foreground">
             Every <code className="rounded bg-muted px-1">tools/call</code> response is
             cryptographically signed and carries a provenance block (spec{" "}
-            <code className="rounded bg-muted px-1">org.jardenberg/verifiable-mcp 0.2</code>).
+            <code className="rounded bg-muted px-1">org.jardenberg/verifiable-mcp 0.2.1</code>).
             This is a working pilot of verifiable MCP responses — in the spirit of C2PA
             content credentials, but for tool output. No MCP client verifies these
             signatures automatically yet; the point is that you <em>can</em>, today, with
@@ -454,8 +454,8 @@ function Landing() {
                 /.well-known/rise-ai-sweden-mcp-public-key.json
               </a>{" "}
               (<code className="rounded bg-muted px-1">kid</code> = RFC 7638 thumbprint).
-              The server-card path follows SEP-1649, which is not yet frozen upstream — the
-              path may change, so both the card and the dedicated key file are served.
+              The server-card path follows SEP-2127, which superseded SEP-1649 and settled{" "}
+              /.well-known/mcp.json — both the card and the dedicated key file are served.
             </li>
             <li>
               JSON-RPC <strong>error</strong> frames carry the envelope at{" "}
@@ -491,12 +491,14 @@ function Landing() {
               licence over it.
             </li>
             <li>
-              <strong>Deprecated (removed in v0.3):</strong> the v0.1 sibling{" "}
-              <code className="rounded bg-muted px-1">result.signature</code> over{" "}
-              <code className="rounded bg-muted px-1">structuredContent</code>, and the{" "}
-              <code className="rounded bg-muted px-1">provenance</code> mirror inside{" "}
-              <code className="rounded bg-muted px-1">structuredContent</code>, are still
-              emitted so existing clients keep working.
+              <code className="rounded bg-muted px-1">structuredContent</code> is
+              byte-identical (RFC 8785) to the signed{" "}
+              <code className="rounded bg-muted px-1">wrapper.payload</code> — nothing is
+              injected into it. The deprecated v0.1{" "}
+              <code className="rounded bg-muted px-1">result.signature</code> and{" "}
+              <code className="rounded bg-muted px-1">result.provenance</code> mirror are
+              emitted as top-level <code className="rounded bg-muted px-1">result</code>{" "}
+              siblings (removed in v0.3).
             </li>
           </ul>
 
