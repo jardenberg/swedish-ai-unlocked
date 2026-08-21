@@ -19,6 +19,7 @@ Run by Joakim Jardenberg (joakim@jardenberg.com) and Lovable.
 - `find_similar` — Given an indexed URL, return semantically nearest documents.
 - `get_document` — Full cleaned markdown for a single indexed URL.
 - `list_sources` — Sources covered, document counts, language breakdown, last-updated.
+- `server_info` — Server identity and scope: name, origin, spec id, build version, dataset stats (documents per source, chunks), last-updated.
 
 ## Page types
 
@@ -41,17 +42,18 @@ URL inputs to `get_document` and `find_similar` (and URL-shaped `find_mentions` 
 
 Event pages on ai.se that 301-redirect off-domain (Invajo, Meetup, etc.) are deliberately not indexed.
 
-## Signed responses (provenance trust layer) — spec org.jardenberg.verifiable-mcp/0.2
+## Signed responses (provenance trust layer) — spec org.jardenberg/verifiable-mcp 0.2
 
 Every `tools/call` response (and JSON-RPC error) is signed and carries a provenance block. Additive only — all existing data fields are unchanged.
 
-- `result._meta["org.jardenberg.verifiable-mcp"]` = `{ spec: "0.2", alg: "EdDSA", kid, signed: "wrapper", jws }`. No security-bearing values live outside the JWS: a verifier trusts only what it recovers from the verified wrapper.
+- `result._meta["org.jardenberg/verifiable-mcp"]` = `{ spec: "0.2", alg: "EdDSA", kid, signed: "wrapper", jws }`. No security-bearing values live outside the JWS: a verifier trusts only what it recovers from the verified wrapper.
 - Signed scope: a wrapper `{ iat, payload, payload_digest, content_digest, provenance }` where `payload` is the tool result data (no provenance mirrored inside it). **Both digests live inside the signature.**
 - Canonicalization: **RFC 8785 (JCS)**, normative for the JWS payload and every digest.
 - `payload_digest` = `sha256:<hex>` over the RFC 8785 canonical `payload`.
 - Content binding **by digest**: `content_digest` = `sha256:<hex>` over the exact served bytes of `content[0].text` (canonical JSON on this server). Verifiers hash the rendered text and compare against the signed digest.
-- `provenance`: `server_operator` ("Studio Jardenberg"), `server`, `content_publisher` ("RISE" / "AI Sweden"), `canonical_origin` (https://www.ri.se / https://www.ai.se), `legal_basis` ("EU TDM exception (DSM art. 3-4); all content remains © its publisher"), `content_hash` (SHA-256), `dataset_version`, `last_updated`.
-- Signed errors: the wrapper payload is `{ id, error }`, including the JSON-RPC request id.
+- `provenance` (inside the wrapper): `server_operator` ("Studio Jardenberg"), `server`, `legal_basis` ("Indexed under the EU TDM exception (DSM directive, art. 4); excerpts served with source attribution; all content remains © its publisher"), `dataset_version`, `last_updated`. Single-source responses add `content_publisher` and `canonical_origin` as strings; multi-source responses omit `canonical_origin` and carry a `publishers[]` array instead. No `content_hash*` keys — the digests are the wrapper's.
+- JWS protected header: `alg: "EdDSA"`, `kid`, `typ: "verifiable-mcp+jws"` (RFC 8725 explicit typing).
+- Signed errors: JSON-RPC error frames carry the envelope at `error.data["org.jardenberg/verifiable-mcp"]`; the wrapper payload is `{ id, error }` (request id included, envelope removed). Tool-level `isError` results are signed as `{ isError: true, message }` with `content_digest` over the text arm.
 - Key discovery: https://rise-ai-sweden.jardenberg.org/.well-known/mcp.json (server card + `jwks`), or the dedicated JWK at https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json (`kid` = RFC 7638 thumbprint, alg EdDSA/Ed25519). The server-card path follows SEP-1649, which is not yet frozen upstream — the path may change, so both the card and the dedicated key file are served.
 - Deprecated (removed in v0.3): the v0.1 sibling `result.signature` over `structuredContent`, and the `provenance` mirror inside `structuredContent`, are still emitted so existing clients keep working.
 - If the signing key is unavailable, responses are served unsigned; signing never blocks a query.
