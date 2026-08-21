@@ -24,9 +24,12 @@ type JsonRpcMessage = {
 /**
  * v0.2 trust envelope (additive, dual-emitting v0.1).
  *
- * - Signs a wrapper `{ iat, payload, provenance }` — RFC 8785 (JCS) canonical.
- * - Envelope lives at `result._meta["org.jardenberg.verifiable-mcp"]`.
- * - `content[0].text` is the RFC 8785 canonical serialization of the payload.
+ * - Signs a wrapper `{ iat, payload, payload_digest, content_digest, provenance }`
+ *   — RFC 8785 (JCS) canonical. Both digests live INSIDE the signature.
+ * - Envelope lives at `result._meta["org.jardenberg.verifiable-mcp"]` and holds
+ *   only `{ spec, alg, kid, signed, jws }` — nothing security-bearing outside.
+ * - Content binding is by digest: `content_digest` is SHA-256 over the exact
+ *   served bytes of `content[0].text` (which remains canonical JSON here).
  * - Deprecated v0.1 `result.signature` and the in-payload provenance mirror on
  *   `structuredContent` are kept unchanged until v0.3.
  *
@@ -47,11 +50,11 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     }
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
       // Tool-level error (isError) or non-JSON text: sign an error wrapper and
-      // leave the human-readable text arm untouched (no content binding claim).
+      // leave the human-readable text arm untouched.
       if (result.isError && typeof first.text === "string") {
-        const errObj = { error: { code: -32000, message: first.text } };
+        const errObj = { id: msg.id ?? null, error: { code: -32000, message: first.text } };
         const prov = await buildProvenance(errObj);
-        const signedErr = await signWrapper(errObj, prov);
+        const signedErr = await signWrapper(errObj, prov, first.text);
         if (signedErr) {
           result._meta = { ...(result._meta ?? {}), [SPEC_NAMESPACE]: signedErr.meta };
         }
@@ -62,7 +65,7 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     const base = payload as Record<string, unknown>;
     const provenance = await buildProvenance(base);
 
-    // ITEM 4 — content binding: the text a model reads IS the canonical payload.
+    // Text arm: canonical payload bytes (content binding is by digest).
     first.text = canonicalJson(base);
 
     // v0.1 (deprecated): structuredContent keeps the provenance mirror.
@@ -72,7 +75,7 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     if (legacy) result.signature = legacy;
 
     // v0.2: signed wrapper in namespaced _meta.
-    const signed = await signWrapper(base, provenance);
+    const signed = await signWrapper(base, provenance, first.text);
     if (signed) {
       result._meta = { ...(result._meta ?? {}), [SPEC_NAMESPACE]: signed.meta };
     }
@@ -82,13 +85,14 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
   }
 }
 
-/** ITEM 6 — signed JSON-RPC errors: wrapper payload = the error object. */
+/** ITEM 6 — signed JSON-RPC errors: wrapper payload = { id, error }. */
 async function augmentError(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
   try {
     const error = msg.error;
     if (!error || typeof error !== "object") return msg;
-    const provenance = await buildProvenance(error);
-    const signed = await signWrapper(error, provenance);
+    const errPayload = { id: msg.id ?? null, error };
+    const provenance = await buildProvenance(errPayload);
+    const signed = await signWrapper(errPayload, provenance);
     if (signed) {
       const existing = (msg._meta as Record<string, unknown> | undefined) ?? {};
       msg._meta = { ...existing, [SPEC_NAMESPACE]: signed.meta };
@@ -98,6 +102,7 @@ async function augmentError(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     return msg;
   }
 }
+
 
 async function augmentMessage(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
   if (msg && typeof msg === "object" && msg.error) return augmentError(msg);
