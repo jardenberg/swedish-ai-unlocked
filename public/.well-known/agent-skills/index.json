@@ -4,9 +4,9 @@
     {
       "name": "query-swedish-ai",
       "type": "markdown",
-      "description": "How to query the RISE & AI Sweden MCP effectively: tool selection (hybrid search vs find_mentions), filters including page_type, URL canonicalization, freshness, OCR/offsite quirks, and citation guidance.",
+      "description": "How to query the RISE & AI Sweden MCP effectively: tool selection (hybrid search vs find_mentions), filters including page_type, URL canonicalization, freshness, OCR/offsite quirks, signed-response verification, and citation guidance.",
       "url": "https://rise-ai-sweden.jardenberg.org/.well-known/agent-skills/query-swedish-ai/SKILL.md",
-      "sha256": "a1c5d1ed128589f0eb56134d637e375ac93a13ef548ac75bd2b9ae03074ec0ce"
+      "sha256": "7b00830cdfbd76a52ced127ae5fbb7e3fdf488de08e8a3d306df66cca5dc60ad"
     }
   ]
 }

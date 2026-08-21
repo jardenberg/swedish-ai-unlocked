@@ -41,6 +41,19 @@ URL inputs to `get_document` and `find_similar` (and URL-shaped `find_mentions` 
 
 Event pages on ai.se that 301-redirect off-domain (Invajo, Meetup, etc.) are deliberately not indexed.
 
+## Signed responses (provenance trust layer)
+
+Every `tools/call` response is signed and carries a provenance block. Additive only — all existing data fields are unchanged.
+
+- `result.structuredContent` — the response JSON plus a `provenance` block: `server_operator` ("Studio Jardenberg"), `server`, `content_publisher` ("RISE" / "AI Sweden"), `canonical_origin` (https://www.ri.se / https://www.ai.se), `legal_basis` ("EU TDM exception (DSM art. 3-4); all content remains © its publisher"), `content_hash` (SHA-256), `dataset_version`, `last_updated`.
+- `result.signature` — `{ alg: "EdDSA", kid, signed: "structuredContent", jws }`; compact JWS.
+- Signed scope: `tools/call structuredContent`.
+- Canonicalization: JSON with lexicographically sorted keys, UTF-8, no insignificant whitespace.
+- Public key JWK: https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json (`kid` = RFC 7638 thumbprint, alg EdDSA/Ed25519).
+- `content_hash` = SHA-256 over the canonical JSON of the response object with the `provenance` key removed.
+- If the signing key is unavailable, responses are served unsigned; signing never blocks a query.
+- No MCP client verifies these signatures automatically yet — this is a working pilot of verifiable MCP responses.
+
 ## Rate limit
 
 60 requests / 5 minutes per IP.
@@ -54,6 +67,7 @@ Live document counts, language breakdown, and last-updated timestamps are availa
 - Landing page: https://rise-ai-sweden.jardenberg.org/
 - MCP Server Card: https://rise-ai-sweden.jardenberg.org/.well-known/mcp/server-card.json
 - Agent skills index: https://rise-ai-sweden.jardenberg.org/.well-known/agent-skills/index.json
+- Public signing key (JWK): https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json
 - Sitemap: https://rise-ai-sweden.jardenberg.org/sitemap.xml
 
 ## Citation

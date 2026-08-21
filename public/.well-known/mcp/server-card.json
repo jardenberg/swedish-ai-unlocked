@@ -3,7 +3,7 @@
   "serverInfo": {
     "name": "rise-ai-sweden",
     "title": "RISE & AI Sweden Public MCP",
-    "version": "v202606112120"
+    "version": "v202608211000"
   },
   "transport": {
     "type": "streamable-http",
@@ -15,15 +15,59 @@
   },
   "capabilities": {
     "tools": [
-      { "name": "search_swedish_ai", "description": "Hybrid semantic + lexical search across RISE and AI Sweden publications (Swedish and English). Filters: source, lang, page_type. Limit 1–50 (default 20)." },
-      { "name": "find_mentions", "description": "Lexical 'everything that mentions X' primitive: stemmed tsquery + exact-substring fallback. Includes a parity total. Filters: source, lang, page_type. Limit 1–100 (default 25)." },
-      { "name": "list_latest", "description": "Newest indexed documents across both sources; lightweight metadata only. Filters: source, lang, page_type. Limit 1–50 (default 20)." },
-      { "name": "find_similar", "description": "Given an indexed URL, return semantically nearest other documents." },
-      { "name": "get_document", "description": "Full cleaned markdown for a single indexed URL." },
-      { "name": "list_sources", "description": "Sources covered, document counts, language breakdown, last-updated." }
+      {
+        "name": "search_swedish_ai",
+        "description": "Hybrid semantic + lexical search across RISE and AI Sweden publications (Swedish and English). Filters: source, lang, page_type. Limit 1–50 (default 20)."
+      },
+      {
+        "name": "find_mentions",
+        "description": "Lexical 'everything that mentions X' primitive: stemmed tsquery + exact-substring fallback. Includes a parity total. Filters: source, lang, page_type. Limit 1–100 (default 25)."
+      },
+      {
+        "name": "list_latest",
+        "description": "Newest indexed documents across both sources; lightweight metadata only. Filters: source, lang, page_type. Limit 1–50 (default 20)."
+      },
+      {
+        "name": "find_similar",
+        "description": "Given an indexed URL, return semantically nearest other documents."
+      },
+      {
+        "name": "get_document",
+        "description": "Full cleaned markdown for a single indexed URL."
+      },
+      {
+        "name": "list_sources",
+        "description": "Sources covered, document counts, language breakdown, last-updated."
+      }
     ],
-    "pageTypes": ["event", "news", "project", "page"]
+    "pageTypes": [
+      "event",
+      "news",
+      "project",
+      "page"
+    ]
   },
   "documentation": "https://rise-ai-sweden.jardenberg.org/",
-  "contact": { "email": "joakim@jardenberg.com" }
+  "contact": {
+    "email": "joakim@jardenberg.com"
+  },
+  "signing": {
+    "alg": "EdDSA",
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "kid": "upCmqalkMBHA7ZBkcCNWakftZgIEKtGVvvvpSQL_2p8",
+    "signed": "tools/call structuredContent",
+    "jws": "compact",
+    "canonicalization": "JSON with lexicographically sorted keys, UTF-8, no insignificant whitespace",
+    "publicKeyUrl": "https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json",
+    "note": "Additive: every tools/call result carries result.structuredContent (with a provenance block) and a sibling result.signature. Unsigned fallback if the key is unavailable."
+  },
+  "provenance": {
+    "server_operator": "Studio Jardenberg",
+    "content_publishers": [
+      "RISE",
+      "AI Sweden"
+    ],
+    "legal_basis": "EU TDM exception (DSM art. 3-4); all content remains © its publisher"
+  }
 }

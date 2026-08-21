@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRouteImport } from './routes/[.]well-known/rise-ai-sweden-mcp-public-key[.]json'
 import { Route as DotwellKnownSplatRouteImport } from './routes/[.]well-known/$'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminUploadRouteImport } from './routes/_authenticated/admin/upload'
@@ -56,6 +57,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRoute =
+  DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRouteImport.update({
+    id: '/.well-known/rise-ai-sweden-mcp-public-key.json',
+    path: '/.well-known/rise-ai-sweden-mcp-public-key.json',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DotwellKnownSplatRoute = DotwellKnownSplatRouteImport.update({
   id: '/.well-known/$',
   path: '/.well-known/$',
@@ -124,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/$': typeof DotwellKnownSplatRoute
+  '/.well-known/rise-ai-sweden-mcp-public-key.json': typeof DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/api/mcp': typeof ApiMcpRoute
   '/admin/documents': typeof AuthenticatedAdminDocumentsRouteWithChildren
@@ -142,6 +150,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/$': typeof DotwellKnownSplatRoute
+  '/.well-known/rise-ai-sweden-mcp-public-key.json': typeof DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRoute
   '/api/mcp': typeof ApiMcpRoute
   '/admin/documents': typeof AuthenticatedAdminDocumentsRouteWithChildren
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
@@ -161,6 +170,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/$': typeof DotwellKnownSplatRoute
+  '/.well-known/rise-ai-sweden-mcp-public-key.json': typeof DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/api/mcp': typeof ApiMcpRoute
   '/_authenticated/admin/documents': typeof AuthenticatedAdminDocumentsRouteWithChildren
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/.well-known/$'
+    | '/.well-known/rise-ai-sweden-mcp-public-key.json'
     | '/admin'
     | '/api/mcp'
     | '/admin/documents'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/.well-known/$'
+    | '/.well-known/rise-ai-sweden-mcp-public-key.json'
     | '/api/mcp'
     | '/admin/documents'
     | '/admin/pipeline'
@@ -217,6 +229,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/.well-known/$'
+    | '/.well-known/rise-ai-sweden-mcp-public-key.json'
     | '/_authenticated/admin'
     | '/api/mcp'
     | '/_authenticated/admin/documents'
@@ -237,6 +250,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   DotwellKnownSplatRoute: typeof DotwellKnownSplatRoute
+  DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRoute: typeof DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRoute
   ApiMcpRoute: typeof ApiMcpRoute
   DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute: typeof DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute
   ApiPublicHooksDailyRefreshRoute: typeof ApiPublicHooksDailyRefreshRoute
@@ -285,6 +299,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/.well-known/rise-ai-sweden-mcp-public-key.json': {
+      id: '/.well-known/rise-ai-sweden-mcp-public-key.json'
+      path: '/.well-known/rise-ai-sweden-mcp-public-key.json'
+      fullPath: '/.well-known/rise-ai-sweden-mcp-public-key.json'
+      preLoaderRoute: typeof DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/.well-known/$': {
       id: '/.well-known/$'
@@ -422,6 +443,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   DotwellKnownSplatRoute: DotwellKnownSplatRoute,
+  DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRoute:
+    DotwellKnownRiseAiSwedenMcpPublicKeyDotjsonRoute,
   ApiMcpRoute: ApiMcpRoute,
   DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute:
     DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute,

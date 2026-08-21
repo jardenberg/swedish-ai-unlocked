@@ -85,6 +85,35 @@ the server's job is honest labeling.
 - **Freshness.** Sitemaps are re-checked daily (04:15 UTC) and changed pages
   re-scraped. \`list_sources\` reports the live last-fetch per source.
 
+## Verification (signed responses)
+
+Every \`tools/call\` response is signed and carries provenance. Both are
+**additive** — all existing data fields are unchanged.
+
+- \`result.structuredContent\` — the same JSON object as the text arm, plus a
+  \`provenance\` block (\`server_operator\`, \`server\`, \`content_publisher\`,
+  \`canonical_origin\`, \`publishers\`, \`legal_basis\`, \`content_hash\`,
+  \`dataset_version\`, \`last_updated\`).
+- \`result.signature\` — \`{ alg: "EdDSA", kid, signed: "structuredContent", jws }\`,
+  a **compact** JWS over the canonicalized \`structuredContent\`.
+- Canonicalization: JSON with lexicographically sorted object keys, UTF-8, no
+  insignificant whitespace.
+- Public key (JWK, \`kid\` = RFC 7638 thumbprint):
+  \`https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json\`
+
+Verify in three steps:
+
+1. Fetch the JWK and check \`kid\` matches \`result.signature.kid\`.
+2. Verify the compact JWS with EdDSA (\`jose\` in JS; \`python-jose\` / \`PyJWT\` in Python).
+3. Canonicalize \`result.structuredContent\` and confirm it equals the verified JWS
+   payload byte-for-byte. Drop the \`provenance\` key, canonicalize the rest and
+   SHA-256 it to reproduce \`provenance.content_hash\`.
+
+Content is published by RISE and AI Sweden and remains © its publisher; this
+server indexes it under the EU TDM exception (DSM art. 3-4) and claims no
+licence over it. If the signing key is unavailable, responses are served
+unsigned — signing never blocks a query.
+
 ## Citing results
 
 **Every result includes the original publisher URL** (\`ri.se\` or \`ai.se\`).
