@@ -3,7 +3,7 @@
   "serverInfo": {
     "name": "rise-ai-sweden",
     "title": "RISE & AI Sweden Public MCP",
-    "version": "v202608211500"
+    "version": "v202608211730"
   },
   "transport": {
     "type": "streamable-http",
@@ -38,6 +38,10 @@
       {
         "name": "list_sources",
         "description": "Sources covered, document counts, language breakdown, last-updated."
+      },
+      {
+        "name": "server_info",
+        "description": "Server identity and scope: name, origin, verifiable-response spec id, build version, dataset statistics (documents per source, chunks), last-updated."
       }
     ],
     "pageTypes": [
@@ -52,14 +56,14 @@
     "email": "joakim@jardenberg.com"
   },
   "signing": {
-    "spec": "org.jardenberg.verifiable-mcp/0.2",
+    "spec": "org.jardenberg/verifiable-mcp",
     "alg": "EdDSA",
     "kty": "OKP",
     "crv": "Ed25519",
     "kid": "upCmqalkMBHA7ZBkcCNWakftZgIEKtGVvvvpSQL_2p8",
     "previous_kids": [],
     "signed": "wrapper { iat, payload, payload_digest, content_digest, provenance }",
-    "envelope": "result._meta[\"org.jardenberg.verifiable-mcp\"] = { spec, alg, kid, signed, jws } — no security-bearing values outside the JWS",
+    "envelope": "result._meta[\"org.jardenberg/verifiable-mcp\"] = { spec, alg, kid, signed, jws } — no security-bearing values outside the JWS",
     "jws": "compact",
     "canonicalization": "RFC 8785 (JCS)",
     "payload_digest": "sha256 over the RFC 8785 canonical payload (inside the signed wrapper)",
@@ -68,15 +72,17 @@
     "cardUrl": "https://rise-ai-sweden.jardenberg.org/.well-known/mcp.json",
     "cardPathNote": "The /.well-known/mcp.json server-card path follows SEP-1649, not yet frozen upstream; the path may change. Both the card and the dedicated key file are served.",
     "deprecated": "v0.1 result.signature over structuredContent and the in-payload provenance mirror are still emitted; removed in v0.3.",
-    "note": "Signed errors: JSON-RPC error responses carry the same _meta envelope; the signed payload is { id, error }. Unsigned fallback if the key is unavailable."
+    "note": "Signed errors: JSON-RPC error frames carry the envelope at error.data[\"org.jardenberg/verifiable-mcp\"]; the signed payload is { id, error } with the envelope removed. Tool-level isError results are signed as { isError: true, message }. Unsigned fallback if the key is unavailable.",
+    "spec_version": "0.2",
+    "typ": "verifiable-mcp+jws",
+    "meta_key": "org.jardenberg/verifiable-mcp"
   },
-
   "provenance": {
     "server_operator": "Studio Jardenberg",
     "content_publishers": [
       "RISE",
       "AI Sweden"
     ],
-    "legal_basis": "EU TDM exception (DSM art. 3-4); all content remains © its publisher"
+    "legal_basis": "Indexed under the EU TDM exception (DSM directive, art. 4); excerpts served with source attribution; all content remains © its publisher"
   }
 }
