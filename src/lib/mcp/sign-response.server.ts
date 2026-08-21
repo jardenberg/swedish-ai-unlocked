@@ -43,9 +43,21 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     try {
       payload = JSON.parse(first.text);
     } catch {
+      payload = null;
+    }
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      // Tool-level error (isError) or non-JSON text: sign an error wrapper and
+      // leave the human-readable text arm untouched (no content binding claim).
+      if (result.isError && typeof first.text === "string") {
+        const errObj = { error: { code: -32000, message: first.text } };
+        const prov = await buildProvenance(errObj);
+        const signedErr = await signWrapper(errObj, prov);
+        if (signedErr) {
+          result._meta = { ...(result._meta ?? {}), [SPEC_NAMESPACE]: signedErr.meta };
+        }
+      }
       return msg;
     }
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) return msg;
 
     const base = payload as Record<string, unknown>;
     const provenance = await buildProvenance(base);
