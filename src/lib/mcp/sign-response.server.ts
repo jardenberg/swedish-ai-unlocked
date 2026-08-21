@@ -99,8 +99,9 @@ async function augmentError(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     // Signed payload is the error frame WITHOUT the envelope itself; verifiers
     // remove error.data["org.jardenberg/verifiable-mcp"] before comparing.
     const errPayload = { id: msg.id ?? null, error: { ...error } };
-
+    const provenance = await buildProvenance(errPayload);
     const signed = await signWrapper(errPayload, provenance);
+
     if (signed) {
       const data = error.data;
       const dataObj =
