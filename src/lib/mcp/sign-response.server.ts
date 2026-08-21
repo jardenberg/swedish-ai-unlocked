@@ -1,10 +1,11 @@
-import { buildProvenance } from "./provenance.server";
+import { buildProvenance, buildLegacyProvenance } from "./provenance.server";
 import {
   canonicalJson,
   signStructuredContent,
   signWrapper,
   SPEC_NAMESPACE,
 } from "./signing.server";
+
 
 type JsonRpcMessage = {
   jsonrpc?: string;
