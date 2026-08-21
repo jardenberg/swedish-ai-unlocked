@@ -1,8 +1,12 @@
 import { CompactSign, importJWK, type CryptoKey, type KeyObject } from "jose";
 import jcs from "canonicalize";
 
-export const SPEC_NAMESPACE = "org.jardenberg.verifiable-mcp";
+export const SPEC_ID = "org.jardenberg/verifiable-mcp";
+/** MCP namespaced-key grammar: reverse-DNS prefix + "/" + name. */
+export const SPEC_NAMESPACE = SPEC_ID;
 export const SPEC_VERSION = "0.2";
+/** RFC 8725 explicit typing for the trust-layer JWS. */
+export const JWS_TYP = "verifiable-mcp+jws";
 
 /**
  * RFC 8785 (JCS) canonical JSON. Normative canonicalization for all signing and
@@ -48,7 +52,7 @@ async function signCanonical(value: unknown): Promise<{ jws: string; kid: string
   try {
     const payload = new TextEncoder().encode(canonicalJson(value));
     const jws = await new CompactSign(payload)
-      .setProtectedHeader({ alg: "EdDSA", kid: signer.kid, typ: "JOSE" })
+      .setProtectedHeader({ alg: "EdDSA", kid: signer.kid, typ: JWS_TYP })
       .sign(signer.key);
     return { jws, kid: signer.kid };
   } catch {
