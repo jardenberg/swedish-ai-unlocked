@@ -7,14 +7,15 @@ import { listLatestTool } from "@/lib/mcp/tools/list-latest";
 import { findSimilarTool } from "@/lib/mcp/tools/find-similar";
 import { searchTool } from "@/lib/mcp/tools/search";
 import { findMentionsTool } from "@/lib/mcp/tools/find-mentions";
+import { serverInfoTool } from "@/lib/mcp/tools/server-info";
 import { checkRateLimit, getClientIp } from "@/lib/mcp/rate-limit.server";
 
 const mcp = createMcpServer({
   name: "swedish-ai-librarian",
   version: "0.3.0",
   instructions:
-    "Tools for searching AI-relevant content published by Sweden's two government-funded AI organizations: RISE (Research Institutes of Sweden, ri.se) and AI Sweden (ai.se). Covers research projects, reports, blog posts, sector initiatives, AI labs, language models, and adoption stories in both English and Swedish. Use search_swedish_ai (hybrid semantic + lexical) for topical queries; find_mentions for proper-noun / recall-style 'everything that mentions X' lookups; list_latest for a 'what's new' view; find_similar for more-like-this; get_document for full text; list_sources for scope and freshness. Most tools accept a page_type filter (event | news | project | page).",
-  tools: [searchTool, findMentionsTool, listLatestTool, findSimilarTool, getDocumentTool, listSourcesTool],
+    "Tools for searching AI-relevant content published by Sweden's two government-funded AI organizations: RISE (Research Institutes of Sweden, ri.se) and AI Sweden (ai.se). Covers research projects, reports, blog posts, sector initiatives, AI labs, language models, and adoption stories in both English and Swedish. Use search_swedish_ai (hybrid semantic + lexical) for topical queries; find_mentions for proper-noun / recall-style 'everything that mentions X' lookups; list_latest for a 'what's new' view; find_similar for more-like-this; get_document for full text; list_sources for scope and freshness; server_info for server identity, spec and dataset statistics. Most tools accept a page_type filter (event | news | project | page).",
+  tools: [searchTool, findMentionsTool, listLatestTool, findSimilarTool, getDocumentTool, listSourcesTool, serverInfoTool],
 });
 
 const methodNotAllowed = () =>
