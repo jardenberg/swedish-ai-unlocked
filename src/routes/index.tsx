@@ -373,10 +373,11 @@ function Landing() {
             <li>
               Scope: a <strong>wrapper</strong> object{" "}
               <code className="rounded bg-muted px-1">
-                {`{ iat, payload, provenance }`}
+                {`{ iat, payload, payload_digest, content_digest, provenance }`}
               </code>{" "}
               — <code className="rounded bg-muted px-1">payload</code> is the tool result
-              data exactly as returned (no provenance mirrored inside it).
+              data exactly as returned (no provenance mirrored inside it). Both digests are{" "}
+              <strong>inside</strong> the signature.
             </li>
             <li>
               Envelope location: the JSON-RPC result's{" "}
@@ -385,9 +386,10 @@ function Landing() {
               </code>{" "}
               ={" "}
               <code className="rounded bg-muted px-1">
-                {`{ spec, alg, kid, signed: "wrapper", iat, payload_digest, jws }`}
+                {`{ spec, alg, kid, signed: "wrapper", jws }`}
               </code>
-              .
+              . Nothing security-bearing lives outside the JWS — a verifier trusts only
+              values recovered from the verified wrapper.
             </li>
             <li>
               Algorithm: <strong>EdDSA (Ed25519)</strong>, compact JWS. Canonicalization:{" "}
@@ -395,14 +397,15 @@ function Landing() {
               digest.
             </li>
             <li>
-              <strong>Content binding:</strong>{" "}
-              <code className="rounded bg-muted px-1">content[0].text</code> is exactly the
-              RFC 8785 canonical serialization of{" "}
-              <code className="rounded bg-muted px-1">payload</code>, and{" "}
-              <code className="rounded bg-muted px-1">payload_digest</code> is{" "}
-              <code className="rounded bg-muted px-1">sha256:&lt;hex&gt;</code> over those
-              same bytes — so a gateway can check the text a model reads is what was
-              signed.
+              <strong>Content binding by digest:</strong>{" "}
+              <code className="rounded bg-muted px-1">content_digest</code> is{" "}
+              <code className="rounded bg-muted px-1">sha256:&lt;hex&gt;</code> over the
+              exact served bytes of{" "}
+              <code className="rounded bg-muted px-1">content[0].text</code> (canonical JSON
+              on this server). Hash the rendered text and compare it against the{" "}
+              <em>signed</em> digest;{" "}
+              <code className="rounded bg-muted px-1">payload_digest</code> covers the RFC
+              8785 canonical payload.
             </li>
             <li>
               Key discovery:{" "}
@@ -421,11 +424,15 @@ function Landing() {
                 /.well-known/rise-ai-sweden-mcp-public-key.json
               </a>{" "}
               (<code className="rounded bg-muted px-1">kid</code> = RFC 7638 thumbprint).
+              The server-card path follows SEP-1649, which is not yet frozen upstream — the
+              path may change, so both the card and the dedicated key file are served.
             </li>
             <li>
-              JSON-RPC <strong>error</strong> responses carry the same envelope, with the
-              error object as the wrapper payload.
+              JSON-RPC <strong>error</strong> responses carry the same envelope, with{" "}
+              <code className="rounded bg-muted px-1">{`{ id, error }`}</code> — including
+              the request id — as the wrapper payload.
             </li>
+
             <li>
               Provenance per response: operator, content publisher(s) and their canonical
               origins, legal basis, a SHA-256{" "}
