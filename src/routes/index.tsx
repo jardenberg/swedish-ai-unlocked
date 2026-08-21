@@ -468,11 +468,13 @@ function Landing() {
               payload is the JCS-canonical wrapper.
             </li>
             <li>
-              Canonicalize <code className="rounded bg-muted px-1">wrapper.payload</code>{" "}
-              with RFC 8785 and confirm it is byte-identical to{" "}
-              <code className="rounded bg-muted px-1">content[0].text</code>, and that its
-              SHA-256 equals{" "}
-              <code className="rounded bg-muted px-1">payload_digest</code>.
+              Hash the served{" "}
+              <code className="rounded bg-muted px-1">content[0].text</code> bytes and
+              compare with the signed{" "}
+              <code className="rounded bg-muted px-1">wrapper.content_digest</code>; check{" "}
+              <code className="rounded bg-muted px-1">wrapper.payload_digest</code> against
+              the SHA-256 of the RFC 8785 canonical{" "}
+              <code className="rounded bg-muted px-1">wrapper.payload</code>.
             </li>
           </ol>
 
@@ -490,13 +492,15 @@ const env = result._meta["org.jardenberg.verifiable-mcp"];
 const { payload } = await compactVerify(env.jws, key);
 const wrapper = JSON.parse(new TextDecoder().decode(payload));
 
-const canonPayload = canon(wrapper.payload);
-console.log(canonPayload === result.content[0].text);  // content binding
-const digest = [...new Uint8Array(await crypto.subtle.digest(
-  "SHA-256", new TextEncoder().encode(canonPayload)))]
+const sha = async (s) => "sha256:" + [...new Uint8Array(await crypto.subtle.digest(
+  "SHA-256", new TextEncoder().encode(s)))]
   .map((b) => b.toString(16).padStart(2, "0")).join("");
-console.log("sha256:" + digest === env.payload_digest);`}</pre>
+
+// digests come from the VERIFIED wrapper, never from _meta
+console.log(await sha(result.content[0].text) === wrapper.content_digest); // content binding
+console.log(await sha(canon(wrapper.payload)) === wrapper.payload_digest);`}</pre>
           </div>
+
 
           <p className="mt-3 text-sm text-muted-foreground">
             If the signing key is ever unavailable, responses are served unsigned — signing
