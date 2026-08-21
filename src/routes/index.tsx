@@ -467,6 +467,15 @@ console.log(new TextDecoder().decode(payload) === canon(result.structuredContent
 
           <h2 className="text-xl font-semibold">FAQ</h2>
           <dl className="mt-4 space-y-5 text-sm">
+            <Faq q="Are responses signed?">
+              Yes — every <code className="rounded bg-muted px-1">tools/call</code> response
+              carries an Ed25519 (EdDSA) compact JWS over its{" "}
+              <code className="rounded bg-muted px-1">structuredContent</code>, plus a{" "}
+              <code className="rounded bg-muted px-1">provenance</code> block with a
+              SHA-256 content hash. See Trust &amp; verification above. Purely additive —
+              no existing field changed.
+            </Faq>
+
             <Faq q="Is this open source?">
               Yes — code lives at{" "}
               <a
