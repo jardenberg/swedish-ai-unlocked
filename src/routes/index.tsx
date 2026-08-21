@@ -3,7 +3,14 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 
 import { publicStats } from "@/lib/ingest.functions";
-import { VERSION, PUBLISHED, MCP_ENDPOINT as MCP_URL, MCP_NAME } from "@/lib/build-version";
+import {
+  VERSION,
+  PUBLISHED,
+  MCP_ENDPOINT as MCP_URL,
+  MCP_NAME,
+  SITE_URL as SITE,
+} from "@/lib/build-version";
+
 
 const PAGE_TITLE = "RISE & AI Sweden — Public MCP Server";
 
