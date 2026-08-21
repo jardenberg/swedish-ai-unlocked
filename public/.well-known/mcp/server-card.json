@@ -3,7 +3,7 @@
   "serverInfo": {
     "name": "rise-ai-sweden",
     "title": "RISE & AI Sweden Public MCP",
-    "version": "v202608211000"
+    "version": "v202608211500"
   },
   "transport": {
     "type": "streamable-http",
