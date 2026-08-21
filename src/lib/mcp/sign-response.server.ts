@@ -69,10 +69,15 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     // Text arm: canonical payload bytes (content binding is by digest).
     first.text = canonicalJson(base);
 
-    // v0.1 (deprecated): structuredContent keeps the provenance mirror.
-    const structuredContent = { ...base, provenance: await buildLegacyProvenance(base) };
-    result.structuredContent = structuredContent;
-    const legacy = await signStructuredContent(structuredContent);
+    // structuredContent is byte-identical (RFC 8785) to the signed wrapper
+    // payload — nothing is injected into it (v0.2.1 §2).
+    result.structuredContent = base;
+
+    // v0.1 (deprecated, removed in v0.3): provenance mirror + signature live as
+    // TOP-LEVEL `result` siblings, never inside structuredContent.
+    const legacyProvenance = await buildLegacyProvenance(base);
+    (result as Record<string, unknown>).provenance = legacyProvenance;
+    const legacy = await signStructuredContent({ ...base, provenance: legacyProvenance });
     if (legacy) result.signature = legacy;
 
     // v0.2: signed wrapper in namespaced _meta.
@@ -80,6 +85,7 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     if (signed) {
       result._meta = { ...(result._meta ?? {}), [SPEC_NAMESPACE]: signed.meta };
     }
+
 
     return msg;
   } catch {
