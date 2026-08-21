@@ -50,10 +50,10 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
       payload = null;
     }
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-      // Tool-level error (isError) or non-JSON text: sign an error wrapper and
-      // leave the human-readable text arm untouched.
+      // Tool-level error (isError) or non-JSON text: signed like any tools/call
+      // result, wrapper payload = { isError: true, message: <text arm> }.
       if (result.isError && typeof first.text === "string") {
-        const errObj = { id: msg.id ?? null, error: { code: -32000, message: first.text } };
+        const errObj = { isError: true, message: first.text };
         const prov = await buildProvenance(errObj);
         const signedErr = await signWrapper(errObj, prov, first.text);
         if (signedErr) {
@@ -70,7 +70,7 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     first.text = canonicalJson(base);
 
     // v0.1 (deprecated): structuredContent keeps the provenance mirror.
-    const structuredContent = { ...base, provenance };
+    const structuredContent = { ...base, provenance: await buildLegacyProvenance(base) };
     result.structuredContent = structuredContent;
     const legacy = await signStructuredContent(structuredContent);
     if (legacy) result.signature = legacy;
@@ -80,6 +80,7 @@ async function augmentResult(msg: JsonRpcMessage): Promise<JsonRpcMessage> {
     if (signed) {
       result._meta = { ...(result._meta ?? {}), [SPEC_NAMESPACE]: signed.meta };
     }
+
     return msg;
   } catch {
     return msg;
