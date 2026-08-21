@@ -27,7 +27,7 @@ type JsonRpcMessage = {
  *
  * - Signs a wrapper `{ iat, payload, payload_digest, content_digest, provenance }`
  *   — RFC 8785 (JCS) canonical. Both digests live INSIDE the signature.
- * - Envelope lives at `result._meta["org.jardenberg.verifiable-mcp"]` and holds
+ * - Envelope lives at `result._meta["org.jardenberg/verifiable-mcp"]` and holds
  *   only `{ spec, alg, kid, signed, jws }` — nothing security-bearing outside.
  * - Content binding is by digest: `content_digest` is SHA-256 over the exact
  *   served bytes of `content[0].text` (which remains canonical JSON here).
