@@ -348,8 +348,116 @@ function Landing() {
           </div>
         </section>
 
+        {/* ── Trust & verification ───────────────────────────────── */}
+        <section className="mt-12">
+          <h2 className="text-xl font-semibold">Trust &amp; verification</h2>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Every <code className="rounded bg-muted px-1">tools/call</code> response is
+            cryptographically signed and carries a provenance block. This is a working
+            pilot of verifiable MCP responses — in the spirit of C2PA content credentials,
+            but for tool output. No MCP client verifies these signatures automatically
+            yet; the point is that you <em>can</em>, today, with any standard JOSE library.
+          </p>
+
+          <h3 className="mt-6 font-medium">What is signed</h3>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+            <li>
+              Scope: the response's{" "}
+              <code className="rounded bg-muted px-1">structuredContent</code> — the same
+              JSON object as the text arm, including its{" "}
+              <code className="rounded bg-muted px-1">provenance</code> block.
+            </li>
+            <li>
+              Algorithm: <strong>EdDSA (Ed25519)</strong>, compact JWS, attached as a
+              sibling <code className="rounded bg-muted px-1">signature</code> object:{" "}
+              <code className="rounded bg-muted px-1">
+                {`{ alg, kid, signed: "structuredContent", jws }`}
+              </code>
+              .
+            </li>
+            <li>
+              Canonicalization: JSON with lexicographically sorted object keys, UTF-8, no
+              insignificant whitespace.
+            </li>
+            <li>
+              Public key (JWK, with <code className="rounded bg-muted px-1">kid</code> =
+              RFC 7638 thumbprint):{" "}
+              <a
+                href="/.well-known/rise-ai-sweden-mcp-public-key.json"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                /.well-known/rise-ai-sweden-mcp-public-key.json
+              </a>
+            </li>
+            <li>
+              Provenance per response: operator, content publisher(s) and their canonical
+              origins, legal basis, a SHA-256{" "}
+              <code className="rounded bg-muted px-1">content_hash</code>,{" "}
+              <code className="rounded bg-muted px-1">dataset_version</code> and{" "}
+              <code className="rounded bg-muted px-1">last_updated</code>. Content is
+              published by RISE and AI Sweden and remains © its publisher — indexing rests
+              on the EU TDM exception (DSM art. 3–4). This server claims no licence over it.
+            </li>
+          </ul>
+
+          <h3 className="mt-6 font-medium">Verify it yourself — three steps</h3>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+            <li>
+              Fetch the JWK from{" "}
+              <code className="rounded bg-muted px-1">
+                /.well-known/rise-ai-sweden-mcp-public-key.json
+              </code>{" "}
+              and check that its <code className="rounded bg-muted px-1">kid</code> matches
+              the one in the response signature.
+            </li>
+            <li>
+              Split the compact JWS (
+              <code className="rounded bg-muted px-1">header.payload.signature</code>) and
+              verify it with EdDSA — <code className="rounded bg-muted px-1">jose</code>{" "}
+              (JS) or <code className="rounded bg-muted px-1">python-jose</code> / {""}
+              <code className="rounded bg-muted px-1">PyJWT</code> (Python).
+            </li>
+            <li>
+              Re-canonicalize the response's{" "}
+              <code className="rounded bg-muted px-1">structuredContent</code> (sorted
+              keys, UTF-8) and confirm it is byte-identical to the verified JWS payload.
+              Then drop the <code className="rounded bg-muted px-1">provenance</code> key,
+              canonicalize the rest, and SHA-256 it — that reproduces{" "}
+              <code className="rounded bg-muted px-1">provenance.content_hash</code>.
+            </li>
+          </ol>
+
+          <div className="mt-4">
+            <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs">{`// Node — npm i jose
+import { compactVerify, importJWK } from "jose";
+
+const canon = (v) => JSON.stringify(sort(v));
+const sort = (v) =>
+  Array.isArray(v) ? v.map(sort)
+  : v && typeof v === "object"
+    ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sort(v[k])]))
+    : v;
+
+const jwk = await (await fetch(
+  "${SITE}/.well-known/rise-ai-sweden-mcp-public-key.json"
+)).json();
+const key = await importJWK({ kty: jwk.kty, crv: jwk.crv, x: jwk.x }, "EdDSA");
+
+const { result } = mcpResponse;                       // one tools/call result
+const { payload } = await compactVerify(result.signature.jws, key);
+console.log(new TextDecoder().decode(payload) === canon(result.structuredContent));`}</pre>
+          </div>
+
+          <p className="mt-3 text-sm text-muted-foreground">
+            If the signing key is ever unavailable, responses are served unsigned — signing
+            never blocks a query. Data fields are unchanged by this layer; signature and
+            provenance are purely additive.
+          </p>
+        </section>
+
         {/* ── FAQ ────────────────────────────────────────────────── */}
         <section className="mt-12">
+
           <h2 className="text-xl font-semibold">FAQ</h2>
           <dl className="mt-4 space-y-5 text-sm">
             <Faq q="Is this open source?">
