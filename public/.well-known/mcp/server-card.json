@@ -58,17 +58,19 @@
     "crv": "Ed25519",
     "kid": "upCmqalkMBHA7ZBkcCNWakftZgIEKtGVvvvpSQL_2p8",
     "previous_kids": [],
-    "signed": "wrapper { iat, payload, provenance }",
-    "envelope": "result._meta[\"org.jardenberg.verifiable-mcp\"]",
+    "signed": "wrapper { iat, payload, payload_digest, content_digest, provenance }",
+    "envelope": "result._meta[\"org.jardenberg.verifiable-mcp\"] = { spec, alg, kid, signed, jws } — no security-bearing values outside the JWS",
     "jws": "compact",
     "canonicalization": "RFC 8785 (JCS)",
-    "payload_digest": "sha256 over the RFC 8785 canonical payload",
-    "content_binding": "content[0].text is the RFC 8785 canonical serialization of the payload",
+    "payload_digest": "sha256 over the RFC 8785 canonical payload (inside the signed wrapper)",
+    "content_binding": "content_digest (inside the signed wrapper) = sha256 over the exact served bytes of content[0].text",
     "publicKeyUrl": "https://rise-ai-sweden.jardenberg.org/.well-known/rise-ai-sweden-mcp-public-key.json",
     "cardUrl": "https://rise-ai-sweden.jardenberg.org/.well-known/mcp.json",
+    "cardPathNote": "The /.well-known/mcp.json server-card path follows SEP-1649, not yet frozen upstream; the path may change. Both the card and the dedicated key file are served.",
     "deprecated": "v0.1 result.signature over structuredContent and the in-payload provenance mirror are still emitted; removed in v0.3.",
-    "note": "Signed errors: JSON-RPC error responses carry the same _meta envelope. Unsigned fallback if the key is unavailable."
+    "note": "Signed errors: JSON-RPC error responses carry the same _meta envelope; the signed payload is { id, error }. Unsigned fallback if the key is unavailable."
   },
+
   "provenance": {
     "server_operator": "Studio Jardenberg",
     "content_publishers": [
