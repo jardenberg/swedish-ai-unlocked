@@ -3,7 +3,8 @@ import { canonicalJson, sha256Hex } from "./signing.server";
 export const SERVER_OPERATOR = "Studio Jardenberg";
 export const SERVER_HOST = "rise-ai-sweden.jardenberg.org";
 export const LEGAL_BASIS =
-  "EU TDM exception (DSM art. 3-4); all content remains © its publisher";
+  "Indexed under the EU TDM exception (DSM directive, art. 4); excerpts served with source attribution; all content remains © its publisher";
+
 
 const PUBLISHERS: Record<string, { publisher: string; canonical_origin: string }> = {
   rise: { publisher: "RISE", canonical_origin: "https://www.ri.se" },
