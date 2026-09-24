@@ -1,5 +1,13 @@
 # Changelog
 
+## v202609241600 — 2026-09-24
+
+### Changed
+- Setup begins with a copyable prompt that requests installation or app-specific guidance and verifies a real read through the connector.
+- Manual instructions now link to current official Claude, ChatGPT, Codex and Cursor guidance, with clearly labelled configuration examples.
+- Removed the misleading universal JSON configuration and corrected the documented tool count to seven.
+
+
 ## v202609241445 — 2026-09-24
 
 ### Fixed

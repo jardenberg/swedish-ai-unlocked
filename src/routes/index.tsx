@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
@@ -11,6 +12,8 @@ import {
   SITE_URL as SITE,
 } from "@/lib/build-version";
 
+
+const SETUP_PROMPT = `Help me add ${MCP_URL} as a read-only connector for AI publications from RISE and AI Sweden. Name it ${MCP_NAME}. It needs no authentication or API key. If you cannot add it here, guide me through this app's setup one step at a time; ask what I see if the menus differ. Then verify it by listing its sources and finding a publication about Svea, with a source link. Only confirm that it works after a real connector tool call succeeds.`;
 
 const PAGE_TITLE = "RISE & AI Sweden — Public MCP Server";
 
@@ -63,6 +66,15 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const { data } = useSuspenseQuery(statsQuery);
+  const [copyStatus, setCopyStatus] = useState("");
+  async function copySetupPrompt() {
+    try {
+      await navigator.clipboard.writeText(SETUP_PROMPT);
+      setCopyStatus("Copied. Paste it into your AI assistant.");
+    } catch {
+      setCopyStatus("Select the prompt above and copy it manually.");
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,53 +101,73 @@ function Landing() {
           </div>
         </header>
 
-        {/* ── The one thing most people need ─────────────────────── */}
-        <section className="mt-10 rounded-lg border bg-card p-6">
-          <h2 className="text-xl font-semibold">Add it to your AI assistant</h2>
+        <section className="mt-10 rounded-lg border bg-card p-6" aria-labelledby="setup-heading">
+          <h2 id="setup-heading" className="text-xl font-semibold">Add it to your AI assistant</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            In most modern MCP-compatible tools, this URL is all you need. No login,
-            no API key, no authentication.
+            Start with a prompt. Copy this into the AI app you want to use.
           </p>
-
-          <div className="mt-4 space-y-3">
-            <Field label="Server URL" value={MCP_URL} />
-            <Field label="Suggested name" value={MCP_NAME} />
-            <Field label="Authentication" value="None" />
+          <label htmlFor="setup-prompt" className="mt-4 block text-sm font-medium">Your setup prompt</label>
+          <textarea id="setup-prompt" readOnly value={SETUP_PROMPT}
+            className="mt-2 min-h-56 w-full resize-y rounded-md border bg-muted/40 p-4 text-sm leading-relaxed"
+            onFocus={(event) => event.currentTarget.select()} />
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button type="button" onClick={copySetupPrompt}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+              Copy setup prompt
+            </button>
+            <span role="status" className="text-sm text-muted-foreground">{copyStatus}</span>
           </div>
-
+          <p className="mt-3 text-sm text-muted-foreground">
+            Your assistant may be able to add the connector, or guide you through setup.
+            Availability depends on your app, account and workspace settings.
+          </p>
+          <details className="mt-6 border-t pt-4">
+            <summary className="cursor-pointer font-medium">Prefer manual setup?</summary>
+            <div className="mt-4 space-y-3">
+              <Field label="Server URL" value={MCP_URL} />
+              <Field label="Suggested name" value={MCP_NAME} />
+              <Field label="Authentication" value="None — no login or API key" />
+              <Field label="Connection type (if asked)" value="Streamable HTTP" />
+            </div>
+            <div className="mt-6 space-y-5 text-sm">
+              <Tool name="Claude (web and desktop)">
+                Open Customize → Connectors → + → Add custom connector, then enter the server URL.
+                In a managed workspace, an owner may need to add it first.{" "}
+                <a className="underline underline-offset-4" href="https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp">Claude setup guide</a>
+              </Tool>
+              <Tool name="ChatGPT (web)">
+                For a custom MCP connection, enable Developer mode in Settings → Security and login,
+                then open Plugins, select + and enter the server URL under Connection.
+                Account and workspace policies may limit access.{" "}
+                <a className="underline underline-offset-4" href="https://developers.openai.com/plugins/deploy/connect-chatgpt">ChatGPT setup guide</a>
+              </Tool>
+              <Tool name="Codex">
+                Ask Codex to add the server with the prompt above, or use the CLI command below.
+                Configuration uses TOML.{" "}
+                <a className="underline underline-offset-4" href="https://learn.chatgpt.com/docs/extend/mcp?surface=cli">Codex setup guide</a>
+              </Tool>
+              <Tool name="Cursor">
+                Add the server URL in your MCP configuration using the example below.{" "}
+                <a className="underline underline-offset-4" href="https://cursor.com/docs/mcp">Cursor setup guide</a>
+              </Tool>
+            </div>
+            <details className="mt-5 rounded-md border p-4">
+              <summary className="cursor-pointer text-sm font-medium">Configuration examples for Cursor and Codex</summary>
+              <p className="mt-4 text-sm font-medium">Cursor: add to .cursor/mcp.json (project) or ~/.cursor/mcp.json (personal)</p>
+              <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify({ mcpServers: { [MCP_NAME]: { url: MCP_URL } } }, null, 2)}</pre>
+              <p className="mt-4 text-sm font-medium">Codex CLI</p>
+              <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-3 text-xs">{`codex mcp add ${MCP_NAME} --url ${MCP_URL}`}</pre>
+            </details>
+            <p className="mt-4 text-sm text-muted-foreground">
+              After adding it, enable it in your conversation. Start a new conversation or restart
+              the app if required, then ask it to list the connector's sources and find a Svea publication.
+              A saved setting alone does not confirm that the connection works.
+            </p>
+            <p className="mt-3 text-xs text-muted-foreground">Setup guidance checked 24 September 2026. Follow the official guide if your app's menus differ.</p>
+          </details>
           <div className="mt-6 grid grid-cols-2 gap-3">
             <Stat label="Documents indexed" value={data?.documents ?? 0} />
             <Stat label="Searchable chunks" value={data?.chunks ?? 0} />
-          </div>
-        </section>
-
-        {/* ── Where to paste it in popular tools ────────────────── */}
-        <section className="mt-10">
-          <h2 className="text-xl font-semibold">Where to add it</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            These menus change often — if something looks different, search the app's
-            settings for &ldquo;MCP&rdquo;.
-          </p>
-
-          <div className="mt-4 space-y-4 text-sm">
-            <Tool name="Claude Desktop">
-              Settings → Developer → Edit Config, then add an entry under{" "}
-              <code className="rounded bg-muted px-1">mcpServers</code> with the URL
-              above.
-            </Tool>
-            <Tool name="Claude.ai (web)">
-              Customize → Connectors → + → Add custom connector → paste the URL.
-            </Tool>
-            <Tool name="ChatGPT (Pro/Team)">
-              Settings → Connectors → Add → MCP server → paste the URL.
-            </Tool>
-            <Tool name="Cursor">
-              Settings → MCP → Add new server → paste the URL.
-            </Tool>
-            <Tool name="Codex CLI / others">
-              Add an entry to your <code className="rounded bg-muted px-1">mcpServers</code>{" "}
-              config pointing at the URL.
-            </Tool>
           </div>
         </section>
 
@@ -151,28 +183,11 @@ function Landing() {
           </blockquote>
         </section>
 
-        {/* ── Geekier: JSON config ──────────────────────────────── */}
-        <section className="mt-12">
-          <h2 className="text-xl font-semibold">JSON config (for tools that need it)</h2>
-          <pre className="mt-3 overflow-x-auto rounded-md bg-muted p-4 text-sm">
-{`{
-  "mcpServers": {
-    "${MCP_NAME}": {
-      "transport": { "type": "http", "url": "${MCP_URL}" }
-    }
-  }
-}`}
-          </pre>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Rate limit: 60 requests / 5 minutes per IP.
-          </p>
-        </section>
-
         {/* ── Tools + sample responses ──────────────────────────── */}
         <section className="mt-12">
           <h2 className="text-xl font-semibold">Tools exposed</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Six tools, each returning JSON. Most accept a{" "}
+            Seven tools, each returning JSON. Most accept a{" "}
             <code className="rounded bg-muted px-1">page_type</code> filter
             (<code className="rounded bg-muted px-1">event</code> ·{" "}
             <code className="rounded bg-muted px-1">news</code> ·{" "}
