@@ -94,24 +94,9 @@ export async function runSmokeTests(sb: AnySb): Promise<SmokeReport> {
 
   // 4. list_latest top 10 contains no pre-2024 entries
   await wrap("list_latest no pre-2024", async () => {
-    const { data, error } = await sb
-      .from("documents")
-      .select("url, published_at, sitemap_lastmod")
-      .eq("status", "embedded")
-      .eq("hidden", false)
-      .limit(200);
-    if (error) throw new Error(error.message);
-    const ranked = (data ?? [])
-      .map((d: { url: string; published_at: string | null; sitemap_lastmod: string | null }) => ({
-        url: d.url,
-        eff: d.published_at ?? d.sitemap_lastmod,
-      }))
-      .sort((a, b) => {
-        const av = a.eff ? new Date(a.eff).getTime() : 0;
-        const bv = b.eff ? new Date(b.eff).getTime() : 0;
-        return bv - av;
-      })
-      .slice(0, 10);
+    const { fetchLatestDocuments } = await import("./latest-documents.server");
+    const ranked = (await fetchLatestDocuments(sb, { limit: 10 }))
+      .map(({ d, effective }) => ({ url: d.url, eff: effective }));
     const cutoff = new Date("2024-01-01T00:00:00Z").getTime();
     const offenders = ranked.filter(
       (r) => !r.eff || new Date(r.eff).getTime() < cutoff,

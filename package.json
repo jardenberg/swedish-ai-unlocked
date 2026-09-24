@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "audit:pagination": "node scripts/audit-pagination.mjs"
+    "audit:pagination": "node scripts/audit-pagination.mjs",
+    "test:freshness": "node --experimental-strip-types --test tests/publication-freshness.test.mts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

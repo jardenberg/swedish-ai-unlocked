@@ -1,0 +1,3010 @@
+{
+  "checkedAt": "2026-09-24T14:17:06.565Z",
+  "sources": [
+    {
+      "source": "ai_sweden",
+      "sitemapTotal": 2315,
+      "eligible": 2137,
+      "matched": 2137,
+      "missing": [],
+      "stale": [],
+      "parked": [
+        {
+          "url": "https://www.ai.se/en/events/ai-rendezvous-public-needs-local-growth-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-rendezvous-fran-offentliga-behov-till-lokal-tillvaxt-med-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/how-optimize-use-resources-healthcare-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/hur-kan-vi-arbeta-med-resursoptimering-i-varden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/benefits-applied-ai-healthcare-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/nytta-med-tillampad-ai-i-varden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-labs-sharing-caring",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-labs-sharing-caring-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partner-partner-meetup-gothenburg-and-stockholm",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/partner-till-partner-meetup-i-goteborg-och-stockholm-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/open-network-regions-and-municipalities-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/oppna-ai-natverket-kommuner-och-regioner",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/building-competence-ai-adoption-together-university-concordia-canada",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/bygga-kompetens-att-implementera-ai-tillsammans-med-university-concordia-kanada-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/artificial-intelligence-ai-public-sector-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/artificiell-intelligens-ai-i-offentlig-sektor",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-enhanced-mobility-final-conference",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-enhanced-mobility-slutkonferens",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-marketing",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-marknadsforing-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partner-breakfast-seminar-14",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/partner-breakfast-seminar",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/mandela-talks-ai-against-wildlife-crime",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/mandela-talks-om-ai-att-forhindra-tjuvjakt-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/webinar-responsible-ai-organizations-navigating-todays-ai-landscape-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/webinar-ansvarsfull-ai-organisationer-att-navigera-dagens-ai-landskap",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/prodikt-construction-sustainable-tomorrow",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/prodikt-byggprocesser-en-hallbar-framtid-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/mlops-deep-dive-sessions",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/mlops-deep-dive-sessions-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-labs-sharing-caring-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-tomorrows-world-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-i-morgondagens-varld",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-trends-seminar-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-trends-seminar-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/event/ai-for-klimatet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-i-klimatets-tjanst",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/large-language-models-healthcare-lessons-region-halland-and-sahlgrenska-university-hospital",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/stora-sprakmodeller-i-varden-lardomar-fran-region-halland-och-sahlgrenska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/deploying-ai-scale",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/deploying-ai-scale-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/francesweden-bridging-borders-ai-startups",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/francesweden-bridging-borders-ai-startups-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-driven-cybersecurity-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-driven-cybersakerhet-mojligheter-och-utmaningar",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-natverket-offentlig-sektor-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-natverket-offentlig-sektor",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/open-network-regions-and-municipalities-swedish-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/oppet-ai-natverk-kommuner-och-regioner",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-social-entrepreneurs-non-profits-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-samhallsnyttiga-entreprenorer-och-ideella-organisationer",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-social-entrepreneurs-non-profits-swedish-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-samhallsnyttiga-entreprenorer-och-ideella-organisationer-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/artificial-intelligence-public-sector-stockholm-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/artificiell-intelligens-i-offentlig-sektor-stockholm",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-gaia-conference",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-gaia-conference",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/modernizing-forest-industry-synthetic-data-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/modernisering-av-skogsindustrin-med-hjalp-av-syntetiska-data",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/afternoon-aiotea-how-work-data-driven-iot-and-ai-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/afternoon-aiotea-sa-arbetar-du-datadrivet-med-iot-och-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/artificial-intelligence-public-sector-helsingborg-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/artificiell-intelligens-i-offentlig-sektor-helsingborg",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-rendezvous-tillampad-ai-i-praktiken-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-rendezvous-tillampad-ai-i-praktiken",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-sweden-innovation-days",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-sweden-innovation-days",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partner-partner-meet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/partner-partner-meet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/natverkstraff-offentlig-sektor-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/natverkstraff-ai-natverket-offentlig-sektor-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/latest-advancements-decentralized-learning-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/latest-advancements-decentralized-learning-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-rendezvous-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-rendezvous",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/workshop-language-technology-multilingual-europe",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/workshop-om-sprakteknologi-ett-flersprakigt-europa",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/open-ai-network-regions-and-municipalities-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/oppna-ai-natverket-kommuner-och-regioner-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/generative-ai-academia-insights-university-gothenburg",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/generativ-ai-inom-akademin-insikter-fran-goteborgs-universitet-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/co-working-day-nlp-seminar-series-soft-launch",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/co-working-day-nlp-seminar-series-soft-launch",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/co-working-day-nlp-seminar-series-soft-launch-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/co-working-day-nlp-seminar-series-soft-launch-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-boards-and-ceos-how-evolve-your-organization-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-styrelse-och-vd-sa-utvecklar-du-ditt-foretag-med-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-industry-lab-initiative",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-industry-lab-initiativ",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/open-pitch-day-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/open-pitch-day",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-startup-program-spotlight-ai-sweden-nvidia",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-startup-program-spotlight-med-ai-sweden-nvidia-english",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/workshop-language-models-and-generative-ai-government-agencies-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/workshop-om-sprakmodeller-och-generativ-ai-myndigheter",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-world-singapores-new-ai-strategy-and-growth-opportunities-southeast-asia",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-varlden-singapores-nya-ai-strategi-och-tillvaxtmojligheter-i-sydostasien-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/upskilling-part-organisational-ai-strategy",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/upskilling-part-organizational-ai-strategy-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/master-thesis-conference",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/master-thesis-conference-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/future-mining-insight-boliden-edge-lab-creating-conditions-rd-activities-ai-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/framtidens-gruvdrift-en-inblick-i-boliden-edge-lab-som-skapar-forutsattningar-fou-aktiviteter",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-labs-special-lectures",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-labs-special-lectures-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/summer-mingle-ai-sweden-partners",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sommarmingel-partners",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-labs-special-lectures-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-labs-special-lectures-pa-engelska-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/impact-innovation-summit",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/impact-innovation-summit-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-labs-sharing-caring-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-labs-sharing-caring",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/konferens-ai4energy",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/konferens-ai4energy",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-hackaton-20-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-hackaton-20",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/information-meeting-ai-course-social-entrepreneurs-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/infotraff-ai-utbildning-sociala-entreprenorer",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/kickstart-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/kickstart-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/industrial-immersion-exchange-program-final-presentation",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/industrial-immersion-exchange-program-slutlig-presentation",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partner-morning-session-sep",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/partner-morning-session-sept",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/oppna-ai-natverket-kommuner-och-regioner-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/oppna-ai-natverket-kommuner-och-regioner-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partner-morning-session-oct",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/partner-morning-session-okt",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partner-morning-session-nov",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/partner-morning-session-nov",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partner-morning-session-dec",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/partner-morning-session-dec",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/slutseminarium-gpt-sw3-valideringsprojekt-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/slutseminarium-gpt-sw3-valideringsprojekt",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-sthlm-open-house",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-sthlm-oppet-hus",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/lindholmen-open-day",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/lindholmen-open-day",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-labs-fika-guest-speaker-dr-linda-pipkorn-mit",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-labs-fika-med-gastforelasare-dr-linda-pipkorn-fran-mit",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partner-partner-meet-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/partner-partner-meet-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-automotive",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-automotive",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/generative-ai-energy-sector",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/generativ-ai-inom-energisektorn",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/nlu-co-working-day",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/nlu-co-working-day",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/nlu-co-working-day-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/nlu-co-working-day-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/nlu-co-working-day-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/nlu-co-working-day-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/future-traveling-ostgotatrafiken-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/framtidens-resa-med-ostgotatrafiken",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/lunch-lecture-behind-scenes-sustainable-ai-solutions-and-circular-business-development",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/lunchforelasning-bakom-kulisserna-hallbara-ai-losningar-och-cirkular-affarsutveckling",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/sveagpt-municipalities-skane-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sveagpt-4okt",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/sveagpt-municipalities-skane-swedish-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sveagpt-9okt",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/building-competence-ai-adoption-how-ai-act-will-transform-way-we-work",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/building-competence-ai-adoption-ai-acts-paverkan-pa-hur-vi-jobbar-english",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/praktiskt-ai-stod-innovationsekosystem-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/praktiskt-ai-stod-innovationsekosystem",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/spacetech-commercialization-summit",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/spacetech-commercialization-summit",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/oppna-ai-natverket-kommuner-och-regioner-vad-behovs-att-gora-ai-tillsammans-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/oppna-ai-natverket-kommuner-och-regioner-vad-behovs-att-gora-ai-tillsammans",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partnertraff-ai-natverket-offentlig-sektor-swedish-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/natverkstraff-ai-natverket-offentlig-sektor",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/praktiskt-ai-stod-forskningsadministratorer-akademiska-organisationer-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/praktiskt-ai-stod-forskningsadministratorer-akademiska-organisationer",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-kommuner-ett-digitalt-studiebesok-hos-jonkopings-kommun-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/digitalt-studiebesok-jonkoping",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/fran-utmaning-till-losning-partnerskap-som-skapar-samhallsnytta-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/fran-utmaning-till-losning-partnerskap-som-skapar-samhallsnytta",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/impact-hack-2025-info-session",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/impact-hack-2025-infotraff",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/impact-hack-2025-ideation-workshop-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/impact-hack-2025-ideworkshop-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/impact-hack-2025-ideation-workshop-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/impact-hack-2025-ideworkshop-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/impact-hack-2025-ideation-workshop-3",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/impact-hack-2025-ideworkshop-3",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-rendezvous-whats-going-skane-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-rendezvous-vad-hander-inom-det-skanska-ai-landskapet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ibm-techxchange-ai-here-stay-so-now-what",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ibm-techxchange-ai-here-stay-so-now-what",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-executives-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/AI-for-styrelse-och-vd-lund",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/kickstart-ai-lund-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/kickstart-ai-lund",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/kickstart-ai-webinar-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/kickstart-ai-webinar",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/kickstart-ai-helsingborg-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/kickstart-ai-helsingborg",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/building-competence-ai-adoption-roadmap-implementing-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/building-competence-ai-adoption-roadmap-implementing-ai-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/tysk-svenska-handelskammaren-natverkstraff-hos-ai-sweden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/tysk-svenska-handelskammaren-natverkstraff-hos-ai-sweden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-trends-2025-collective-intelligence",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-trends-2025-collective-intelligence",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/digitalt-studiebesok-hos-lidingo-kommun-mojliggorare-lyckad-ai-implemetering-i-kommuner",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/digitalt-studiebesok-hos-lidingo-kommun-mojliggorare-lyckad-ai-implemetering-i-kommuner",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-robotics-challenge-red-hat-and-ai-sweden-stockholm",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-robotics-challenge-red-hat-and-ai-sweden-stockholm",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-robotics-challenge-redhat-and-ai-sweden-gothenburg",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-robotics-challenge-redhat-and-ai-sweden-gothenburg",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/natverkstraff-att-utveckla-och-implementera-ai-losningar-i-praktiken-lardomar-fran",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/natverkstraff-att-utveckla-och-implementera-ai-losningar-i-praktiken-lardomar-fran",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/digitalt-studiebesok-hos-kungsbacka-kommun-mojliggorare-lyckad-ai-implemetering-i-kommuner",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/digitalt-studiebesok-hos-kungsbacka-kommun-mojliggorare-lyckad-ai-implemetering-i-kommuner",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-mognadsmatning-i-praktiken-grunden-en-framgangsrik-ai-resa-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-mognadsmatning-i-praktiken-grunden-en-framgangsrik-ai-resa",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-gothenburg-open-house-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-gothenburg-open-house-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-stockholm-open-house",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-stockholm-open-house",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-shared-learnings-session",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-shared-learnings-session",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-shared-learnings-session-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-shared-learnings-session-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/edge-processing-solutions-next-gen-automotive",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/edge-processing-solutions-next-gen-automotive",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/natverket-offentlig-sektor-swedish-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/natverkstraff-offentlig-sektor-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/oppna-ai-natverket-kommuner-och-regioner-swedish-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/oppna-ai-natverket-kommuner-och-regioner-hur-bygger-vi-gemensam-formaga-och-skalar",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/oppna-ai-natverket-kommuner-och-regioner-swedish-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/oppna-ai-natverket-kommuner-och-regioner-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/public-policy-meetup-partners-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/public-policy-traff-partners",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/gothenburg-partner-partner-meet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/goteborg-partner-partner-meet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/malmo-partner-partner-meet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/malmo-partner-partner-meet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/stockholm-partner-partner-meet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/stockholm-partner-partner-meet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/online-partner-partner-meet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/online-partner-partner-meet",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/building-competence-ai-adoption-navigating-ai-skills-maze",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/building-competence-ai-adoption-navigating-ai-skills-maze",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/proact-bleasure-x-ai-sweden-roadshow-secure-your-data-ai-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/proact-bleasure-x-ai-sweden-roadshow-stockholm-sakra-din-data-med-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/proact-bleasure-x-ai-sweden-roadshow-secure-your-data-ai-swedish-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/proact-bleasure-x-ai-sweden-roadshow-goteborg-sakra-din-data-med-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/proact-bleasure-x-ai-sweden-roadshow-malmo-secure-your-data-ai-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/proact-bleasure-x-ai-sweden-roadshow-malmo-sakra-din-data-med-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/stockholm-mlops-community-kick-2025",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/stockholm-mlops-community-kick-2025",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-catalyst-network-may-meetup",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-catalyst-network-traff-maj",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/network-public-sector-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/natverkstraff-offentlig-sektor",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/natverkstraff-fran-ide-till-innovation-losningar-fran-impact-hack-2025-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/natverkstraff-fran-ide-till-innovation-losningar-fran-impact-hack-2025",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-use-case-platform-monthly-meetup-series-3",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-use-case-platform-monthly-meetup-series-3-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-shared-learnings-session-ai-security",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-shared-learnings-session-ai-security",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/scaling-ai-nordics-building-growth-and-impact",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/scaling-ai-nordics-building-growth-and-impact-english",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/webinar-syntethic-data-future-fuel-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/webinar-syntethic-data-future-fuel-ai-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/inspirationsevent-kraftsamling-ai-i-kommuner-och-civilsamhalle-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/inspirationsevent-kraftsamling-ai-i-kommuner-och-civilsamhalle",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/trustworthy-computing-ai-hpc-automotive-industry",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/trustworthy-computing-ai-hpc-automotive-industry-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/sovereign-ai-infrastructure-building-secure-and-scalable-ecosystem",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sovereign-ai-infrastructure-building-secure-and-scalable-ecosystem-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-learning-hackathon",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-learning-hackathon-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-partner-mingle-gothenburg",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sommarmingel-partners-goteborg",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-partner-mingle-stockholm",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sommarmingel-partners-stockholm",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/mutual-reinforcement-ethics-and-trust-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/mutual-reinforcement-ethics-and-trust-ai-english",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/building-sovereign-ai-ecosystem-europe",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/building-sovereign-ai-ecosystem-europe-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-101-introduction-ai-startups",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-101-introduction-ai-startups",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/socially-responsible-and-trustworthy-ai-workshop",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/socially-responsible-and-trustworthy-ai-workshop",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/breakfast-webinar-ashley-podhradsky-workforce-development-and-cybher",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/breakfast-webinar-ashley-podhradsky-workforce-development-and-cybher",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/shared-learnings-sessions-ai-and-future-work",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/shared-learnings-sessions-ai-and-future-work-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/oppna-ai-natverket-kommuner-och-regioner-swedish-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/oppna-ai-natverket-kommuner-och-regioner-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/shadows-and-strategy-cybersecurity-gray-zone",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/shadows-and-strategy-cybersecurity-gray-zone-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/leadership-ai-journey-within-public-sector-strategy-responsibility-and-opportunities-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ledningsgruppens-roll-i-ai-resan-inom-offentlig-sektor-strategi-ansvar-och-mojligheter",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/leadership-ai-journey-within-private-sector-strategy-responsibility-and-opportunities",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ledningsgruppens-roll-i-ai-resan-i-privat-sektor-strategi-ansvar-och-mojligheter-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-catalyst-network-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-catalyst-network-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/fran-ide-till-varderealisering-med-ai-i-offentlig-sektor-erfarenheter-och-insikter",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/fran-ide-till-varderealisering-med-ai-i-offentlig-sektor-erfarenheter-och-insikter",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/fokus-fordjupning-i-rag-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/fokusmodul-fordjupning-i-rag",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/final-presentations-industrial-immersion-exchange-program-project-presentations-ai-and",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/final-presentations-industrial-immersion-exchange-program-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/slutpresentationer-public-innovation-summer-program-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/slutpresentationer-public-innovation-summer-program",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/natverket-offentlig-sektor-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/natverkstraff-offentlig-sektor-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/fokusmodul-dra-nytta-av-kunddata-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/fokusmodul-dra-nytta-av-kunddata",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-network-healthcare-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-natverket-halso-och-sjukvarden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/inspirationsevent-kraftsamling-ai-i-kommuner-och-civilsamhalle-swedish-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/inspirationsevent-kraftsamling-ai-i-kommuner-och-civilsamhalle-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/digital-konferens-gemensamma-ai-formagor-i-kommuner-och-civilsamhalle-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/digital-konferens-gemensamma-ai-formagor-i-kommuner-och-civilsamhalle",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/nlu-co-working-day-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/nlu-co-working-day-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-study-visit-inside-look-astrazeneca",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-studiebesok-inside-look-astrazeneca",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/webinar-strategic-value-open-models",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/webinar-strategic-value-open-models",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/shared-learning-sessions-trustworthy-conversational-ai-agents",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/shared-learning-sessions-trustworthy-conversational-ai-agents-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/nlu-co-working-day-3",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/nlu-co-working-day-3",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/svea-project-presentation-our-work-and-lessons-learnt-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/svea-projektet-en-presentation-av-vart-arbete-och-vara-viktigaste-lardomar",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/meet-experts-unconference",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/meet-expert-unconference",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/sweo-swedish-earth-observation",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sweo-swedish-earth-observation",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-based-communication-support-people-intellectual-disabilities-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-baserat-kommunikationsstod-personer-med-intellektuell-funktionsnedsattning",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/creative-connect-generative-ai-tatic-designstudio",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/creative-connect-generative-ai-tatic-designstudio-english",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partnertraff-natverket-offentlig-sektor-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/partnertraff-natverket-offentlig-sektor",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/leadership-ai-journey-workshop-series-leadership-teams-academia-and-public-sector-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ledningsgruppens-roll-pa-ai-resan-strategi-ansvar-och-mojligheter-offentlig-sektor-och",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/leadership-ai-journey-workshop-series-leadership-teams-private-sector",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ledningsgruppens-roll-pa-ai-resan-strategi-ansvar-och-mojligheter-privat-sektor",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-network-healthcare-swedish-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-natverket-halso-och-sjukvarden-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-network-healthcare-swedish-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-natverket-halso-och-sjukvarden-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/creative-connect-ai-vfx-istudios",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/creative-connect-ai-vfx-istudios-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-studion-innovationsaktorer-sv",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-studion-innovationsaktorer",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-challenge-workshop-make-your-data-ready-ai-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-challenge-workshop-gor-dina-data-redo-ai-pa-svenska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/competence-strategy-network",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/competence-strategy-network",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-catalyst-network-swedens-emerging-ai-factory-landscape",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-catalyst-network-swedens-emerging-ai-factory-landscape-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/gen-ai-lunch-n-learn-maximizing-generative-ai-go",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/gen-ai-lunch-n-learn-maximizing-generative-ai-go-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/oppen-partnerfrukost-med-ai-sweden-och-arboair-hur-ai-blir-karnan-i-produktion-och-rd",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/oppen-partnerfrukost-med-ai-sweden-och-arboair-hur-ai-blir-karnan-i-produktion-och-rd",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-studion-innovationsaktorer-sv-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-studion-innovationsaktorer-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/data-results-how-take-ai-idea-reality",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/data-results-how-take-ai-idea-reality-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-life-sciences-stockholm-mlops-community",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-life-sciences-stockholm-mlops-community-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/frukostmote-upptack-hur-ai-kan-lyfta-ditt-foretag-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/frukostmote-upptack-hur-ai-kan-lyfta-ditt-foretag",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/creative-connect-ai-and-fashion-design-petra-fagerstrom-substorm",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/creative-connect-ai-and-fashion-design-petra-fagerstrom-substorm-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/mutual-reinforcement-ethics-and-trust-ai-deep-dive",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/mutual-reinforcement-ethics-and-trust-ai-deep-dive-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/workshop-strengthening-your-design-process-generative-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/workshop-strengthening-your-design-process-generative-ai-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-stockholm-christmas-mingle",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-stockholm-julmingel",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/how-businesses-succeed-ai-idea-results-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sa-lyckas-foretag-med-ai-fran-ide-till-resultat",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/series-big-tech-small-business-featuring-google",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/series-big-tech-small-business-featuring-google-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/human-centered-future-ai-beyond-algorithms-and-hardware",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/human-centered-future-ai-beyond-algorithms-and-hardware-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/gen-ai-lunch-n-learn-vibe-coding",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/gen-ai-lunch-n-learn-vibe-coding-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/guest-talk-enhancing-cyber-hunting-artificial-intelligence",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/guest-talk-enhancing-cyber-hunting-artificial-intelligence-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/kommunala-vibekodarcupen",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/genai-lunch-n-learn-ai-assistants",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/genai-lunch-n-learn-ai-assistants",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-studion-innovationsaktorer-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-studion-innovationsaktorer-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/upplev-forsta-och-tillampa-ai-pa-en-formiddag-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/upplev-forsta-och-tillampa-ai-pa-en-formiddag",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/partnertraff-natverket-offentlig-sektor-swedish-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/partnertraff-natverket-offentlig-sektor-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/agenter-och-agentiska-arbetsfloden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/agenter-och-agentiska-arbetsfloden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-post-production",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-post-production",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-creative-practices",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-creative-practices",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-gothenburg-open-house-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-gothenburg-open-house-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-network-healthcare-swedish-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-natverket-halso-och-sjukvarden-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-network-healthcare-swedish-3",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-natverket-halso-och-sjukvarden-3",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-network-healthcare-swedish-4",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-natverket-halso-och-sjukvarden-4",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-trend-seminar",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-trend-seminar-english",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-after-hours-med-arctic-group-och-ai-sweden-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-after-hours-med-arctic-group-och-ai-sweden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/where-ai-research-and-industry-stand-right-now-and-what-we-should-expect-coming-years",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/where-ai-research-and-industry-stand-right-now-and-what-we-should-expect-coming-years-pa",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/filmvisning-pa-wisdome-ai-immersive-journey-future-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/filmvisning-pa-wisdome-ai-immersive-journey-future",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/inspirationsevent-kraftsamling-ai-i-kommuner-och-civilsamhalle",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/inspirationsevent-kraftsamling-ai-i-kommuner-och-civilsamhalle-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/co-working-friday-ai-sweden-stockholm-january",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/co-working-hos-ai-sweden-stockholm-januari",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/co-working-friday-ai-sweden-stockholm-february",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/co-working-hos-ai-sweden-stockholm-februari",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/co-working-friday-ai-sweden-stockholm-march",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/co-working-hos-ai-sweden-stockholm-mars",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/co-working-friday-ai-sweden-stockholm-april",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/co-working-hos-ai-sweden-stockholm-april",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/co-working-friday-ai-sweden-stockholm-may",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/co-working-hos-ai-sweden-stockholm-maj",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-open-house-stockholm",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-open-house-stockholm",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/natverket-offentlig-sektor-swedish-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/natverket-offentlig-sektor",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/natverket-offentlig-sektor-swedish-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/natverket-offentlig-sektor-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/natverket-offentlig-sektor-swedish-3",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/natverket-offentlig-sektor-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/workshop-advancing-your-creative-practice-generative-ai-level-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/workshop-advancing-your-creative-practice-generative-ai-level-2-english",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/workshop-strengthening-your-design-process-generative-ai-level-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/workshop-strengthening-your-design-process-generative-ai-level-1-english",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/orchestrating-operationalizing-scalable-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/orchestrating-operationalizing-scalable-ai-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-catalyst-network-turning-swedens-ai-strategy-real-capability",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-catalyst-network-turning-swedens-ai-strategy-real-capability-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-catalyst-network-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-catalyst-network-pa-engelska-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-catalyst-network-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-catalyst-network-pa-engelska-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-catalyst-network-3",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-catalyst-network-pa-engelska-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/genai-lunch-n-learn",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/genai-lunch-n-learn-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/genai-lunch-n-learn-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/genai-lunch-n-learn-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/genai-lunch-n-learn-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-hr-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-hr",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/quitecutes-workshop-focus-combination-aiquantumhpc",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/quitecutes-workshop-focus-combination-aiquantumhpc",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/big-tech-small-business-featuring-ibm",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/big-tech-small-business-featuring-ibm-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/sa-hittar-utvarderar-och-prioriterar-du-ai-anvandningsfall",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sa-hittar-utvarderar-och-prioriterar-du-ai-anvandningsfall",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/agentiska-arbetsfloden-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/agentiska-arbetsfloden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-sweden-gothenburg-partner-mingle",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-sweden-goteborg-partner-mingle",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-class-prompt-engineering",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-class-prompt-engineering",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/nvidia-gtc-watch-party",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/nvidia-gtc-watch-party",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/next-generation-infrastructure-foundation-models-end-seminar",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/next-generation-infrastructure-foundation-models-end-seminar",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/optimizing-inferencing",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/optimizing-inferencing",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-industrial-design-20",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-industrial-design-20",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/stockholm-vllm-inference-meetup",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/stockholm-vllm-inference-meetup",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/competence-strategy-network-session-2-strategy-competence-plan",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/competence-strategy-network-session-2-strategy-competence-plan",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/competence-strategy-network-attracting-and-retaining-talent",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/competence-strategy-network-attracting-and-retaining-talent",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/competence-strategy-network-learning-practice",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/competence-strategy-network-learning-practice",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/competence-strategy-network-upskilling-and-new-roles",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/competence-strategy-network-upskilling-and-new-roles",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/google-deepmind-talk-amit-vadi",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/google-deepmind-talk-amit-vadi",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/gaia-conference-2026",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/gaia-conference-2026",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/lansering-av-behovskartan-20-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/lansering-av-behovskartan-20",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-production-healthcare",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-i-drift-sjukvard",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/enabling-sovereign-ai-through-sovereign-infrastructure",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/framja-suveran-ai-med-hjalp-av-suveran-infrastruktur",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/creative-connect-future-ai-native-architectural-design",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/creative-connect-future-ai-native-architectural-design",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/accelerate-your-ai-journey-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/accelerera-er-ai-resa",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/build-next-frontier-ai-labs-europe",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/build-next-frontier-ai-labs-europe",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/hackathon-future-crisis-management",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/hackathon-future-crisis-management",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/competence-strategy-network-how-ai-changing-leadership",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/competence-strategy-network-how-ai-changing-leadership",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/workshop-strengthening-your-design-process-generative-ai-level-1-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/workshop-strengthening-your-design-process-generative-ai-level-1-english-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/what-do-mythos-preview-and-project-glasswing-mean-sweden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/vad-betyder-mythos-preview-och-project-glasswing-sverige",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/summer-mingle-gothenburg",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sommarmingel-i-goteborg",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/lunch-seminar-erik-rask-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/lunchseminarium-med-erik-rask",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/how-ai-changing-playing-field-startups",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/how-ai-changing-playing-field-startups",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/sa-startar-du-din-strategiska-dataresa-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/sa-startar-du-din-strategiska-dataresa",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/esf-project-digital-competence-development-event-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/stockholm-summer-mingle",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/stockholm-sommarmingel",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-catalyst",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-som-katalysator-event-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/hackathon-reimagine-work",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/hackathon-reimagine-work",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-transkribering-i-socialtjansten-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-transkribering-i-socialtjansten",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-driven-information-influence-how-well-prepared-sweden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-driven-informationspaverkan-hur-val-rustat-ar-sverige",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/investor-workshop",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/investerarworkshop",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ansvarsfull-ai-vad-innebar-det-i-praktiken-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ansvarsfull-ai-vad-innebar-det-i-praktiken",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/workshop-strengthening-your-design-process-generative-ai-level-1-1",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/workshop-strengthening-your-design-process-generative-ai-niva-1-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/autumn-kickoff-demo-day",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/autumn-kickoff-demo-day",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/genai-lunch-n-learn-building-living-knowledge-system",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/genai-lunch-n-learn-building-living-knowledge-system-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/gen-ai-lunch-n-learn-meet-your-ai-coworker",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/gen-ai-lunch-n-learn-meet-your-ai-coworker-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/genai-lunch-n-learn-always-ai-agent",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/genai-lunch-n-learn-always-ai-agent-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/genai-lunch-n-learn-how-lead-team-ai-agents",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/genai-lunch-n-learn-how-lead-team-ai-agents",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/responsible-ai-talks-reliable-and-resilient-ai-scale-rethinking-fleet-intelligence",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/responsible-ai-talks-tillforlitlig-och-resilient-ai-i-stor-skala",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/principles-practice-building-responsible-ai-framework-actually-works",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/responsible-ai-talks-building-responsible-ai-framework",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/responsible-ai-talks-exploring-security-issues-agentic-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/responsible-ai-talks-exploring-security-issues-agentic-ai",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/responsible-ai-talks-2",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/responsible-ai-talks-theme-tba",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-raddar-liv-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-raddar-liv",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/pilot-run-educating-future-leaders-ai-era-retail-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/provomgang-av-utbildning-av-framtidens-ledare-inom-retail-i-ai-eran-0",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-lunch-event-aseda",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-lunchevent-i-aseda",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-lunch-event-markaryd",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-lunchevent-i-markaryd",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-lunch-event-tingsryd",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-lunchevent-i-tingsryd",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-lunch-event-ljungby",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-lunchevent-i-ljungby",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-lunch-event-vaxjo",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-lunchevent-i-vaxjo",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-lunch-event-almhult",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-lunchevent-i-almhult",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-lunch-event-alvesta",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-lunchevent-i-alvesta",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-lunch-event-lessebo",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-lunchevent-i-lessebo",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/industrial-ai-practice-opportunity-impact-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/industriell-ai-i-praktiken-fran-mojlighet-till-effekt",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/openlab-day-test-discuss-and-explore-our-testbed",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/openlab-day-utforska-var-testbadd",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/fran-sokmotorer-till-agenter-nu-forandras-kundernas-kopbeteende-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/fran-sokmotorer-till-agenter-nu-forandras-kundernas-kopbeteende",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/conversation-glocal-perspectives-ai-adoption-across-sectors",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/conversation-glocal-perspectives-ai-adoption-across-sectors",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/pitch-tank-agentic-physical-ai-edition",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/pitch-tank-agentic-physical-ai-edition-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/responsible-ai-talks-ai-and-gdpr-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/responsible-ai-talks-ai-och-gdpr-vem-bar-ansvaret-nar-modellerna-finjusteras",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-den-grona-omstallningen-i-vastsverige-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-den-grona-omstallningen-i-vastsverige",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-i-socialtjansten-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-i-socialtjansten",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/bridging-ai-ecosystems-appliedai-ai-sweden",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/bridging-ai-ecosystems-appliedai-ai-sweden-pa-engelska",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/ai-och-investeringar-hype-substans-och-allt-daremellan-swedish",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/ai-och-investeringar-hype-substans-och-allt-daremellan",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/en/events/situation-room-ai-agent-hackathon",
+          "status": "skipped_offsite",
+          "hidden": true
+        },
+        {
+          "url": "https://www.ai.se/sv/event/situation-room-ett-ai-agent-hackathon",
+          "status": "skipped_offsite",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "source": "rise",
+      "verified": false,
+      "error": "No sitemap entries returned; coverage not certified"
+    }
+  ]
+}

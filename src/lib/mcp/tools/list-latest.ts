@@ -8,7 +8,9 @@ export const listLatestTool = defineTool({
   parameters: z.object({
     source: z.enum(["rise", "ai_sweden"]).optional().describe("Restrict to one source"),
     lang: z.enum(["en", "sv"]).optional().describe("Restrict by language"),
-    page_type: z.enum(["event", "news", "project", "page"]).optional()
+    page_type: z
+      .enum(["event", "news", "project", "page"])
+      .optional()
       .describe("Restrict by URL-derived page type"),
     limit: z.number().int().min(1).max(50).default(20),
   }),
@@ -21,32 +23,14 @@ export const listLatestTool = defineTool({
       filterSourceId = data?.id ?? null;
     }
 
-    let q = supabaseAdmin
-      .from("documents")
-      .select(
-        "url, title, lang, page_type, fetched_at, sitemap_lastmod, published_at, published_at_source, sources(slug, name)",
-      )
-      .eq("status", "embedded")
-      .eq("hidden", false)
-      .limit(Math.min(limit * 4, 200));
-    if (filterSourceId) q = q.eq("source_id", filterSourceId);
-    if (lang) q = q.eq("lang", lang);
-    if (page_type) q = q.eq("page_type", page_type);
-
-    const { data, error } = await q;
-    if (error) throw new Error(error.message);
-
-    const ranked = (data ?? [])
-      .map((d) => {
-        const effective = d.published_at ?? d.sitemap_lastmod ?? null;
-        return { d, effective };
-      })
-      .sort((a, b) => {
-        const av = a.effective ? new Date(a.effective).getTime() : 0;
-        const bv = b.effective ? new Date(b.effective).getTime() : 0;
-        return bv - av;
-      })
-      .slice(0, limit);
+    if (source && !filterSourceId) throw new Error(`Unknown source: ${source}`);
+    const { fetchLatestDocuments } = await import("../../latest-documents.server");
+    const ranked = await fetchLatestDocuments(supabaseAdmin, {
+      sourceId: filterSourceId ?? undefined,
+      lang,
+      pageType: page_type,
+      limit,
+    });
 
     const results = ranked.map(({ d, effective }) => ({
       url: d.url,

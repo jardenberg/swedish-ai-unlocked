@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createMcpServer } from "mcp-tanstack-start";
+import { VERSION } from "@/lib/build-version";
 
 import { getDocumentTool } from "@/lib/mcp/tools/get-document";
 import { listSourcesTool } from "@/lib/mcp/tools/list-sources";
@@ -12,7 +13,7 @@ import { checkRateLimit, getClientIp } from "@/lib/mcp/rate-limit.server";
 
 const mcp = createMcpServer({
   name: "swedish-ai-librarian",
-  version: "0.3.0",
+  version: VERSION,
   instructions:
     "Tools for searching AI-relevant content published by Sweden's two government-funded AI organizations: RISE (Research Institutes of Sweden, ri.se) and AI Sweden (ai.se). Covers research projects, reports, blog posts, sector initiatives, AI labs, language models, and adoption stories in both English and Swedish. Use search_swedish_ai (hybrid semantic + lexical) for topical queries; find_mentions for proper-noun / recall-style 'everything that mentions X' lookups; list_latest for a 'what's new' view; find_similar for more-like-this; get_document for full text; list_sources for scope and freshness; server_info for server identity, spec and dataset statistics. Most tools accept a page_type filter (event | news | project | page).",
   tools: [searchTool, findMentionsTool, listLatestTool, findSimilarTool, getDocumentTool, listSourcesTool, serverInfoTool],

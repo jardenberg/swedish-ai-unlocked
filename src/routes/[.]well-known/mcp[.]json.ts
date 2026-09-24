@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { VERSION } from "@/lib/build-version";
 import { MCP_SIGNING_PUBLIC_JWK, MCP_SIGNING_KEY_URL, MCP_SIGNING_KID } from "@/lib/mcp/public-key";
 
 const body = JSON.stringify(
@@ -6,6 +7,7 @@ const body = JSON.stringify(
     spec: "org.jardenberg/verifiable-mcp",
     spec_version: "0.2.1",
     name: "rise-ai-sweden",
+    version: VERSION,
     title: "RISE & AI Sweden Public MCP",
     documentation: "https://rise-ai-sweden.jardenberg.org/",
     server_card: "https://rise-ai-sweden.jardenberg.org/.well-known/mcp/server-card.json",
@@ -49,7 +51,7 @@ const respond = () =>
   new Response(body, {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
+      "Cache-Control": "no-cache",
       "Access-Control-Allow-Origin": "*",
     },
   });

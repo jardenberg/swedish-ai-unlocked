@@ -352,7 +352,7 @@ export async function scrapeBatchCore(args: {
   if (htmlDocs.length > 0) {
     try {
       const fc = getFirecrawl();
-      const { extractPublishedAtFromHtml } = await import("./published-date.server");
+      const { extractPublishedAtFromPage } = await import("./published-date.server");
       const includeTags = ((source as { include_tags?: string[] }).include_tags ?? []) as string[];
       const excludeTags = ((source as { exclude_tags?: string[] }).exclude_tags ?? []) as string[];
       const urls = htmlDocs.map((d) => d.url);
@@ -452,7 +452,7 @@ export async function scrapeBatchCore(args: {
           }
         }
         if (got && got.markdown.length > 100) {
-          const pub = extractPublishedAtFromHtml(got.rawHtml ?? null);
+          const pub = extractPublishedAtFromPage(got.rawHtml, got.markdown, doc.url);
           await supabaseAdmin
             .from("documents")
             .update({

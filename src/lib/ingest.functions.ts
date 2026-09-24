@@ -868,36 +868,32 @@ export const recleanAndReembed = createServerFn({ method: "POST" })
 export const backfillPublishedDates = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ limit: z.number().int().min(1).max(5000).default(1000) }).parse(d),
+    z.object({ limit: z.number().int().min(1).max(5000).default(5000) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { extractPublishedAtFromHtml, extractPublishedAtFromPdfUrl } =
+    const { extractPublishedAtFromMarkdown, extractPublishedAtFromPdfUrl } =
       await import("./published-date.server");
-
-    const { data: docs } = await supabaseAdmin
-      .from("documents")
-      .select("id, url, content_type, raw_markdown, sitemap_lastmod")
-      .is("published_at", null)
-      .limit(data.limit);
-
+    const { fetchAllPages } = await import("./ingest-helpers.server");
+    // Scan a stable ID-ordered set before changing dates. Paginating a shrinking
+    // published_at IS NULL set would skip rows; a single query would cap at 1000.
+    const docs = await fetchAllPages(async (from, to) => {
+      if (from >= data.limit) return { data: [], error: null };
+      return await supabaseAdmin.from("documents")
+        .select("id, url, content_type, raw_markdown, published_at, published_at_source")
+        .eq("status", "embedded").eq("hidden", false)
+        .order("id", { ascending: true }).range(from, Math.min(to, data.limit - 1));
+    });
     let filled = 0;
-    for (const doc of docs ?? []) {
-      let pub: { date: string; source: string } | null = null;
-      if (doc.content_type === "pdf") {
-        pub = extractPublishedAtFromPdfUrl(doc.url);
-      } else {
-        // Try extracting from raw_markdown (won't catch <meta>, but JSON-LD
-        // may have leaked through). For real backfill, the next scrape will
-        // capture it via rawHtml.
-        pub = extractPublishedAtFromHtml(doc.raw_markdown ?? null);
-      }
-      if (pub) {
-        await supabaseAdmin
-          .from("documents")
-          .update({ published_at: pub.date, published_at_source: pub.source })
-          .eq("id", doc.id);
+    for (const doc of docs) {
+      const pub = doc.content_type === "pdf"
+        ? (!doc.published_at ? extractPublishedAtFromPdfUrl(doc.url) : null)
+        : extractPublishedAtFromMarkdown(doc.raw_markdown, doc.url);
+      if (pub && (pub.date !== doc.published_at || pub.source !== doc.published_at_source)) {
+        const { error } = await supabaseAdmin.from("documents")
+          .update({ published_at: pub.date, published_at_source: pub.source }).eq("id", doc.id);
+        if (error) throw new Error(error.message);
         filled++;
       }
     }

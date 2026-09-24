@@ -1,0 +1,451 @@
+{
+  "checkedAt": "2026-09-24T14:17:58.294Z",
+  "responses": [
+    {
+      "method": "initialize",
+      "status": 200,
+      "data": {
+        "result": {
+          "protocolVersion": "2025-03-26",
+          "capabilities": {
+            "tools": {
+              "listChanged": true
+            }
+          },
+          "serverInfo": {
+            "name": "swedish-ai-librarian",
+            "version": "0.3.0"
+          },
+          "instructions": "Tools for searching AI-relevant content published by Sweden's two government-funded AI organizations: RISE (Research Institutes of Sweden, ri.se) and AI Sweden (ai.se). Covers research projects, reports, blog posts, sector initiatives, AI labs, language models, and adoption stories in both English and Swedish. Use search_swedish_ai (hybrid semantic + lexical) for topical queries; find_mentions for proper-noun / recall-style 'everything that mentions X' lookups; list_latest for a 'what's new' view; find_similar for more-like-this; get_document for full text; list_sources for scope and freshness; server_info for server identity, spec and dataset statistics. Most tools accept a page_type filter (event | news | project | page)."
+        },
+        "jsonrpc": "2.0",
+        "id": 1
+      }
+    },
+    {
+      "method": "tools/list",
+      "status": 200,
+      "data": {
+        "result": {
+          "tools": [
+            {
+              "name": "find_mentions",
+              "description": "Return documents that mention a specific term — exact substring or stemmed variants. Honest 'everything that mentions X' primitive: lexical only, no embeddings. Useful for proper nouns, organization names, project names, and recall checks. Returns one row per document with best snippet, plus a `total` that mirrors a direct `count(DISTINCT id) WHERE raw_markdown ILIKE '%term%'` query for reconciliation. Filters: `source`, `lang`, `page_type` (event | news | project | page), `limit` (1–100, default 25).",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "term": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Term or short phrase to find mentions of"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "rise",
+                      "ai_sweden"
+                    ]
+                  },
+                  "lang": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "sv"
+                    ]
+                  },
+                  "page_type": {
+                    "type": "string",
+                    "enum": [
+                      "event",
+                      "news",
+                      "project",
+                      "page"
+                    ]
+                  },
+                  "limit": {
+                    "default": 25,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  }
+                },
+                "required": [
+                  "term"
+                ]
+              },
+              "execution": {
+                "taskSupport": "forbidden"
+              }
+            },
+            {
+              "name": "find_similar",
+              "description": "Given a URL already present in the index, return semantically similar documents. Uses the seed document's centroid embedding (average of all its chunks) so navigation chrome doesn't dominate matches. Useful for 'more like this' flows after the user picks a hit from search_swedish_ai or list_latest.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URL previously returned by search_swedish_ai, list_latest, or list_sources"
+                  },
+                  "limit": {
+                    "default": 10,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 25
+                  },
+                  "source": {
+                    "description": "Restrict similar results to one source",
+                    "type": "string",
+                    "enum": [
+                      "rise",
+                      "ai_sweden"
+                    ]
+                  },
+                  "lang": {
+                    "description": "Restrict similar results by language",
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "sv"
+                    ]
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              },
+              "execution": {
+                "taskSupport": "forbidden"
+              }
+            },
+            {
+              "name": "get_document",
+              "description": "Fetch the full cleaned markdown content of a single indexed document by URL. Use after search_swedish_ai to get full context for the most relevant hit.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              },
+              "execution": {
+                "taskSupport": "forbidden"
+              }
+            },
+            {
+              "name": "list_latest",
+              "description": "List the most recently published documents. Without arguments, returns the newest items across both RISE and AI Sweden. Pass `source` to restrict to one. Lightweight — returns URL, title, source, language, page type and dates but no snippets. Ordered by actual publish date (from page metadata or PDF file path) when available, falling back to sitemap last-modified. Filters: `source`, `lang`, `page_type` (event | news | project | page), `limit` (1–50, default 20).",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "description": "Restrict to one source",
+                    "type": "string",
+                    "enum": [
+                      "rise",
+                      "ai_sweden"
+                    ]
+                  },
+                  "lang": {
+                    "description": "Restrict by language",
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "sv"
+                    ]
+                  },
+                  "page_type": {
+                    "description": "Restrict by URL-derived page type",
+                    "type": "string",
+                    "enum": [
+                      "event",
+                      "news",
+                      "project",
+                      "page"
+                    ]
+                  },
+                  "limit": {
+                    "default": 20,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50
+                  }
+                }
+              },
+              "execution": {
+                "taskSupport": "forbidden"
+              }
+            },
+            {
+              "name": "list_sources",
+              "description": "List the data sources covered by this MCP server (RISE and AI Sweden) with document counts, language breakdown, and last-updated timestamp per source. Useful for an agent to discover scope and freshness before querying.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {}
+              },
+              "execution": {
+                "taskSupport": "forbidden"
+              }
+            },
+            {
+              "name": "search_swedish_ai",
+              "description": "Hybrid (semantic + lexical) search across the indexed AI-relevant content published by RISE (Research Institutes of Sweden) and AI Sweden. Returns ranked passages with source URLs. Covers Swedish and English material. Vector search handles topical queries; a lexical arm (tsvector with Swedish/English stemming, plus trigram fallback) handles proper nouns and short keyword queries. Filters: `source`, `lang`, `page_type` (event | news | project | page), `limit` (1–50, default 20).",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 500,
+                    "description": "Natural-language search query"
+                  },
+                  "source": {
+                    "description": "Restrict to one source",
+                    "type": "string",
+                    "enum": [
+                      "rise",
+                      "ai_sweden"
+                    ]
+                  },
+                  "lang": {
+                    "description": "Restrict by language",
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "sv"
+                    ]
+                  },
+                  "page_type": {
+                    "description": "Restrict by URL-derived page type",
+                    "type": "string",
+                    "enum": [
+                      "event",
+                      "news",
+                      "project",
+                      "page"
+                    ]
+                  },
+                  "limit": {
+                    "default": 20,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              },
+              "execution": {
+                "taskSupport": "forbidden"
+              }
+            },
+            {
+              "name": "server_info",
+              "description": "Identity and scope of this MCP server: name, origin, verifiable-response spec id, build version, dataset statistics (documents per source, total chunks) and last-updated timestamp. Call this first to learn what the server is and how fresh its corpus is.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {}
+              },
+              "execution": {
+                "taskSupport": "forbidden"
+              }
+            }
+          ]
+        },
+        "jsonrpc": "2.0",
+        "id": 1
+      }
+    },
+    {
+      "method": "tools/call",
+      "status": 200,
+      "data": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"count\":10,\"results\":[{\"fetchedAt\":\"2026-09-11T04:17:00.824+00:00\",\"lang\":\"sv\",\"pageType\":\"news\",\"publishedAt\":\"2026-09-10T07:18:42+00:00\",\"publishedAtSource\":\"sitemap\",\"sitemapLastmod\":\"2026-09-10T07:18:42+00:00\",\"source\":\"ai_sweden\",\"sourceName\":\"AI Sweden\",\"title\":\"Bortom dagens teknik: Försvarsminister Pål Jonson besöker AI Sweden | AI Sweden\",\"url\":\"https://www.ai.se/sv/nyheter/bortom-dagens-teknik-forsvarsminister-pal-jonson-besoker-ai-sweden\"},{\"fetchedAt\":\"2026-09-03T04:16:34.327+00:00\",\"lang\":\"sv\",\"pageType\":\"news\",\"publishedAt\":\"2026-09-02T12:31:20+00:00\",\"publishedAtSource\":\"sitemap\",\"sitemapLastmod\":\"2026-09-02T12:31:20+00:00\",\"source\":\"ai_sweden\",\"sourceName\":\"AI Sweden\",\"title\":\"Fler certifieras för att mäta AI-mognad: “Ett kraftfullt verktyg” | AI Sweden\",\"url\":\"https://www.ai.se/sv/nyheter/fler-certifieras-att-mata-ai-mognad-ett-kraftfullt-verktyg\"},{\"fetchedAt\":\"2026-09-03T04:16:34.844+00:00\",\"lang\":\"sv\",\"pageType\":\"news\",\"publishedAt\":\"2026-09-02T12:28:24+00:00\",\"publishedAtSource\":\"sitemap\",\"sitemapLastmod\":\"2026-09-02T12:28:24+00:00\",\"source\":\"ai_sweden\",\"sourceName\":\"AI Sweden\",\"title\":\"Ny rapport: Från AI-strategi till klinisk nytta | AI Sweden\",\"url\":\"https://www.ai.se/sv/nyheter/ny-rapport-fran-ai-strategi-till-klinisk-nytta\"},{\"fetchedAt\":\"2026-08-20T12:37:07.773+00:00\",\"lang\":\"sv\",\"pageType\":\"news\",\"publishedAt\":\"2026-08-05T14:21:00+00:00\",\"publishedAtSource\":\"sitemap\",\"sitemapLastmod\":\"2026-08-05T14:21:00+00:00\",\"source\":\"ai_sweden\",\"sourceName\":\"AI Sweden\",\"title\":\"Lindex tidigare CDO Annika Elfström rekryteras till nyckelroll på AI Sweden | AI Sweden\",\"url\":\"https://www.ai.se/sv/nyheter/lindex-tidigare-cdo-annika-elfstrom-rekryteras-till-nyckelroll-pa-ai-sweden\"},{\"fetchedAt\":\"2026-08-20T12:28:40.525+00:00\",\"lang\":\"sv\",\"pageType\":\"news\",\"publishedAt\":\"2026-08-04T11:42:58+00:00\",\"publishedAtSource\":\"sitemap\",\"sitemapLastmod\":\"2026-08-04T11:42:58+00:00\",\"source\":\"ai_sweden\",\"sourceName\":\"AI Sweden\",\"title\":\"Praktiska råd för kommunens AI-resa | AI Sweden\",\"url\":\"https://www.ai.se/sv/nyheter/praktiska-rad-kommunens-ai-resa\"},{\"fetchedAt\":\"2026-08-20T12:28:35.302+00:00\",\"lang\":\"sv\",\"pageType\":\"news\",\"publishedAt\":\"2026-08-04T11:42:30+00:00\",\"publishedAtSource\":\"sitemap\",\"sitemapLastmod\":\"2026-08-04T11:42:30+00:00\",\"source\":\"ai_sweden\",\"sourceName\":\"AI Sweden\",\"title\":\"Nya modeller och funktioner förbättrar Svea | AI Sweden\",\"url\":\"https://www.ai.se/sv/nyheter/nya-modeller-och-funktioner-forbattrar-svea\"},{\"fetchedAt\":\"2026-08-20T12:37:06.666+00:00\",\"lang\":\"sv\",\"pageType\":\"news\",\"publishedAt\":\"2026-08-04T11:42:14+00:00\",\"publishedAtSource\":\"sitemap\",\"sitemapLastmod\":\"2026-08-04T11:42:14+00:00\",\"source\":\"ai_sweden\",\"sourceName\":\"AI Sweden\",\"title\":\"Stort intresse för att samverka kring gemensam AI i offentlig sektor | AI Sweden\",\"url\":\"https://www.ai.se/sv/nyheter/stort-intresse-att-samverka-kring-gemensam-ai-i-offentlig-sektor\"},{\"fetchedAt\":\"2026-08-20T12:28:35.812+00:00\",\"lang\":\"sv\",\"pageType\":\"news\",\"publishedAt\":\"2026-08-04T11:40:27+00:00\",\"publishedAtSource\":\"sitemap\",\"sitemapLastmod\":\"2026-08-04T11:40:27+00:00\",\"source\":\"ai_sweden\",\"sourceName\":\"AI Sweden\",\"title\":\"AI-råd utvecklar rekommendationer för snabbare AI-utveckling i svenska kommuner | AI Sweden\",\"url\":\"https://www.ai.se/sv/nyheter/ai-rad-utvecklar-rekommendationer-snabbare-ai-utveckling-i-svenska-kommuner\"},{\"fetchedAt\":\"2026-08-20T12:28:40.713+00:00\",\"lang\":\"sv\",\"pageType\":\"news\",\"publishedAt\":\"2026-08-04T09:08:28+00:00\",\"publishedAtSource\":\"sitemap\",\"sitemapLastmod\":\"2026-08-04T09:08:28+00:00\",\"source\":\"ai_sweden\",\"sourceName\":\"AI Sweden\",\"title\":\"Kraftsamlingen har gått i mål | AI Sweden\",\"url\":\"https://www.ai.se/sv/nyheter/kraftsamlingen-har-gatt-i-mal\"},{\"fetchedAt\":\"2026-08-20T12:28:35.242+00:00\",\"lang\":\"sv\",\"pageType\":\"news\",\"publishedAt\":\"2026-07-03T13:09:40+00:00\",\"publishedAtSource\":\"sitemap\",\"sitemapLastmod\":\"2026-07-03T13:09:40+00:00\",\"source\":\"ai_sweden\",\"sourceName\":\"AI Sweden\",\"title\":\"AI Sweden får 47 miljoner för att accelerera AI-användningen i svenska företag | AI Sweden\",\"url\":\"https://www.ai.se/sv/nyheter/ai-sweden-far-47-miljoner-att-accelerera-ai-anvandningen-i-svenska-foretag\"}]}"
+            }
+          ],
+          "structuredContent": {
+            "count": 10,
+            "results": [
+              {
+                "url": "https://www.ai.se/sv/nyheter/bortom-dagens-teknik-forsvarsminister-pal-jonson-besoker-ai-sweden",
+                "title": "Bortom dagens teknik: Försvarsminister Pål Jonson besöker AI Sweden | AI Sweden",
+                "source": "ai_sweden",
+                "sourceName": "AI Sweden",
+                "lang": "sv",
+                "pageType": "news",
+                "publishedAt": "2026-09-10T07:18:42+00:00",
+                "publishedAtSource": "sitemap",
+                "fetchedAt": "2026-09-11T04:17:00.824+00:00",
+                "sitemapLastmod": "2026-09-10T07:18:42+00:00"
+              },
+              {
+                "url": "https://www.ai.se/sv/nyheter/fler-certifieras-att-mata-ai-mognad-ett-kraftfullt-verktyg",
+                "title": "Fler certifieras för att mäta AI-mognad: “Ett kraftfullt verktyg” | AI Sweden",
+                "source": "ai_sweden",
+                "sourceName": "AI Sweden",
+                "lang": "sv",
+                "pageType": "news",
+                "publishedAt": "2026-09-02T12:31:20+00:00",
+                "publishedAtSource": "sitemap",
+                "fetchedAt": "2026-09-03T04:16:34.327+00:00",
+                "sitemapLastmod": "2026-09-02T12:31:20+00:00"
+              },
+              {
+                "url": "https://www.ai.se/sv/nyheter/ny-rapport-fran-ai-strategi-till-klinisk-nytta",
+                "title": "Ny rapport: Från AI-strategi till klinisk nytta | AI Sweden",
+                "source": "ai_sweden",
+                "sourceName": "AI Sweden",
+                "lang": "sv",
+                "pageType": "news",
+                "publishedAt": "2026-09-02T12:28:24+00:00",
+                "publishedAtSource": "sitemap",
+                "fetchedAt": "2026-09-03T04:16:34.844+00:00",
+                "sitemapLastmod": "2026-09-02T12:28:24+00:00"
+              },
+              {
+                "url": "https://www.ai.se/sv/nyheter/lindex-tidigare-cdo-annika-elfstrom-rekryteras-till-nyckelroll-pa-ai-sweden",
+                "title": "Lindex tidigare CDO Annika Elfström rekryteras till nyckelroll på AI Sweden | AI Sweden",
+                "source": "ai_sweden",
+                "sourceName": "AI Sweden",
+                "lang": "sv",
+                "pageType": "news",
+                "publishedAt": "2026-08-05T14:21:00+00:00",
+                "publishedAtSource": "sitemap",
+                "fetchedAt": "2026-08-20T12:37:07.773+00:00",
+                "sitemapLastmod": "2026-08-05T14:21:00+00:00"
+              },
+              {
+                "url": "https://www.ai.se/sv/nyheter/praktiska-rad-kommunens-ai-resa",
+                "title": "Praktiska råd för kommunens AI-resa | AI Sweden",
+                "source": "ai_sweden",
+                "sourceName": "AI Sweden",
+                "lang": "sv",
+                "pageType": "news",
+                "publishedAt": "2026-08-04T11:42:58+00:00",
+                "publishedAtSource": "sitemap",
+                "fetchedAt": "2026-08-20T12:28:40.525+00:00",
+                "sitemapLastmod": "2026-08-04T11:42:58+00:00"
+              },
+              {
+                "url": "https://www.ai.se/sv/nyheter/nya-modeller-och-funktioner-forbattrar-svea",
+                "title": "Nya modeller och funktioner förbättrar Svea | AI Sweden",
+                "source": "ai_sweden",
+                "sourceName": "AI Sweden",
+                "lang": "sv",
+                "pageType": "news",
+                "publishedAt": "2026-08-04T11:42:30+00:00",
+                "publishedAtSource": "sitemap",
+                "fetchedAt": "2026-08-20T12:28:35.302+00:00",
+                "sitemapLastmod": "2026-08-04T11:42:30+00:00"
+              },
+              {
+                "url": "https://www.ai.se/sv/nyheter/stort-intresse-att-samverka-kring-gemensam-ai-i-offentlig-sektor",
+                "title": "Stort intresse för att samverka kring gemensam AI i offentlig sektor | AI Sweden",
+                "source": "ai_sweden",
+                "sourceName": "AI Sweden",
+                "lang": "sv",
+                "pageType": "news",
+                "publishedAt": "2026-08-04T11:42:14+00:00",
+                "publishedAtSource": "sitemap",
+                "fetchedAt": "2026-08-20T12:37:06.666+00:00",
+                "sitemapLastmod": "2026-08-04T11:42:14+00:00"
+              },
+              {
+                "url": "https://www.ai.se/sv/nyheter/ai-rad-utvecklar-rekommendationer-snabbare-ai-utveckling-i-svenska-kommuner",
+                "title": "AI-råd utvecklar rekommendationer för snabbare AI-utveckling i svenska kommuner | AI Sweden",
+                "source": "ai_sweden",
+                "sourceName": "AI Sweden",
+                "lang": "sv",
+                "pageType": "news",
+                "publishedAt": "2026-08-04T11:40:27+00:00",
+                "publishedAtSource": "sitemap",
+                "fetchedAt": "2026-08-20T12:28:35.812+00:00",
+                "sitemapLastmod": "2026-08-04T11:40:27+00:00"
+              },
+              {
+                "url": "https://www.ai.se/sv/nyheter/kraftsamlingen-har-gatt-i-mal",
+                "title": "Kraftsamlingen har gått i mål | AI Sweden",
+                "source": "ai_sweden",
+                "sourceName": "AI Sweden",
+                "lang": "sv",
+                "pageType": "news",
+                "publishedAt": "2026-08-04T09:08:28+00:00",
+                "publishedAtSource": "sitemap",
+                "fetchedAt": "2026-08-20T12:28:40.713+00:00",
+                "sitemapLastmod": "2026-08-04T09:08:28+00:00"
+              },
+              {
+                "url": "https://www.ai.se/sv/nyheter/ai-sweden-far-47-miljoner-att-accelerera-ai-anvandningen-i-svenska-foretag",
+                "title": "AI Sweden får 47 miljoner för att accelerera AI-användningen i svenska företag | AI Sweden",
+                "source": "ai_sweden",
+                "sourceName": "AI Sweden",
+                "lang": "sv",
+                "pageType": "news",
+                "publishedAt": "2026-07-03T13:09:40+00:00",
+                "publishedAtSource": "sitemap",
+                "fetchedAt": "2026-08-20T12:28:35.242+00:00",
+                "sitemapLastmod": "2026-07-03T13:09:40+00:00"
+              }
+            ]
+          },
+          "provenance": {
+            "server_operator": "Studio Jardenberg",
+            "server": "rise-ai-sweden.jardenberg.org",
+            "content_publisher": "AI Sweden",
+            "canonical_origin": "https://www.ai.se",
+            "legal_basis": "Indexed under the EU TDM exception (DSM directive, art. 4); excerpts served with source attribution; all content remains © its publisher",
+            "dataset_version": "d20260924.2343",
+            "last_updated": "2026-09-24T04:16:18.767+00:00",
+            "publishers": [
+              {
+                "source": "ai_sweden",
+                "content_publisher": "AI Sweden",
+                "canonical_origin": "https://www.ai.se"
+              }
+            ],
+            "content_hash": "031f13138cf5ac618c697a873d84c68c88cd29ca15619992527ba5b60f2076a0",
+            "content_hash_alg": "sha256",
+            "content_hash_scope": "SHA-256 over the canonical (sorted-keys, UTF-8, no whitespace) JSON of this response object with the `provenance` key removed"
+          },
+          "signature": {
+            "alg": "EdDSA",
+            "kid": "upCmqalkMBHA7ZBkcCNWakftZgIEKtGVvvvpSQL_2p8",
+            "signed": "structuredContent",
+            "jws": "eyJhbGciOiJFZERTQSIsImtpZCI6InVwQ21xYWxrTUJIQTdaQmtjQ05XYWtmdFpnSUVLdEdWdnZ2cFNRTF8ycDgiLCJ0eXAiOiJ2ZXJpZmlhYmxlLW1jcCtqd3MifQ.eyJjb3VudCI6MTAsInByb3ZlbmFuY2UiOnsiY2Fub25pY2FsX29yaWdpbiI6Imh0dHBzOi8vd3d3LmFpLnNlIiwiY29udGVudF9oYXNoIjoiMDMxZjEzMTM4Y2Y1YWM2MThjNjk3YTg3M2Q4NGM2OGM4OGNkMjljYTE1NjE5OTkyNTI3YmE1YjYwZjIwNzZhMCIsImNvbnRlbnRfaGFzaF9hbGciOiJzaGEyNTYiLCJjb250ZW50X2hhc2hfc2NvcGUiOiJTSEEtMjU2IG92ZXIgdGhlIGNhbm9uaWNhbCAoc29ydGVkLWtleXMsIFVURi04LCBubyB3aGl0ZXNwYWNlKSBKU09OIG9mIHRoaXMgcmVzcG9uc2Ugb2JqZWN0IHdpdGggdGhlIGBwcm92ZW5hbmNlYCBrZXkgcmVtb3ZlZCIsImNvbnRlbnRfcHVibGlzaGVyIjoiQUkgU3dlZGVuIiwiZGF0YXNldF92ZXJzaW9uIjoiZDIwMjYwOTI0LjIzNDMiLCJsYXN0X3VwZGF0ZWQiOiIyMDI2LTA5LTI0VDA0OjE2OjE4Ljc2NyswMDowMCIsImxlZ2FsX2Jhc2lzIjoiSW5kZXhlZCB1bmRlciB0aGUgRVUgVERNIGV4Y2VwdGlvbiAoRFNNIGRpcmVjdGl2ZSwgYXJ0LiA0KTsgZXhjZXJwdHMgc2VydmVkIHdpdGggc291cmNlIGF0dHJpYnV0aW9uOyBhbGwgY29udGVudCByZW1haW5zIMKpIGl0cyBwdWJsaXNoZXIiLCJwdWJsaXNoZXJzIjpbeyJjYW5vbmljYWxfb3JpZ2luIjoiaHR0cHM6Ly93d3cuYWkuc2UiLCJjb250ZW50X3B1Ymxpc2hlciI6IkFJIFN3ZWRlbiIsInNvdXJjZSI6ImFpX3N3ZWRlbiJ9XSwic2VydmVyIjoicmlzZS1haS1zd2VkZW4uamFyZGVuYmVyZy5vcmciLCJzZXJ2ZXJfb3BlcmF0b3IiOiJTdHVkaW8gSmFyZGVuYmVyZyJ9LCJyZXN1bHRzIjpbeyJmZXRjaGVkQXQiOiIyMDI2LTA5LTExVDA0OjE3OjAwLjgyNCswMDowMCIsImxhbmciOiJzdiIsInBhZ2VUeXBlIjoibmV3cyIsInB1Ymxpc2hlZEF0IjoiMjAyNi0wOS0xMFQwNzoxODo0MiswMDowMCIsInB1Ymxpc2hlZEF0U291cmNlIjoic2l0ZW1hcCIsInNpdGVtYXBMYXN0bW9kIjoiMjAyNi0wOS0xMFQwNzoxODo0MiswMDowMCIsInNvdXJjZSI6ImFpX3N3ZWRlbiIsInNvdXJjZU5hbWUiOiJBSSBTd2VkZW4iLCJ0aXRsZSI6IkJvcnRvbSBkYWdlbnMgdGVrbmlrOiBGw7Zyc3ZhcnNtaW5pc3RlciBQw6VsIEpvbnNvbiBiZXPDtmtlciBBSSBTd2VkZW4gfCBBSSBTd2VkZW4iLCJ1cmwiOiJodHRwczovL3d3dy5haS5zZS9zdi9ueWhldGVyL2JvcnRvbS1kYWdlbnMtdGVrbmlrLWZvcnN2YXJzbWluaXN0ZXItcGFsLWpvbnNvbi1iZXNva2VyLWFpLXN3ZWRlbiJ9LHsiZmV0Y2hlZEF0IjoiMjAyNi0wOS0wM1QwNDoxNjozNC4zMjcrMDA6MDAiLCJsYW5nIjoic3YiLCJwYWdlVHlwZSI6Im5ld3MiLCJwdWJsaXNoZWRBdCI6IjIwMjYtMDktMDJUMTI6MzE6MjArMDA6MDAiLCJwdWJsaXNoZWRBdFNvdXJjZSI6InNpdGVtYXAiLCJzaXRlbWFwTGFzdG1vZCI6IjIwMjYtMDktMDJUMTI6MzE6MjArMDA6MDAiLCJzb3VyY2UiOiJhaV9zd2VkZW4iLCJzb3VyY2VOYW1lIjoiQUkgU3dlZGVuIiwidGl0bGUiOiJGbGVyIGNlcnRpZmllcmFzIGbDtnIgYXR0IG3DpHRhIEFJLW1vZ25hZDog4oCcRXR0IGtyYWZ0ZnVsbHQgdmVya3R5Z-KAnSB8IEFJIFN3ZWRlbiIsInVybCI6Imh0dHBzOi8vd3d3LmFpLnNlL3N2L255aGV0ZXIvZmxlci1jZXJ0aWZpZXJhcy1hdHQtbWF0YS1haS1tb2duYWQtZXR0LWtyYWZ0ZnVsbHQtdmVya3R5ZyJ9LHsiZmV0Y2hlZEF0IjoiMjAyNi0wOS0wM1QwNDoxNjozNC44NDQrMDA6MDAiLCJsYW5nIjoic3YiLCJwYWdlVHlwZSI6Im5ld3MiLCJwdWJsaXNoZWRBdCI6IjIwMjYtMDktMDJUMTI6Mjg6MjQrMDA6MDAiLCJwdWJsaXNoZWRBdFNvdXJjZSI6InNpdGVtYXAiLCJzaXRlbWFwTGFzdG1vZCI6IjIwMjYtMDktMDJUMTI6Mjg6MjQrMDA6MDAiLCJzb3VyY2UiOiJhaV9zd2VkZW4iLCJzb3VyY2VOYW1lIjoiQUkgU3dlZGVuIiwidGl0bGUiOiJOeSByYXBwb3J0OiBGcsOlbiBBSS1zdHJhdGVnaSB0aWxsIGtsaW5pc2sgbnl0dGEgfCBBSSBTd2VkZW4iLCJ1cmwiOiJodHRwczovL3d3dy5haS5zZS9zdi9ueWhldGVyL255LXJhcHBvcnQtZnJhbi1haS1zdHJhdGVnaS10aWxsLWtsaW5pc2stbnl0dGEifSx7ImZldGNoZWRBdCI6IjIwMjYtMDgtMjBUMTI6Mzc6MDcuNzczKzAwOjAwIiwibGFuZyI6InN2IiwicGFnZVR5cGUiOiJuZXdzIiwicHVibGlzaGVkQXQiOiIyMDI2LTA4LTA1VDE0OjIxOjAwKzAwOjAwIiwicHVibGlzaGVkQXRTb3VyY2UiOiJzaXRlbWFwIiwic2l0ZW1hcExhc3Rtb2QiOiIyMDI2LTA4LTA1VDE0OjIxOjAwKzAwOjAwIiwic291cmNlIjoiYWlfc3dlZGVuIiwic291cmNlTmFtZSI6IkFJIFN3ZWRlbiIsInRpdGxlIjoiTGluZGV4IHRpZGlnYXJlIENETyBBbm5pa2EgRWxmc3Ryw7ZtIHJla3J5dGVyYXMgdGlsbCBueWNrZWxyb2xsIHDDpSBBSSBTd2VkZW4gfCBBSSBTd2VkZW4iLCJ1cmwiOiJodHRwczovL3d3dy5haS5zZS9zdi9ueWhldGVyL2xpbmRleC10aWRpZ2FyZS1jZG8tYW5uaWthLWVsZnN0cm9tLXJla3J5dGVyYXMtdGlsbC1ueWNrZWxyb2xsLXBhLWFpLXN3ZWRlbiJ9LHsiZmV0Y2hlZEF0IjoiMjAyNi0wOC0yMFQxMjoyODo0MC41MjUrMDA6MDAiLCJsYW5nIjoic3YiLCJwYWdlVHlwZSI6Im5ld3MiLCJwdWJsaXNoZWRBdCI6IjIwMjYtMDgtMDRUMTE6NDI6NTgrMDA6MDAiLCJwdWJsaXNoZWRBdFNvdXJjZSI6InNpdGVtYXAiLCJzaXRlbWFwTGFzdG1vZCI6IjIwMjYtMDgtMDRUMTE6NDI6NTgrMDA6MDAiLCJzb3VyY2UiOiJhaV9zd2VkZW4iLCJzb3VyY2VOYW1lIjoiQUkgU3dlZGVuIiwidGl0bGUiOiJQcmFrdGlza2EgcsOlZCBmw7ZyIGtvbW11bmVucyBBSS1yZXNhIHwgQUkgU3dlZGVuIiwidXJsIjoiaHR0cHM6Ly93d3cuYWkuc2Uvc3YvbnloZXRlci9wcmFrdGlza2EtcmFkLWtvbW11bmVucy1haS1yZXNhIn0seyJmZXRjaGVkQXQiOiIyMDI2LTA4LTIwVDEyOjI4OjM1LjMwMiswMDowMCIsImxhbmciOiJzdiIsInBhZ2VUeXBlIjoibmV3cyIsInB1Ymxpc2hlZEF0IjoiMjAyNi0wOC0wNFQxMTo0MjozMCswMDowMCIsInB1Ymxpc2hlZEF0U291cmNlIjoic2l0ZW1hcCIsInNpdGVtYXBMYXN0bW9kIjoiMjAyNi0wOC0wNFQxMTo0MjozMCswMDowMCIsInNvdXJjZSI6ImFpX3N3ZWRlbiIsInNvdXJjZU5hbWUiOiJBSSBTd2VkZW4iLCJ0aXRsZSI6Ik55YSBtb2RlbGxlciBvY2ggZnVua3Rpb25lciBmw7ZyYsOkdHRyYXIgU3ZlYSB8IEFJIFN3ZWRlbiIsInVybCI6Imh0dHBzOi8vd3d3LmFpLnNlL3N2L255aGV0ZXIvbnlhLW1vZGVsbGVyLW9jaC1mdW5rdGlvbmVyLWZvcmJhdHRyYXItc3ZlYSJ9LHsiZmV0Y2hlZEF0IjoiMjAyNi0wOC0yMFQxMjozNzowNi42NjYrMDA6MDAiLCJsYW5nIjoic3YiLCJwYWdlVHlwZSI6Im5ld3MiLCJwdWJsaXNoZWRBdCI6IjIwMjYtMDgtMDRUMTE6NDI6MTQrMDA6MDAiLCJwdWJsaXNoZWRBdFNvdXJjZSI6InNpdGVtYXAiLCJzaXRlbWFwTGFzdG1vZCI6IjIwMjYtMDgtMDRUMTE6NDI6MTQrMDA6MDAiLCJzb3VyY2UiOiJhaV9zd2VkZW4iLCJzb3VyY2VOYW1lIjoiQUkgU3dlZGVuIiwidGl0bGUiOiJTdG9ydCBpbnRyZXNzZSBmw7ZyIGF0dCBzYW12ZXJrYSBrcmluZyBnZW1lbnNhbSBBSSBpIG9mZmVudGxpZyBzZWt0b3IgfCBBSSBTd2VkZW4iLCJ1cmwiOiJodHRwczovL3d3dy5haS5zZS9zdi9ueWhldGVyL3N0b3J0LWludHJlc3NlLWF0dC1zYW12ZXJrYS1rcmluZy1nZW1lbnNhbS1haS1pLW9mZmVudGxpZy1zZWt0b3IifSx7ImZldGNoZWRBdCI6IjIwMjYtMDgtMjBUMTI6Mjg6MzUuODEyKzAwOjAwIiwibGFuZyI6InN2IiwicGFnZVR5cGUiOiJuZXdzIiwicHVibGlzaGVkQXQiOiIyMDI2LTA4LTA0VDExOjQwOjI3KzAwOjAwIiwicHVibGlzaGVkQXRTb3VyY2UiOiJzaXRlbWFwIiwic2l0ZW1hcExhc3Rtb2QiOiIyMDI2LTA4LTA0VDExOjQwOjI3KzAwOjAwIiwic291cmNlIjoiYWlfc3dlZGVuIiwic291cmNlTmFtZSI6IkFJIFN3ZWRlbiIsInRpdGxlIjoiQUktcsOlZCB1dHZlY2tsYXIgcmVrb21tZW5kYXRpb25lciBmw7ZyIHNuYWJiYXJlIEFJLXV0dmVja2xpbmcgaSBzdmVuc2thIGtvbW11bmVyIHwgQUkgU3dlZGVuIiwidXJsIjoiaHR0cHM6Ly93d3cuYWkuc2Uvc3YvbnloZXRlci9haS1yYWQtdXR2ZWNrbGFyLXJla29tbWVuZGF0aW9uZXItc25hYmJhcmUtYWktdXR2ZWNrbGluZy1pLXN2ZW5za2Eta29tbXVuZXIifSx7ImZldGNoZWRBdCI6IjIwMjYtMDgtMjBUMTI6Mjg6NDAuNzEzKzAwOjAwIiwibGFuZyI6InN2IiwicGFnZVR5cGUiOiJuZXdzIiwicHVibGlzaGVkQXQiOiIyMDI2LTA4LTA0VDA5OjA4OjI4KzAwOjAwIiwicHVibGlzaGVkQXRTb3VyY2UiOiJzaXRlbWFwIiwic2l0ZW1hcExhc3Rtb2QiOiIyMDI2LTA4LTA0VDA5OjA4OjI4KzAwOjAwIiwic291cmNlIjoiYWlfc3dlZGVuIiwic291cmNlTmFtZSI6IkFJIFN3ZWRlbiIsInRpdGxlIjoiS3JhZnRzYW1saW5nZW4gaGFyIGfDpXR0IGkgbcOlbCB8IEFJIFN3ZWRlbiIsInVybCI6Imh0dHBzOi8vd3d3LmFpLnNlL3N2L255aGV0ZXIva3JhZnRzYW1saW5nZW4taGFyLWdhdHQtaS1tYWwifSx7ImZldGNoZWRBdCI6IjIwMjYtMDgtMjBUMTI6Mjg6MzUuMjQyKzAwOjAwIiwibGFuZyI6InN2IiwicGFnZVR5cGUiOiJuZXdzIiwicHVibGlzaGVkQXQiOiIyMDI2LTA3LTAzVDEzOjA5OjQwKzAwOjAwIiwicHVibGlzaGVkQXRTb3VyY2UiOiJzaXRlbWFwIiwic2l0ZW1hcExhc3Rtb2QiOiIyMDI2LTA3LTAzVDEzOjA5OjQwKzAwOjAwIiwic291cmNlIjoiYWlfc3dlZGVuIiwic291cmNlTmFtZSI6IkFJIFN3ZWRlbiIsInRpdGxlIjoiQUkgU3dlZGVuIGbDpXIgNDcgbWlsam9uZXIgZsO2ciBhdHQgYWNjZWxlcmVyYSBBSS1hbnbDpG5kbmluZ2VuIGkgc3ZlbnNrYSBmw7ZyZXRhZyB8IEFJIFN3ZWRlbiIsInVybCI6Imh0dHBzOi8vd3d3LmFpLnNlL3N2L255aGV0ZXIvYWktc3dlZGVuLWZhci00Ny1taWxqb25lci1hdHQtYWNjZWxlcmVyYS1haS1hbnZhbmRuaW5nZW4taS1zdmVuc2thLWZvcmV0YWcifV19.mkRwr-A_cY6dvH7zMzCzHaUbIfXDPRKzmue_shxbunozlZBLcRv-LaT1AJlExUDx5hPtBxbuBw7gP2Ih7zG6BA"
+          },
+          "_meta": {
+            "org.jardenberg/verifiable-mcp": {
+              "spec": "0.2.1",
+              "alg": "EdDSA",
+              "kid": "upCmqalkMBHA7ZBkcCNWakftZgIEKtGVvvvpSQL_2p8",
+              "signed": "wrapper",
+              "jws": "eyJhbGciOiJFZERTQSIsImtpZCI6InVwQ21xYWxrTUJIQTdaQmtjQ05XYWtmdFpnSUVLdEdWdnZ2cFNRTF8ycDgiLCJ0eXAiOiJ2ZXJpZmlhYmxlLW1jcCtqd3MifQ.eyJjb250ZW50X2RpZ2VzdCI6InNoYTI1NjowMzFmMTMxMzhjZjVhYzYxOGM2OTdhODczZDg0YzY4Yzg4Y2QyOWNhMTU2MTk5OTI1MjdiYTViNjBmMjA3NmEwIiwiaWF0IjoxNzkwMjU5NDgwLCJwYXlsb2FkIjp7ImNvdW50IjoxMCwicmVzdWx0cyI6W3siZmV0Y2hlZEF0IjoiMjAyNi0wOS0xMVQwNDoxNzowMC44MjQrMDA6MDAiLCJsYW5nIjoic3YiLCJwYWdlVHlwZSI6Im5ld3MiLCJwdWJsaXNoZWRBdCI6IjIwMjYtMDktMTBUMDc6MTg6NDIrMDA6MDAiLCJwdWJsaXNoZWRBdFNvdXJjZSI6InNpdGVtYXAiLCJzaXRlbWFwTGFzdG1vZCI6IjIwMjYtMDktMTBUMDc6MTg6NDIrMDA6MDAiLCJzb3VyY2UiOiJhaV9zd2VkZW4iLCJzb3VyY2VOYW1lIjoiQUkgU3dlZGVuIiwidGl0bGUiOiJCb3J0b20gZGFnZW5zIHRla25pazogRsO2cnN2YXJzbWluaXN0ZXIgUMOlbCBKb25zb24gYmVzw7ZrZXIgQUkgU3dlZGVuIHwgQUkgU3dlZGVuIiwidXJsIjoiaHR0cHM6Ly93d3cuYWkuc2Uvc3YvbnloZXRlci9ib3J0b20tZGFnZW5zLXRla25pay1mb3JzdmFyc21pbmlzdGVyLXBhbC1qb25zb24tYmVzb2tlci1haS1zd2VkZW4ifSx7ImZldGNoZWRBdCI6IjIwMjYtMDktMDNUMDQ6MTY6MzQuMzI3KzAwOjAwIiwibGFuZyI6InN2IiwicGFnZVR5cGUiOiJuZXdzIiwicHVibGlzaGVkQXQiOiIyMDI2LTA5LTAyVDEyOjMxOjIwKzAwOjAwIiwicHVibGlzaGVkQXRTb3VyY2UiOiJzaXRlbWFwIiwic2l0ZW1hcExhc3Rtb2QiOiIyMDI2LTA5LTAyVDEyOjMxOjIwKzAwOjAwIiwic291cmNlIjoiYWlfc3dlZGVuIiwic291cmNlTmFtZSI6IkFJIFN3ZWRlbiIsInRpdGxlIjoiRmxlciBjZXJ0aWZpZXJhcyBmw7ZyIGF0dCBtw6R0YSBBSS1tb2duYWQ6IOKAnEV0dCBrcmFmdGZ1bGx0IHZlcmt0eWfigJ0gfCBBSSBTd2VkZW4iLCJ1cmwiOiJodHRwczovL3d3dy5haS5zZS9zdi9ueWhldGVyL2ZsZXItY2VydGlmaWVyYXMtYXR0LW1hdGEtYWktbW9nbmFkLWV0dC1rcmFmdGZ1bGx0LXZlcmt0eWcifSx7ImZldGNoZWRBdCI6IjIwMjYtMDktMDNUMDQ6MTY6MzQuODQ0KzAwOjAwIiwibGFuZyI6InN2IiwicGFnZVR5cGUiOiJuZXdzIiwicHVibGlzaGVkQXQiOiIyMDI2LTA5LTAyVDEyOjI4OjI0KzAwOjAwIiwicHVibGlzaGVkQXRTb3VyY2UiOiJzaXRlbWFwIiwic2l0ZW1hcExhc3Rtb2QiOiIyMDI2LTA5LTAyVDEyOjI4OjI0KzAwOjAwIiwic291cmNlIjoiYWlfc3dlZGVuIiwic291cmNlTmFtZSI6IkFJIFN3ZWRlbiIsInRpdGxlIjoiTnkgcmFwcG9ydDogRnLDpW4gQUktc3RyYXRlZ2kgdGlsbCBrbGluaXNrIG55dHRhIHwgQUkgU3dlZGVuIiwidXJsIjoiaHR0cHM6Ly93d3cuYWkuc2Uvc3YvbnloZXRlci9ueS1yYXBwb3J0LWZyYW4tYWktc3RyYXRlZ2ktdGlsbC1rbGluaXNrLW55dHRhIn0seyJmZXRjaGVkQXQiOiIyMDI2LTA4LTIwVDEyOjM3OjA3Ljc3MyswMDowMCIsImxhbmciOiJzdiIsInBhZ2VUeXBlIjoibmV3cyIsInB1Ymxpc2hlZEF0IjoiMjAyNi0wOC0wNVQxNDoyMTowMCswMDowMCIsInB1Ymxpc2hlZEF0U291cmNlIjoic2l0ZW1hcCIsInNpdGVtYXBMYXN0bW9kIjoiMjAyNi0wOC0wNVQxNDoyMTowMCswMDowMCIsInNvdXJjZSI6ImFpX3N3ZWRlbiIsInNvdXJjZU5hbWUiOiJBSSBTd2VkZW4iLCJ0aXRsZSI6IkxpbmRleCB0aWRpZ2FyZSBDRE8gQW5uaWthIEVsZnN0csO2bSByZWtyeXRlcmFzIHRpbGwgbnlja2Vscm9sbCBww6UgQUkgU3dlZGVuIHwgQUkgU3dlZGVuIiwidXJsIjoiaHR0cHM6Ly93d3cuYWkuc2Uvc3YvbnloZXRlci9saW5kZXgtdGlkaWdhcmUtY2RvLWFubmlrYS1lbGZzdHJvbS1yZWtyeXRlcmFzLXRpbGwtbnlja2Vscm9sbC1wYS1haS1zd2VkZW4ifSx7ImZldGNoZWRBdCI6IjIwMjYtMDgtMjBUMTI6Mjg6NDAuNTI1KzAwOjAwIiwibGFuZyI6InN2IiwicGFnZVR5cGUiOiJuZXdzIiwicHVibGlzaGVkQXQiOiIyMDI2LTA4LTA0VDExOjQyOjU4KzAwOjAwIiwicHVibGlzaGVkQXRTb3VyY2UiOiJzaXRlbWFwIiwic2l0ZW1hcExhc3Rtb2QiOiIyMDI2LTA4LTA0VDExOjQyOjU4KzAwOjAwIiwic291cmNlIjoiYWlfc3dlZGVuIiwic291cmNlTmFtZSI6IkFJIFN3ZWRlbiIsInRpdGxlIjoiUHJha3Rpc2thIHLDpWQgZsO2ciBrb21tdW5lbnMgQUktcmVzYSB8IEFJIFN3ZWRlbiIsInVybCI6Imh0dHBzOi8vd3d3LmFpLnNlL3N2L255aGV0ZXIvcHJha3Rpc2thLXJhZC1rb21tdW5lbnMtYWktcmVzYSJ9LHsiZmV0Y2hlZEF0IjoiMjAyNi0wOC0yMFQxMjoyODozNS4zMDIrMDA6MDAiLCJsYW5nIjoic3YiLCJwYWdlVHlwZSI6Im5ld3MiLCJwdWJsaXNoZWRBdCI6IjIwMjYtMDgtMDRUMTE6NDI6MzArMDA6MDAiLCJwdWJsaXNoZWRBdFNvdXJjZSI6InNpdGVtYXAiLCJzaXRlbWFwTGFzdG1vZCI6IjIwMjYtMDgtMDRUMTE6NDI6MzArMDA6MDAiLCJzb3VyY2UiOiJhaV9zd2VkZW4iLCJzb3VyY2VOYW1lIjoiQUkgU3dlZGVuIiwidGl0bGUiOiJOeWEgbW9kZWxsZXIgb2NoIGZ1bmt0aW9uZXIgZsO2cmLDpHR0cmFyIFN2ZWEgfCBBSSBTd2VkZW4iLCJ1cmwiOiJodHRwczovL3d3dy5haS5zZS9zdi9ueWhldGVyL255YS1tb2RlbGxlci1vY2gtZnVua3Rpb25lci1mb3JiYXR0cmFyLXN2ZWEifSx7ImZldGNoZWRBdCI6IjIwMjYtMDgtMjBUMTI6Mzc6MDYuNjY2KzAwOjAwIiwibGFuZyI6InN2IiwicGFnZVR5cGUiOiJuZXdzIiwicHVibGlzaGVkQXQiOiIyMDI2LTA4LTA0VDExOjQyOjE0KzAwOjAwIiwicHVibGlzaGVkQXRTb3VyY2UiOiJzaXRlbWFwIiwic2l0ZW1hcExhc3Rtb2QiOiIyMDI2LTA4LTA0VDExOjQyOjE0KzAwOjAwIiwic291cmNlIjoiYWlfc3dlZGVuIiwic291cmNlTmFtZSI6IkFJIFN3ZWRlbiIsInRpdGxlIjoiU3RvcnQgaW50cmVzc2UgZsO2ciBhdHQgc2FtdmVya2Ega3JpbmcgZ2VtZW5zYW0gQUkgaSBvZmZlbnRsaWcgc2VrdG9yIHwgQUkgU3dlZGVuIiwidXJsIjoiaHR0cHM6Ly93d3cuYWkuc2Uvc3YvbnloZXRlci9zdG9ydC1pbnRyZXNzZS1hdHQtc2FtdmVya2Eta3JpbmctZ2VtZW5zYW0tYWktaS1vZmZlbnRsaWctc2VrdG9yIn0seyJmZXRjaGVkQXQiOiIyMDI2LTA4LTIwVDEyOjI4OjM1LjgxMiswMDowMCIsImxhbmciOiJzdiIsInBhZ2VUeXBlIjoibmV3cyIsInB1Ymxpc2hlZEF0IjoiMjAyNi0wOC0wNFQxMTo0MDoyNyswMDowMCIsInB1Ymxpc2hlZEF0U291cmNlIjoic2l0ZW1hcCIsInNpdGVtYXBMYXN0bW9kIjoiMjAyNi0wOC0wNFQxMTo0MDoyNyswMDowMCIsInNvdXJjZSI6ImFpX3N3ZWRlbiIsInNvdXJjZU5hbWUiOiJBSSBTd2VkZW4iLCJ0aXRsZSI6IkFJLXLDpWQgdXR2ZWNrbGFyIHJla29tbWVuZGF0aW9uZXIgZsO2ciBzbmFiYmFyZSBBSS11dHZlY2tsaW5nIGkgc3ZlbnNrYSBrb21tdW5lciB8IEFJIFN3ZWRlbiIsInVybCI6Imh0dHBzOi8vd3d3LmFpLnNlL3N2L255aGV0ZXIvYWktcmFkLXV0dmVja2xhci1yZWtvbW1lbmRhdGlvbmVyLXNuYWJiYXJlLWFpLXV0dmVja2xpbmctaS1zdmVuc2thLWtvbW11bmVyIn0seyJmZXRjaGVkQXQiOiIyMDI2LTA4LTIwVDEyOjI4OjQwLjcxMyswMDowMCIsImxhbmciOiJzdiIsInBhZ2VUeXBlIjoibmV3cyIsInB1Ymxpc2hlZEF0IjoiMjAyNi0wOC0wNFQwOTowODoyOCswMDowMCIsInB1Ymxpc2hlZEF0U291cmNlIjoic2l0ZW1hcCIsInNpdGVtYXBMYXN0bW9kIjoiMjAyNi0wOC0wNFQwOTowODoyOCswMDowMCIsInNvdXJjZSI6ImFpX3N3ZWRlbiIsInNvdXJjZU5hbWUiOiJBSSBTd2VkZW4iLCJ0aXRsZSI6IktyYWZ0c2FtbGluZ2VuIGhhciBnw6V0dCBpIG3DpWwgfCBBSSBTd2VkZW4iLCJ1cmwiOiJodHRwczovL3d3dy5haS5zZS9zdi9ueWhldGVyL2tyYWZ0c2FtbGluZ2VuLWhhci1nYXR0LWktbWFsIn0seyJmZXRjaGVkQXQiOiIyMDI2LTA4LTIwVDEyOjI4OjM1LjI0MiswMDowMCIsImxhbmciOiJzdiIsInBhZ2VUeXBlIjoibmV3cyIsInB1Ymxpc2hlZEF0IjoiMjAyNi0wNy0wM1QxMzowOTo0MCswMDowMCIsInB1Ymxpc2hlZEF0U291cmNlIjoic2l0ZW1hcCIsInNpdGVtYXBMYXN0bW9kIjoiMjAyNi0wNy0wM1QxMzowOTo0MCswMDowMCIsInNvdXJjZSI6ImFpX3N3ZWRlbiIsInNvdXJjZU5hbWUiOiJBSSBTd2VkZW4iLCJ0aXRsZSI6IkFJIFN3ZWRlbiBmw6VyIDQ3IG1pbGpvbmVyIGbDtnIgYXR0IGFjY2VsZXJlcmEgQUktYW52w6RuZG5pbmdlbiBpIHN2ZW5za2EgZsO2cmV0YWcgfCBBSSBTd2VkZW4iLCJ1cmwiOiJodHRwczovL3d3dy5haS5zZS9zdi9ueWhldGVyL2FpLXN3ZWRlbi1mYXItNDctbWlsam9uZXItYXR0LWFjY2VsZXJlcmEtYWktYW52YW5kbmluZ2VuLWktc3ZlbnNrYS1mb3JldGFnIn1dfSwicGF5bG9hZF9kaWdlc3QiOiJzaGEyNTY6MDMxZjEzMTM4Y2Y1YWM2MThjNjk3YTg3M2Q4NGM2OGM4OGNkMjljYTE1NjE5OTkyNTI3YmE1YjYwZjIwNzZhMCIsInByb3ZlbmFuY2UiOnsiY2Fub25pY2FsX29yaWdpbiI6Imh0dHBzOi8vd3d3LmFpLnNlIiwiY29udGVudF9wdWJsaXNoZXIiOiJBSSBTd2VkZW4iLCJkYXRhc2V0X3ZlcnNpb24iOiJkMjAyNjA5MjQuMjM0MyIsImxhc3RfdXBkYXRlZCI6IjIwMjYtMDktMjRUMDQ6MTY6MTguNzY3KzAwOjAwIiwibGVnYWxfYmFzaXMiOiJJbmRleGVkIHVuZGVyIHRoZSBFVSBURE0gZXhjZXB0aW9uIChEU00gZGlyZWN0aXZlLCBhcnQuIDQpOyBleGNlcnB0cyBzZXJ2ZWQgd2l0aCBzb3VyY2UgYXR0cmlidXRpb247IGFsbCBjb250ZW50IHJlbWFpbnMgwqkgaXRzIHB1Ymxpc2hlciIsInNlcnZlciI6InJpc2UtYWktc3dlZGVuLmphcmRlbmJlcmcub3JnIiwic2VydmVyX29wZXJhdG9yIjoiU3R1ZGlvIEphcmRlbmJlcmcifX0.ZNp1mfG6lQZ8VyYbxPzHW28g3mH6ESVqR71y2p1q_QDpjZFnM5z1f4q5YEJw_i98jqY25i8rvDg50inABCjOBw"
+            }
+          }
+        },
+        "jsonrpc": "2.0",
+        "id": 1
+      }
+    }
+  ],
+  "catalogHash": "3a82f072e071f7e1f16753917db0b369d6ba5ad027a1efc47f5d8fa1f3e065cc"
+}
