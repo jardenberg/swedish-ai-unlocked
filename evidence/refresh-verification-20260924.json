@@ -1,0 +1,33 @@
+{
+  "status": 200,
+  "data": {
+    "ok": true,
+    "startedAt": "2026-09-24T14:28:44.402Z",
+    "durationMs": 54439,
+    "budgetExhausted": false,
+    "sources": [
+      {
+        "slug": "rise",
+        "newInserted": 1,
+        "stale": 6,
+        "scraped": 7,
+        "embedded": 7,
+        "failed": 0,
+        "blocked": false,
+        "totalInSitemap": 17620,
+        "scopedInSitemap": 665
+      },
+      {
+        "slug": "ai_sweden",
+        "newInserted": 0,
+        "stale": 0,
+        "scraped": 0,
+        "embedded": 0,
+        "failed": 0,
+        "blocked": false,
+        "totalInSitemap": 2315,
+        "scopedInSitemap": 2137
+      }
+    ]
+  }
+}

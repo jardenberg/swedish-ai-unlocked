@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-09-24T14:28:20.022Z",
+  "version": "v202609241445",
+  "tests": [
+    {
+      "name": "all",
+      "count": 50,
+      "pass": true
+    },
+    {
+      "name": "ai_sv_news",
+      "count": 50,
+      "pass": true
+    },
+    {
+      "name": "rise_news",
+      "count": 15,
+      "pass": true
+    },
+    {
+      "url": "https://www.ai.se/sv/nyheter/nya-modeller-och-funktioner-forbattrar-svea",
+      "date": "2025-06-12",
+      "pass": true
+    },
+    {
+      "url": "https://www.ri.se/sv/nyheter/rise-inviger-esa-phi-lab-sweden-satsning-pa-ai-i-rymden",
+      "date": "2025-08-28",
+      "pass": true
+    }
+  ]
+}
