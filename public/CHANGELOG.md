@@ -1,5 +1,11 @@
 # Changelog
 
+## v202609241635 — 2026-09-24
+
+### Fixed
+- Permit browser reads from the canonical site's exact origin so /human can use the existing MCP endpoint. Other browser origins remain restricted; origin-less MCP clients continue to work.
+
+
 ## v202609241630 — 2026-09-24
 
 ### Added
