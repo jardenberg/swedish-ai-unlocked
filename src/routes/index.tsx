@@ -81,6 +81,9 @@ function Landing() {
       <main className="mx-auto max-w-3xl px-6 py-16">
         {/* ── Top: normie-friendly ───────────────────────────────── */}
         <header>
+          <nav aria-label="Choose your interface" className="mb-6 flex justify-end">
+            <a href="/human" className="rounded-full border px-4 py-2 text-sm font-medium text-teal-800 hover:bg-muted">Explore the research →</a>
+          </nav>
           <h1 className="text-5xl font-semibold tracking-tight">
             RISE &amp; AI Sweden — Public MCP
           </h1>

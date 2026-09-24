@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as HumanRouteImport } from './routes/human'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,6 +33,11 @@ import { Route as DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRouteImport } f
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HumanRoute = HumanRouteImport.update({
+  id: '/human',
+  path: '/human',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -135,6 +141,7 @@ const DotwellKnownAgentSkillsQuerySwedishAiSKILLDotmdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/human': typeof HumanRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/$': typeof DotwellKnownSplatRoute
   '/.well-known/mcp.json': typeof DotwellKnownMcpDotjsonRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/human': typeof HumanRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/$': typeof DotwellKnownSplatRoute
   '/.well-known/mcp.json': typeof DotwellKnownMcpDotjsonRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/human': typeof HumanRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/$': typeof DotwellKnownSplatRoute
   '/.well-known/mcp.json': typeof DotwellKnownMcpDotjsonRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/human'
     | '/sitemap.xml'
     | '/.well-known/$'
     | '/.well-known/mcp.json'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/human'
     | '/sitemap.xml'
     | '/.well-known/$'
     | '/.well-known/mcp.json'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/human'
     | '/sitemap.xml'
     | '/.well-known/$'
     | '/.well-known/mcp.json'
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  HumanRoute: typeof HumanRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   DotwellKnownSplatRoute: typeof DotwellKnownSplatRoute
   DotwellKnownMcpDotjsonRoute: typeof DotwellKnownMcpDotjsonRoute
@@ -276,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/human': {
+      id: '/human'
+      path: '/human'
+      fullPath: '/human'
+      preLoaderRoute: typeof HumanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -461,6 +481,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  HumanRoute: HumanRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   DotwellKnownSplatRoute: DotwellKnownSplatRoute,
   DotwellKnownMcpDotjsonRoute: DotwellKnownMcpDotjsonRoute,

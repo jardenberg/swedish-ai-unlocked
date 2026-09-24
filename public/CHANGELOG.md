@@ -1,5 +1,17 @@
 # Changelog
 
+## v202609241630 — 2026-09-24
+
+### Added
+- `/human`: a public research browser with search, mentions, latest publications, publisher/language/type filters, readable documents, related publications, and source/service status.
+- Shareable search and document URLs, copy-link controls, loading states, retry and empty-state recovery, and clear labels for inferred dates and truncated content.
+- Navigation between the MCP setup page and the research browser. The root remains focused on connecting AI assistants.
+
+### Implementation
+- The browser calls the existing public MCP endpoint, preserving its retrieval logic, validation and shared request limit. No new backend access or write capability.
+- Publisher Markdown is rendered without raw HTML; images remain links to the source. No AI summaries are generated.
+
+
 ## v202609241600 — 2026-09-24
 
 ### Changed
