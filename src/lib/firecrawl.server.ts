@@ -7,7 +7,9 @@ export function getFirecrawl() {
 }
 
 // Fetch sitemap(s) and return { url, lastmod } pairs. Handles sitemap indexes.
-export async function fetchSitemap(rootUrl: string): Promise<Array<{ url: string; lastmod?: string }>> {
+export async function fetchSitemap(
+  rootUrl: string,
+): Promise<Array<{ url: string; lastmod?: string }>> {
   const candidates = [
     `${rootUrl}/sitemap.xml`,
     `${rootUrl}/sitemap_index.xml`,
@@ -16,11 +18,18 @@ export async function fetchSitemap(rootUrl: string): Promise<Array<{ url: string
   const out = new Map<string, string | undefined>();
   for (const sm of candidates) {
     try {
-      await collectSitemap(sm, out);
+      const candidate = new Map<string, string | undefined>();
+      await collectSitemap(sm, candidate);
+      // Do not accept a partially traversed sitemap index.
+      for (const [url, lastmod] of candidate) out.set(url, lastmod);
     } catch (e) {
       console.warn("[sitemap] fetch/parse failed", sm, (e as Error).message);
     }
   }
+  if (!out.size)
+    throw new Error(
+      `Sitemap unavailable or empty for ${rootUrl}; refresh aborted (possible source verification/block page)`,
+    );
   return Array.from(out.entries()).map(([url, lastmod]) => ({ url, lastmod }));
 }
 
@@ -34,6 +43,7 @@ async function fetchSitemapXml(url: string): Promise<string | null> {
     if (attempt > 0) await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
     const res = await fetch(url, {
       headers: { "User-Agent": SITEMAP_UA, Accept: "application/xml,text/xml,*/*" },
+      signal: AbortSignal.timeout(30_000),
     });
     if (res.ok) return await res.text();
     if (res.status !== 403 && res.status !== 429 && res.status < 500) return null;
@@ -43,12 +53,19 @@ async function fetchSitemapXml(url: string): Promise<string | null> {
 }
 
 async function collectSitemap(url: string, out: Map<string, string | undefined>, depth = 0) {
-  if (depth > 3) return;
+  if (depth > 3) throw new Error(`Sitemap nesting exceeded at ${url}`);
   const xml = await fetchSitemapXml(url);
-  if (xml === null) return;
+  if (xml === null) {
+    if (depth > 0) throw new Error(`Sitemap child unavailable: ${url}`);
+    return;
+  }
+  if (!/<(?:urlset|sitemapindex)\b/i.test(xml))
+    throw new Error(`Expected sitemap XML from ${url}; received another document`);
 
   // Sitemap index?
-  const sitemapMatches = [...xml.matchAll(/<sitemap>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/sitemap>/g)];
+  const sitemapMatches = [
+    ...xml.matchAll(/<sitemap>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/sitemap>/g),
+  ];
   if (sitemapMatches.length > 0) {
     for (const m of sitemapMatches) {
       await collectSitemap(m[1].trim(), out, depth + 1);
@@ -84,9 +101,34 @@ export function detectLang(url: string): string {
 // Swedish-specific characters (å/ä/ö). Falls back to "en" when text is too
 // short or signal is too weak.
 const SV_STOPWORDS = [
-  "och", "att", "är", "för", "på", "med", "som", "det", "inte", "även",
-  "enligt", "har", "ett", "den", "till", "av", "kan", "vid", "från", "men",
-  "eller", "när", "över", "under", "samt", "varit", "blir", "denna",
+  "och",
+  "att",
+  "är",
+  "för",
+  "på",
+  "med",
+  "som",
+  "det",
+  "inte",
+  "även",
+  "enligt",
+  "har",
+  "ett",
+  "den",
+  "till",
+  "av",
+  "kan",
+  "vid",
+  "från",
+  "men",
+  "eller",
+  "när",
+  "över",
+  "under",
+  "samt",
+  "varit",
+  "blir",
+  "denna",
 ];
 export function detectLangFromText(text: string): "sv" | "en" {
   if (!text || text.length < 200) return "en";
@@ -129,5 +171,3 @@ export function isJunkPdfUrl(url: string): boolean {
   if (!lower.endsWith(".pdf")) return false;
   return JUNK_PDF_RE.test(lower);
 }
-
-

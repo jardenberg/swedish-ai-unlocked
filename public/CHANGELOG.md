@@ -1,5 +1,11 @@
 # Changelog
 
+## v202609241445 — 2026-09-24
+
+### Fixed
+- Sitemap refresh rejects HTML verification pages, empty results, and incomplete sitemap-index traversal instead of reporting a successful empty refresh. Existing corpus records are preserved on failure.
+
+
 ## v202609241430 — 2026-09-24
 
 ### Fixed

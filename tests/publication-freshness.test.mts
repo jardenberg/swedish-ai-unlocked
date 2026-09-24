@@ -119,3 +119,28 @@ test("global latest includes new records beyond 1000, combines fallback dates, a
     ["https://x/new", "https://x/fallback"],
   );
 });
+
+test("sitemap audit rejects HTTP-200 block pages and incomplete child indexes", async () => {
+  const { fetchSitemap } = await import("../src/lib/firecrawl.server.ts");
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => new Response("<html><title>Verifying...</title></html>");
+    await assert.rejects(fetchSitemap("https://example.test"), /Sitemap unavailable/);
+    globalThis.fetch = async (url) =>
+      new Response(
+        String(url).endsWith("child.xml")
+          ? "<html>Blocked</html>"
+          : "<sitemapindex><sitemap><loc>https://example.test/child.xml</loc></sitemap></sitemapindex>",
+      );
+    await assert.rejects(fetchSitemap("https://example.test"), /Sitemap unavailable/);
+    globalThis.fetch = async () =>
+      new Response(
+        "<urlset><url><loc>https://example.test/news/one</loc><lastmod>2026-09-23</lastmod></url></urlset>",
+      );
+    assert.deepEqual(await fetchSitemap("https://example.test"), [
+      { url: "https://example.test/news/one", lastmod: "2026-09-23" },
+    ]);
+  } finally {
+    globalThis.fetch = original;
+  }
+});

@@ -10,6 +10,8 @@ export type SourceSlug = (typeof SOURCES)[number];
 export interface SourceReport {
   slug: SourceSlug;
   newInserted: number;
+  totalInSitemap?: number;
+  scopedInSitemap?: number;
   stale: number;
   scraped: number;
   embedded: number;
@@ -60,6 +62,8 @@ export async function runFullPipeline(opts: {
       const res = await refreshSitemapCore({ sourceSlug: slug, trigger: opts.trigger, force: opts.force?.[slug] });
       rep.newInserted = res.newInserted;
       rep.stale = res.stale;
+      rep.totalInSitemap = res.totalInSitemap;
+      rep.scopedInSitemap = res.scopedInSitemap;
     } catch (e) {
       const message = (e as Error).message;
       rep.error = message;
@@ -75,12 +79,15 @@ export async function runFullPipeline(opts: {
         rep.newInserted = Number(e.preview.newInserted ?? 0);
         // ingest_runs row already written by the core with blocked: true.
       } else {
+        rep.blocked = true;
+        rep.failed += 1;
         try {
           const { data: src } = await supabaseAdmin
             .from("sources").select("id").eq("slug", slug).maybeSingle();
           await supabaseAdmin.from("ingest_runs").insert({
             source_id: src?.id ?? null,
             kind: "refresh",
+            failed: 1,
             trigger: opts.trigger,
             finished_at: new Date().toISOString(),
             notes: JSON.stringify({ op: "refresh", blocked: true, error: message }),

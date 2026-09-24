@@ -24,7 +24,8 @@ export const Route = createFileRoute("/api/public/hooks/daily-refresh")({
         const { runFullPipeline } = await import("@/lib/full-refresh.server");
         const report = await runFullPipeline({ trigger: "cron", budgetMs: 4 * 60 * 1000 });
         console.log("[cron] daily-refresh", JSON.stringify(report));
-        return Response.json({ ok: true, ...report });
+        const ok = !report.budgetExhausted && report.sources.every(s => !s.blocked && !s.error && s.failed === 0);
+        return Response.json({ ok, ...report }, { status: ok ? 200 : 503 });
       },
     },
   },

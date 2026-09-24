@@ -230,6 +230,8 @@ export async function refreshSitemapCore(args: {
   const embeddedAfter = await countEmbedded(supabaseAdmin, source.id);
   const notes = writeRunNotes({
     op: "refresh",
+    totalInSitemap: sitemap.length,
+    scopedInSitemap: scoped.length,
     force: !!data.force,
     stale: stale.length,
     newInserted,

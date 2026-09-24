@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-24T14:17:06.565Z",
+  "checkedAt": "2026-09-24T14:25:05.267Z",
   "sources": [
     {
       "source": "ai_sweden",
@@ -3004,7 +3004,7 @@
     {
       "source": "rise",
       "verified": false,
-      "error": "No sitemap entries returned; coverage not certified"
+      "error": "Sitemap unavailable or empty for https://www.ri.se; refresh aborted (possible source verification/block page)"
     }
   ]
 }

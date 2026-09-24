@@ -6,7 +6,13 @@ import { canonicalizeUrl } from "../src/lib/url-canonical.server.ts";
 const snapshot = JSON.parse(readFileSync(process.argv[2], "utf8"));
 const report = { checkedAt: new Date().toISOString(), sources: [] };
 for (const source of snapshot.sources) {
-  const sitemap = await fetchSitemap(source.root_url);
+  let sitemap;
+  try {
+    sitemap = await fetchSitemap(source.root_url);
+  } catch (error) {
+    report.sources.push({ source: source.slug, verified: false, error: error.message });
+    continue;
+  }
   if (!sitemap.length) {
     report.sources.push({
       source: source.slug,
