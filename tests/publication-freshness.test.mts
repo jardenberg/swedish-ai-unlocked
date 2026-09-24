@@ -144,3 +144,14 @@ test("sitemap audit rejects HTTP-200 block pages and incomplete child indexes", 
     globalThis.fetch = original;
   }
 });
+
+test('project start is not publication evidence, and legacy values do not survive a refresh', async () => {
+  const { resolvePagePublicationDate } = await import('../src/lib/published-date.server.ts');
+  const project='https://www.ri.se/sv/projekt/edu-assist';
+  const old={date:'2027-01-01T12:00:00Z',source:'visible_date'};
+  const md='# EDU Assist\n\nUpcoming project\n\n### Projektstart\n\n2027-01-01';
+  assert.equal(resolvePagePublicationDate('<time datetime="2027-01-01T12:00:00Z">2027-01-01</time>',md,project,old),null);
+  assert.equal(resolvePagePublicationDate(null,md,project,old),null);
+  assert.equal(resolvePagePublicationDate('<meta property="article:published_time" content="2026-07-03">',md,project,old)?.date.slice(0,10),'2026-07-03');
+  assert.deepEqual(resolvePagePublicationDate(null,null,'https://www.ai.se/sv/nyheter/news',{date:'2025-06-12T00:00:00Z',source:'visible_date'}),{date:'2025-06-12T00:00:00Z',source:'visible_date'});
+});

@@ -1,5 +1,12 @@
 # Changelog
 
+## v202609241700 — 2026-09-24
+
+### Fixed
+- Correct legacy project-start dates misclassified as publication dates. Latest ordering falls back to the separately labelled source-update date when publication evidence is absent.
+- Do not carry unsupported legacy visible dates forward when refreshing non-news pages. Project dates remain intact in publisher content.
+
+
 ## v202609241640 — 2026-09-24
 
 ### Fixed

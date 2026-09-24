@@ -165,3 +165,19 @@ export function extractPublishedAtFromPage(
 ): PublishedAtResult | null {
   return extractPublishedAtFromMarkdown(markdown, url) ?? extractPublishedAtFromHtml(html);
 }
+
+// Old versions accepted the first HTML <time>, which could be a project or
+// event start. A fresh scrape without publication evidence must not carry
+// that ambiguous legacy value forward on non-news pages.
+export function resolvePagePublicationDate(
+  html: string | null | undefined,
+  markdown: string | null | undefined,
+  url: string,
+  previous: { date: string; source: string | null } | null,
+): { date: string; source: string | null } | null {
+  const current = extractPublishedAtFromPage(html, markdown, url);
+  if (current) return current;
+  const isNews = /\/(?:news|nyheter)\//.test(new URL(url).pathname);
+  if (previous?.source === 'visible_date' && !isNews) return null;
+  return previous;
+}
