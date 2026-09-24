@@ -4,6 +4,7 @@ export async function readConnector<T>(
   args: Record<string, unknown>,
   signal?: AbortSignal,
 ): Promise<T> {
+  const requestId = crypto.randomUUID();
   const response = await fetch("/api/mcp", {
     method: "POST",
     signal,
@@ -16,7 +17,7 @@ export async function readConnector<T>(
     },
     body: JSON.stringify({
       jsonrpc: "2.0",
-      id: 1,
+      id: requestId,
       method: "tools/call",
       params: { name, arguments: args },
     }),
@@ -38,9 +39,9 @@ export async function readConnector<T>(
     )
     .filter(Boolean);
   const wire = frames.length
-    ? frames.map((f) => JSON.parse(f)).find((f) => f.id === 1 && (f.result || f.error))
+    ? frames.map((f) => JSON.parse(f)).find((f) => f.id === requestId && (f.result || f.error))
     : JSON.parse(text);
-  if (!wire || wire.error || wire.result?.isError)
+  if (!wire || wire.id !== requestId || wire.error || wire.result?.isError)
     throw new Error("That request could not be completed. Please try again or narrow your search.");
   const value = wire.result.structuredContent ?? JSON.parse(wire.result.content[0].text);
   if (value.error)
@@ -49,5 +50,14 @@ export async function readConnector<T>(
         ? "This document is not in the searchable collection. Try searching for its title."
         : "This document could not be loaded.",
     );
+  const valid =
+    name === "list_sources"
+      ? Array.isArray(value.sources)
+      : name === "get_document"
+        ? typeof value.content === "string" && typeof value.url === "string"
+        : name === "server_info"
+          ? typeof value.version === "string" && typeof value.stats?.documents === "number"
+          : Array.isArray(value.results);
+  if (!valid) throw new Error("The service returned an unexpected response. Please try again.");
   return value as T;
 }

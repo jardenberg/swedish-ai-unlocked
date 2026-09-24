@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
@@ -78,6 +78,8 @@ export const Route = createFileRoute("/human")({
   component: Human,
 });
 
+const inlineHeading = ({ children }: { children?: ReactNode }) => <span>{children}</span>;
+
 function Markdown({ text, excerpt = false }: { text: string; excerpt?: boolean }) {
   return (
     <div className={excerpt ? "human-excerpt" : "human-prose"}>
@@ -85,6 +87,16 @@ function Markdown({ text, excerpt = false }: { text: string; excerpt?: boolean }
         remarkPlugins={[remarkGfm]}
         skipHtml
         components={{
+          ...(excerpt
+            ? {
+                h1: inlineHeading,
+                h2: inlineHeading,
+                h3: inlineHeading,
+                h4: inlineHeading,
+                h5: inlineHeading,
+                h6: inlineHeading,
+              }
+            : {}),
           a: ({ href, children }) => (
             <a href={href} target="_blank" rel="noopener noreferrer">
               {children}
@@ -113,7 +125,16 @@ function Human() {
     setInput(state.q);
     setCopied(false);
     setCopyError("");
-  }, [state.q, state.doc, state.similar, state.mode, state.source, state.lang, state.kind, state.limit]);
+  }, [
+    state.q,
+    state.doc,
+    state.similar,
+    state.mode,
+    state.source,
+    state.lang,
+    state.kind,
+    state.limit,
+  ]);
   const change = (patch: Partial<Browse>) => navigate({ search: { ...state, ...patch } });
   const filters = {
     ...(state.source ? { source: state.source } : {}),
@@ -232,7 +253,7 @@ function Human() {
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">
         <span>
           {p.publishedAt
-            ? `${p.publishedAtSource === "sitemap" ? "Source updated" : p.publishedAtSource?.startsWith("pdf_") ? "Date inferred from PDF" : "Published"} ${date(p.publishedAt)}`
+            ? `${p.publishedAtSource === "sitemap" ? "Source updated" : p.publishedAtSource?.startsWith("pdf_") ? "Date inferred from PDF" : p.pageType === "news" ? "Published" : "Source date"} ${date(p.publishedAt)}`
             : p.fetchedAt
               ? `Indexed ${date(p.fetchedAt)}`
               : ""}
@@ -269,7 +290,11 @@ function Human() {
         </div>
       </header>
       <main id="research-content" className="mx-auto max-w-6xl px-5 pb-16">
-        {copyError && <p role="status" className="mt-4 text-sm text-amber-800">{copyError}</p>}
+        {copyError && (
+          <p role="status" className="mt-4 text-sm text-amber-800">
+            {copyError}
+          </p>
+        )}
         {!state.doc && (
           <section className="py-10 sm:py-14">
             <p className="text-xs font-semibold uppercase tracking-widest text-teal-800">
@@ -363,7 +388,9 @@ function Human() {
                     <span>
                       {document.data.publishedAtSource?.startsWith("pdf_")
                         ? "Date inferred from PDF"
-                        : "Publication date"}
+                        : document.data.pageType === "news"
+                          ? "Publication date"
+                          : "Source date"}
                       : {date(document.data.publishedAt)}
                     </span>
                     <span>Indexed: {date(document.data.fetchedAt)}</span>
@@ -591,8 +618,8 @@ function Human() {
                 )}
                 {state.mode === "latest" && (
                   <p className="mb-5 text-sm text-stone-500">
-                    Sorted by publication date where available; otherwise by the source’s update
-                    date.
+                    Sorted by the indexed date. Project and event dates may refer to upcoming work;
+                    source update dates are labelled separately.
                   </p>
                 )}
                 {results.isFetching && (

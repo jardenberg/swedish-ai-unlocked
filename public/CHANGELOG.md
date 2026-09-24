@@ -1,5 +1,15 @@
 # Changelog
 
+## v202609241640 — 2026-09-24
+
+### Fixed
+- Give every browser request a unique identifier so concurrent MCP reads cannot collide. Validate response shapes and provide recoverable errors for unexpected replies.
+
+### Changed
+- Distinguish news publication dates from project/event source dates, which may refer to upcoming work.
+- Keep headings in result excerpts from interfering with the page's accessible heading structure.
+
+
 ## v202609241635 — 2026-09-24
 
 ### Fixed
